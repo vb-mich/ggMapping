@@ -1,0 +1,22 @@
+# build output
+build/
+dist/
+out/
+runs/
+*.o
+*.obj
+*.exe
+*.wasm
+!engine/wasm/prebuilt/*.wasm
+*.wasm.map
+node_modules/
+
+# python
+__pycache__/
+*.pyc
+
+# editor / os noise
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

@@ -1,0 +1,9 @@
+# Byte-identity artifacts: never translate line endings, never diff-normalize.
+reference/sample_log_seed42.txt -text
+reference/sim.py -text
+engine/tests/golden/** -text
+
+# Everything else: LF in the repo, LF on checkout (the gate compares bytes).
+* text=auto eol=lf
+*.png binary
+*.wasm binary

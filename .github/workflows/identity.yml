@@ -1,0 +1,39 @@
+name: identity-gate
+
+on: [push, pull_request]
+
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pillow
+      - name: Build engine + tests
+        run: |
+          g++ -std=c++20 -O2 -Wall -Iengine/include -o jerrymap engine/cli/main.cpp engine/src/*.cpp
+          g++ -std=c++20 -O2 -Wall -Iengine/include -o engine_tests engine/tests/test_engine.cpp engine/src/*.cpp
+      - name: RNG vectors + unit tests
+        run: ./engine_tests
+      - name: Proofs (scripted decider, save-resume, dial suites)
+        run: python scripts/run_proofs.py --native ./jerrymap
+      - name: Identity gate, Python vs native
+        run: python scripts/run_gate.py --native ./jerrymap
+
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pillow
+      - uses: mymindstorm/setup-emsdk@v14
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Build native (comparison baseline)
+        run: g++ -std=c++20 -O2 -Wall -Iengine/include -o jerrymap engine/cli/main.cpp engine/src/*.cpp
+      - name: Build WASM
+        run: bash engine/wasm/build.sh
+      - name: Identity gate, Python vs native vs WASM
+        run: python scripts/run_gate.py --native ./jerrymap --wasm engine/wasm/dist/jerrymap.js
