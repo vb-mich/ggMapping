@@ -5,10 +5,13 @@ import { useComputed } from "@preact/signals";
 
 import { DEFAULT_MOODS, DEFAULT_WORK_AVG, KINDS, KIND_LABELS, type Kind } from "../deck";
 import { STRINGS } from "../strings";
+import { deckExportJson } from "../state";
+import { download } from "./download";
 import {
   addpanelCopies,
   deckCopies,
   deckPreview,
+  flatWork,
   moodOverrides,
   warnings,
   workOverrides,
@@ -103,8 +106,10 @@ export function DeckEditor() {
     <section class="card">
       <h2>{STRINGS.deckTitle}</h2>
       <p class="deck-totals" data-testid="deck-totals">
-        {totals.value.cards} {STRINGS.deckCards} · {STRINGS.deckAvgWork}{" "}
-        {totals.value.avg.toFixed(2)}
+        {totals.value.cards} {STRINGS.deckCards} (
+        {totals.value.cards - addpanelCopies.value} {STRINGS.deckInEraOne}) ·{" "}
+        {STRINGS.deckAvgWork} {totals.value.avg.toFixed(2)} ·{" "}
+        {STRINGS.deckEraLength}
       </p>
       <div class="table-scroll">
       <table class="deck-table">
@@ -143,15 +148,34 @@ export function DeckEditor() {
         </tbody>
       </table>
       </div>
+      <label class="toggle">
+        <input
+          type="checkbox"
+          checked={flatWork.value}
+          data-testid="toggle-flat-work"
+          onChange={(e) => (flatWork.value = (e.target as HTMLInputElement).checked)}
+        />
+        {STRINGS.flatWork}
+      </label>
       <p class="note">{STRINGS.deckNoteAddpanel}</p>
       <p class="note">{STRINGS.deckNoteRemoveCard}</p>
-      {warnings.value.length > 0 && (
+      {warnings.value.length === 0 ? (
+        <p class="deck-ok" data-testid="deck-ok">{STRINGS.deckOk}</p>
+      ) : (
         <ul class="warnings" data-testid="deck-warnings">
           {warnings.value.map((w) => (
             <li key={w}>{w}</li>
           ))}
         </ul>
       )}
+      <button
+        data-testid="btn-export-deck"
+        onClick={() =>
+          download("jm-deck.json", new Blob([deckExportJson()], { type: "application/json" }))
+        }
+      >
+        {STRINGS.exportDeck}
+      </button>
     </section>
   );
 }

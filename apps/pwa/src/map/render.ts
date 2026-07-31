@@ -29,7 +29,15 @@ export interface WorldIndex {
   people: Map<string, string>;
   marks: Map<string, string>;
   patina: Map<string, number>; // combined density per §2.4
+  binder: Set<string>; // archived panels, "tx,ty"
   bounds: { x0: number; y0: number; x1: number; y1: number }; // unit box, exclusive max
+}
+
+export interface DrawOptions {
+  panelNames: boolean;
+  patina: boolean;
+  dimArchived: boolean;
+  highlight: [number, number] | null; // the current panel, outlined
 }
 
 const key = (x: number, y: number) => `${x},${y}`;
@@ -40,6 +48,7 @@ export function indexWorld(w: WorldState): WorldIndex {
   const base = new Map(w.world.base.map(([x, y, r]) => [key(x, y), r]));
   const people = new Map(w.world.people.map(([x, y, k]) => [key(x, y), k]));
   const marks = new Map(w.world.marks.map(([x, y, m]) => [key(x, y), m]));
+  const binder = new Set(w.world.binder.map(([tx, ty]) => key(tx, ty)));
 
   // Patina density: per-unit embellish plus the panel-level count distributed
   // round-robin over the panel's units sorted by (gx, gy) — CONTRACTS §2.4.
@@ -66,7 +75,21 @@ export function indexWorld(w: WorldState): WorldIndex {
     y1 = Math.max(y1, oy + geo.h);
   }
   if (!panels.length) { x0 = y0 = 0; x1 = y1 = 1; }
-  return { geo, panels, base, people, marks, patina, bounds: { x0, y0, x1, y1 } };
+  return { geo, panels, base, people, marks, patina, binder, bounds: { x0, y0, x1, y1 } };
+}
+
+// The same scale, re-centered on a panel (the follow-current-panel mode).
+export function centerOn(
+  idx: WorldIndex,
+  view: View,
+  cw: number,
+  ch: number,
+  panel: [number, number],
+): View {
+  const [ox, oy] = origin(idx.geo, panel[0], panel[1]);
+  const cx = ox + idx.geo.w / 2;
+  const cy = oy + idx.geo.h / 2;
+  return { ...view, x: cx - cw / view.scale / 2, y: cy - ch / view.scale / 2 };
 }
 
 export function fitView(idx: WorldIndex, cw: number, ch: number): View {
@@ -88,6 +111,7 @@ export function draw(
   view: View,
   cw: number,
   ch: number,
+  opts: DrawOptions,
 ): void {
   const { geo } = idx;
   const s = view.scale;
@@ -116,7 +140,7 @@ export function draw(
             ctx.lineWidth = 1;
             ctx.strokeRect(x + 0.5, y + 0.5, s - 1, s - 1);
           }
-          const density = idx.patina.get(k) ?? 0;
+          const density = opts.patina ? (idx.patina.get(k) ?? 0) : 0;
           if (density > 0 && s >= 6) {
             const r = Math.max(1, s / 10);
             ctx.fillStyle = darken55(col);
@@ -161,18 +185,38 @@ export function draw(
     }
   }
 
+  // archived panels rest under a veil of the map background
+  if (opts.dimArchived && idx.binder.size) {
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = CHROME.background;
+    for (const [tx, ty] of idx.panels) {
+      if (!idx.binder.has(`${tx},${ty}`)) continue;
+      const [ox, oy] = origin(geo, tx, ty);
+      ctx.fillRect(px(ox), py(oy), geo.w * s, geo.h * s);
+    }
+    ctx.globalAlpha = 1;
+  }
+
   // panel borders + N1/E1 labels
   ctx.strokeStyle = CHROME.panelBorder;
   for (const [tx, ty] of idx.panels) {
     const [ox, oy] = origin(geo, tx, ty);
     ctx.lineWidth = s >= 8 ? 2 : 1;
     ctx.strokeRect(px(ox), py(oy), geo.w * s, geo.h * s);
-    if (s >= 7) {
+    if (opts.panelNames && s >= 7) {
       ctx.fillStyle = CHROME.panelBorder;
       ctx.font = `${Math.max(9, Math.min(13, s))}px system-ui, sans-serif`;
       ctx.textBaseline = "top";
       ctx.fillText(panelName(tx, ty), px(ox) + 3, py(oy) + 2);
     }
+  }
+
+  // the current panel, outlined (volcano red from the canonical palette)
+  if (opts.highlight) {
+    const [ox, oy] = origin(geo, opts.highlight[0], opts.highlight[1]);
+    ctx.strokeStyle = MARK_COLORS.volcano;
+    ctx.lineWidth = Math.max(2, s / 5);
+    ctx.strokeRect(px(ox), py(oy), geo.w * s, geo.h * s);
   }
 }
 

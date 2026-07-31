@@ -1,22 +1,47 @@
-// Files: save/load the CONTRACTS §6 world document, export PNG from the
-// canvas, export the log text, copy the shareable config JSON. Local only.
+// Files: save/load the CONTRACTS §6 world document, save/load the config
+// capsule, export PNG from the canvas, export the log text, copy the
+// shareable config JSON. Local only.
 import { useSignal } from "@preact/signals";
 
 import { mapCanvas } from "../map/canvasRef";
 import { STRINGS } from "../strings";
-import { loadWorld, logText, seed, shareableConfig, worldJson } from "../state";
+import {
+  loadConfigJson,
+  loadWorld,
+  logText,
+  seed,
+  shareableConfig,
+  worldJson,
+} from "../state";
+import { download } from "./download";
 
-function download(name: string, blob: Blob) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(a.href);
+function FileButton(props: {
+  label: string;
+  testid: string;
+  onText: (text: string) => Promise<boolean> | boolean;
+  onError: () => void;
+}) {
+  return (
+    <label class="file-button">
+      {props.label}
+      <input
+        type="file"
+        accept=".json,application/json"
+        data-testid={props.testid}
+        onChange={async (e) => {
+          const f = (e.target as HTMLInputElement).files?.[0];
+          (e.target as HTMLInputElement).value = "";
+          if (!f) return;
+          if (!(await props.onText(await f.text()))) props.onError();
+        }}
+      />
+    </label>
+  );
 }
 
 export function FilesBar() {
   const copied = useSignal(false);
-  const loadError = useSignal(false);
+  const error = useSignal("");
 
   return (
     <section class="card">
@@ -34,20 +59,23 @@ export function FilesBar() {
         >
           {STRINGS.saveWorld}
         </button>
-        <label class="file-button">
-          {STRINGS.loadWorld}
-          <input
-            type="file"
-            accept=".json,application/json"
-            data-testid="input-load"
-            onChange={async (e) => {
-              const f = (e.target as HTMLInputElement).files?.[0];
-              (e.target as HTMLInputElement).value = "";
-              if (!f) return;
-              loadError.value = !loadWorld(await f.text());
-            }}
-          />
-        </label>
+        <FileButton label={STRINGS.loadWorld} testid="input-load"
+          onText={(t) => { error.value = ""; return loadWorld(t); }}
+          onError={() => (error.value = STRINGS.loadFailed)} />
+        <button
+          data-testid="btn-save-config"
+          onClick={() =>
+            download(
+              `jm-config-seed${seed.value}.json`,
+              new Blob([shareableConfig()], { type: "application/json" }),
+            )
+          }
+        >
+          {STRINGS.saveConfig}
+        </button>
+        <FileButton label={STRINGS.loadConfig} testid="input-load-config"
+          onText={(t) => { error.value = ""; return loadConfigJson(t); }}
+          onError={() => (error.value = STRINGS.configLoadFailed)} />
         <button
           data-testid="btn-export-png"
           disabled={!worldJson.value}
@@ -83,7 +111,7 @@ export function FilesBar() {
           {copied.value ? STRINGS.copied : STRINGS.copyConfig}
         </button>
       </div>
-      {loadError.value && <p class="error">{STRINGS.loadFailed}</p>}
+      {error.value && <p class="error">{error.value}</p>}
     </section>
   );
 }

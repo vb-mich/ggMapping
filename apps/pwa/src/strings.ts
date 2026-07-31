@@ -89,6 +89,70 @@ export const STRINGS = {
   copied: "Copied",
   loadFailed: "That file is not a world this app understands.",
 
+  // map toolbar
+  followPanel: "Follow current panel",
+  panelNames: "Panel names",
+  traceReworks: "Trace reworks",
+  dimArchived: "Dim archived panels",
+
+  // now panel
+  nowTitle: "Now",
+  nowEra: "Era",
+  nowAge: "Age",
+  nowPanels: "panels",
+  nowWork: "work",
+  nowOn: "on",
+  nowGenesis: "genesis: the blank world",
+
+  // navigation
+  navTitle: "Navigation",
+  navFirst: "Start",
+  navPrevEra: "Back one era",
+  navPrevAge: "Back one age",
+  navNextAge: "Forward one age",
+  navNextEra: "Forward one era",
+  navLast: "End",
+  navGo: "Go",
+
+  // run extras
+  reroll: "Reroll",
+  backToCanon: "Back to canon",
+
+  // deck extras
+  flatWork: "Flat work",
+  deckInEraOne: "in era one",
+  deckEraLength: "era length: 25 ages, fixed",
+  deckOk: "Deck within the book's recommendations.",
+  exportDeck: "Export deck",
+
+  // stats
+  statWater: "water",
+  statCoastal: "coastal",
+  statPlain: "plain",
+  statHills: "hills",
+  statMountains: "mountains",
+  statCliffs: "cliffs",
+  statDicePerAge: "dice/age",
+  statPeakDensity: "city: peak density",
+  statPeople: "people",
+  statReworks: "reworks",
+  statCrumbles: "crumbles",
+  statEmbellish: "embellish",
+  statFirsts: "firsts",
+  statNone: "none",
+
+  // record extras
+  ageDetails: "Age details",
+
+  // files extras
+  saveConfig: "Save config",
+  loadConfig: "Load config",
+  configLoadFailed: "That file is not a config this app understands.",
+
+  // theme
+  themeLight: "Light",
+  themeDark: "Dark",
+
   // misc
   offlineReady: "Ready to work offline.",
 } as const;

@@ -3,25 +3,33 @@ import { useEffect } from "preact/hooks";
 import { DISPLAY_NAME, STRINGS } from "../strings";
 import {
   addpanelCopies,
+  applyTheme,
+  backToCanon,
   cancelRun,
   deckCopies,
   errorMessage,
   eras,
+  flatWork,
   moodOverrides,
   panelSize,
   progressEra,
   requestDeckPreview,
+  reroll,
   resumeWorld,
   seed,
   startRun,
   status,
+  theme,
   workOverrides,
 } from "../state";
 import { ConfigPanel } from "./ConfigPanel";
 import { DeckEditor } from "./DeckEditor";
 import { FilesBar } from "./FilesBar";
 import { MapView } from "./MapView";
+import { NavPanel } from "./NavPanel";
+import { NowPanel } from "./NowPanel";
 import { RecordView } from "./RecordView";
+import { StatsStrip } from "./StatsStrip";
 
 function RunBar() {
   const s = status.value;
@@ -31,9 +39,17 @@ function RunBar() {
         {STRINGS.seed} <b>{seed.value}</b>
       </span>
       {s !== "running" ? (
-        <button class="primary" data-testid="btn-run" onClick={startRun}>
-          {STRINGS.run}
-        </button>
+        <>
+          <button class="primary" data-testid="btn-run" onClick={startRun}>
+            {STRINGS.run}
+          </button>
+          <button data-testid="btn-reroll" onClick={reroll}>
+            {STRINGS.reroll}
+          </button>
+          <button class="ghost" data-testid="btn-canon" onClick={backToCanon}>
+            {STRINGS.backToCanon}
+          </button>
+        </>
       ) : (
         <button data-testid="btn-cancel" onClick={cancelRun}>
           {STRINGS.cancel}
@@ -65,6 +81,7 @@ export function App() {
     workOverrides.value,
     moodOverrides.value,
     panelSize.value,
+    flatWork.value,
   ]);
 
   return (
@@ -73,6 +90,13 @@ export function App() {
         <h1>
           {DISPLAY_NAME} <small>{STRINGS.tagline}</small>
         </h1>
+        <button
+          class="ghost theme-toggle"
+          data-testid="btn-theme"
+          onClick={() => applyTheme(theme.value === "dark" ? "light" : "dark")}
+        >
+          {theme.value === "dark" ? STRINGS.themeLight : STRINGS.themeDark}
+        </button>
       </header>
       <RunBar />
       <main>
@@ -83,6 +107,11 @@ export function App() {
         </div>
         <div class="col-main">
           <MapView />
+          <div class="now-nav">
+            <NowPanel />
+            <NavPanel />
+          </div>
+          <StatsStrip />
           <RecordView />
         </div>
       </main>

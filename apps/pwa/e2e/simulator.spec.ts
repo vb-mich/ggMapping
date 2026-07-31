@@ -22,6 +22,11 @@ async function runToDone(page: Page) {
 const recordText = (page: Page) =>
   page.getByTestId("record-list").textContent() as Promise<string>;
 
+async function detailsOn(page: Page) {
+  const t = page.getByTestId("toggle-details");
+  if (!(await t.isChecked())) await t.click();
+}
+
 test("a run completes and paints", async ({ page }) => {
   await page.goto("/");
   await setRun(page, 42, 3);
@@ -42,6 +47,12 @@ test("a run completes and paints", async ({ page }) => {
 
   await expect(page.getByTestId("era-rows")).toContainText("era 1:");
   await expect(page.getByTestId("final-report")).toContainText("FINAL METRICS");
+
+  // compact by default: the run frame and era summaries only
+  const compact = await recordText(page);
+  expect(compact).toContain("=== era 1:");
+  expect(compact).not.toContain("paint r");
+  await detailsOn(page);
   expect((await recordText(page)).length).toBeGreaterThan(1000);
 });
 
@@ -49,13 +60,50 @@ test("a deck edit changes the run", async ({ page }) => {
   await page.goto("/");
   await setRun(page, 42, 3);
   await runToDone(page);
+  await detailsOn(page);
   const before = await recordText(page);
 
   await page.getByTestId("deck-inc-calm").click();
   await expect(page.getByTestId("deck-totals")).toContainText("21 cards");
   await runToDone(page);
+  await detailsOn(page);
   const after = await recordText(page);
   expect(after).not.toBe(before);
+});
+
+test("navigation shows true engine state at any age", async ({ page }) => {
+  await page.goto("/");
+  await setRun(page, 42, 3);
+  await runToDone(page);
+
+  const snap = () =>
+    page.evaluate(() =>
+      (document.querySelector('[data-testid="map-canvas"]') as HTMLCanvasElement).toDataURL(),
+    );
+  await expect(page.getByTestId("now-line")).toContainText("Era 3 · Age 25/25");
+  const atEnd = await snap();
+
+  await page.getByTestId("nav-prev-era").click();
+  await expect(page.getByTestId("now-line")).toContainText("Era 2 · Age 0/25");
+  const atEra2 = await snap();
+  expect(atEra2).not.toBe(atEnd);
+
+  await page.getByTestId("nav-next-age").click();
+  await expect(page.getByTestId("now-line")).toContainText("Era 2 · Age 1/25");
+  await expect(page.getByTestId("now-excerpt")).toContainText("[e2 a01]");
+
+  await page.getByTestId("nav-last").click();
+  await expect(page.getByTestId("now-line")).toContainText("Era 3 · Age 25/25");
+  expect(await snap()).toBe(atEnd);
+});
+
+test("the theme defaults to dark and switches", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByTestId("btn-theme").click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
 test("save-load roundtrips a world byte-identically", async ({ page }) => {
@@ -111,6 +159,7 @@ test("screenshots at mobile and desktop widths", async ({ page }) => {
   await setRun(page, 42, 5);
   await runToDone(page);
   await page.screenshot({ path: "e2e-artifacts/desktop.png", fullPage: false });
+  await page.screenshot({ path: "e2e-artifacts/desktop-full.png", fullPage: true });
 
   await page.setViewportSize({ width: 375, height: 812 });
   await page.waitForTimeout(400);

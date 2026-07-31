@@ -1,19 +1,55 @@
 // The map: canvas rendered from engine state in the canonical palette, with
-// zoom, pan (drag + pinch), N1/E1 panel labels, and the era rows alongside.
+// zoom, pan (drag + pinch), N1/E1 panel labels, the current-panel highlight,
+// archived-panel dimming, and the era rows alongside.
 import { useEffect, useRef } from "preact/hooks";
 import { useComputed, useSignal } from "@preact/signals";
 
-import { draw, fitView, indexWorld, type View } from "../map/render";
+import {
+  centerOn,
+  draw,
+  fitView,
+  indexWorld,
+  type View,
+} from "../map/render";
 import { mapCanvas } from "../map/canvasRef";
 import { RUNG_NAMES, RUNG_COLORS } from "../contracts/palette";
 import { STRINGS } from "../strings";
-import { world } from "../state";
+import {
+  currentAgePanel,
+  dimArchived,
+  followPanel,
+  showPanelNames,
+  shownWorld,
+  traceReworks,
+  world,
+} from "../state";
+
+function Toggle(props: {
+  label: string;
+  testid: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label class="toggle">
+      <input
+        type="checkbox"
+        checked={props.value}
+        data-testid={props.testid}
+        onChange={(e) => props.onChange((e.target as HTMLInputElement).checked)}
+      />
+      {props.label}
+    </label>
+  );
+}
 
 export function MapView() {
   const holder = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const view = useSignal<View | null>(null);
-  const idx = useComputed(() => (world.value ? indexWorld(world.value) : null));
+  const idx = useComputed(() =>
+    shownWorld.value ? indexWorld(shownWorld.value) : null,
+  );
 
   const render = () => {
     const cv = canvas.current, host = holder.current;
@@ -27,7 +63,16 @@ export function MapView() {
     if (!ctx || !idx.value) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (!view.value) view.value = fitView(idx.value, cw, ch);
-    draw(ctx, idx.value, view.value, cw, ch);
+    let v = view.value;
+    if (followPanel.value && currentAgePanel.value) {
+      v = centerOn(idx.value, v, cw, ch, currentAgePanel.value);
+    }
+    draw(ctx, idx.value, v, cw, ch, {
+      panelNames: showPanelNames.value,
+      patina: traceReworks.value,
+      dimArchived: dimArchived.value,
+      highlight: currentAgePanel.value,
+    });
   };
 
   useEffect(() => {
@@ -37,10 +82,19 @@ export function MapView() {
     return () => obs.disconnect();
   }, []);
   useEffect(() => {
-    view.value = null; // a new world refits
+    // a brand-new run refits; a seek within the same run keeps the view
+    view.value = null;
     render();
-  }, [idx.value]);
-  useEffect(render, [view.value]);
+  }, [world.value]);
+  useEffect(render, [
+    view.value,
+    idx.value,
+    showPanelNames.value,
+    traceReworks.value,
+    dimArchived.value,
+    followPanel.value,
+    currentAgePanel.value,
+  ]);
 
   const zoom = (factor: number, cx?: number, cy?: number) => {
     const v = view.value, host = holder.current;
@@ -83,8 +137,15 @@ export function MapView() {
 
   return (
     <section class="card">
-      <div class="map-head">
-        <h2>{STRINGS.mapTitle}</h2>
+      <div class="map-toolbar">
+        <Toggle label={STRINGS.followPanel} testid="toggle-follow"
+          value={followPanel.value} onChange={(v) => (followPanel.value = v)} />
+        <Toggle label={STRINGS.panelNames} testid="toggle-names"
+          value={showPanelNames.value} onChange={(v) => (showPanelNames.value = v)} />
+        <Toggle label={STRINGS.traceReworks} testid="toggle-patina"
+          value={traceReworks.value} onChange={(v) => (traceReworks.value = v)} />
+        <Toggle label={STRINGS.dimArchived} testid="toggle-dim"
+          value={dimArchived.value} onChange={(v) => (dimArchived.value = v)} />
         <span class="map-buttons">
           <button class="ghost" aria-label={STRINGS.zoomOut} onClick={() => zoom(1 / 1.3)}>−</button>
           <button class="ghost" aria-label={STRINGS.zoomIn} onClick={() => zoom(1.3)}>+</button>
