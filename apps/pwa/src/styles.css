@@ -1,0 +1,127 @@
+/* Mobile-first. Chrome colors come from the canonical palette (CONTRACTS §2.4). */
+:root {
+  --bg: #f3efe7;
+  --ink: #2b241c;
+  --border: #4a4238;
+  --muted: #6f6557;
+  --card: #ffffff;
+  --card-edge: #d8d2c6;
+  --accent: #205e82;
+  --warn-bg: #fdf6df;
+  --warn-edge: #b8860b;
+  --error: #c0392b;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+#app { max-width: 1280px; margin: 0 auto; padding: 0.5rem; }
+
+header h1 { font-size: 1.3rem; margin: 0.3rem 0 0.5rem; }
+header small { color: var(--muted); font-weight: normal; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.card h2 { font-size: 1.02rem; margin: 0 0 0.5rem; }
+.card h3 { font-size: 0.92rem; margin: 0.7rem 0 0.3rem; color: var(--muted); }
+
+main { display: block; }
+@media (min-width: 900px) {
+  main { display: grid; grid-template-columns: 360px 1fr; gap: 0.75rem; align-items: start; }
+}
+
+.runbar { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.seed-chip {
+  background: var(--bg);
+  border: 1px solid var(--card-edge);
+  border-radius: 999px;
+  padding: 0.15rem 0.7rem;
+}
+.status { color: var(--muted); }
+.error { color: var(--error); }
+
+button {
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.ghost { border-color: var(--card-edge); padding: 0.2rem 0.55rem; }
+button:disabled { opacity: 0.45; cursor: default; }
+
+.field { display: flex; flex-direction: column; gap: 0.15rem; margin: 0.25rem 0; }
+.field span { font-size: 0.8rem; color: var(--muted); }
+.field small { color: var(--muted); font-size: 0.72rem; }
+.field input, .field select {
+  font: inherit;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--card-edge);
+  border-radius: 6px;
+  max-width: 9rem;
+  background: #fff;
+  color: var(--ink);
+}
+.field.invalid input { border-color: var(--error); outline: 1px solid var(--error); }
+.field-row { display: flex; gap: 0.7rem; flex-wrap: wrap; align-items: end; }
+.field.grow { flex: 1; }
+.field.grow input { max-width: none; }
+
+.deck-table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+.deck-table th {
+  text-align: left; font-weight: 500; color: var(--muted);
+  font-size: 0.74rem; padding: 0.15rem 0.3rem;
+}
+.deck-table td { padding: 0.2rem 0.3rem; border-top: 1px solid var(--card-edge); }
+.deck-table input.work { width: 3.6rem; padding: 0.15rem 0.3rem; }
+.deck-table select { max-width: 7.5rem; font-size: 0.82rem; }
+.deck-table .printed { color: var(--muted); font-variant-numeric: tabular-nums; }
+.addpanel-row td { border-top: 2px solid var(--card-edge); }
+.deck-totals { margin: 0 0 0.4rem; color: var(--muted); }
+.stepper { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+.note { color: var(--muted); font-size: 0.8rem; margin: 0.4rem 0 0; }
+.warnings {
+  margin: 0.6rem 0 0; padding: 0.5rem 0.6rem 0.5rem 1.6rem;
+  background: var(--warn-bg); border: 1px solid var(--warn-edge);
+  border-radius: 6px; font-size: 0.82rem;
+}
+.warnings li { margin: 0.15rem 0; }
+
+.map-head { display: flex; justify-content: space-between; align-items: center; }
+.map-buttons { display: flex; gap: 0.3rem; }
+.map-holder { border: 1px solid var(--card-edge); border-radius: 6px; overflow: hidden; }
+.map-holder canvas { display: block; width: 100%; touch-action: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 0.5rem; font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; }
+.legend-item i {
+  display: inline-block; width: 0.75rem; height: 0.75rem;
+  border-radius: 2px; vertical-align: -2px; margin-right: 0.2rem;
+}
+
+pre {
+  background: var(--bg); border: 1px solid var(--card-edge); border-radius: 6px;
+  padding: 0.5rem; overflow: auto; font-size: 0.76rem; line-height: 1.35;
+  max-height: 24rem; white-space: pre;
+}
+.era-rows pre, .report pre { max-height: 16rem; }
+details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
+
+.files-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.file-button {
+  display: inline-block; border: 1px solid var(--border); border-radius: 6px;
+  padding: 0.35rem 0.8rem; cursor: pointer; background: var(--card);
+}
+.file-button input { display: none; }
