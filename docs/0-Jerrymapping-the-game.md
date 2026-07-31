@@ -480,3 +480,22 @@ Here below some suggestions:
 - Keep the number of **instructions** balanced as the initial deck (e.g. 1 every 20 is an Anomaly)
 - Use the same **mood** for all the instructions as the initial deck (e.g. Great Ridge is always Rise). Or keep the mood mix near the starting deck's: about 13x Settle, 4x Level, 3x Rise in twenty cards.
 - If you implement a "Remove Card" instruction, make it a one-shot instruction that applies only when the deck size reaches a threshold. Remove card tend to destroy your deck over time.
+
+# 11. Experimental rules
+
+*The rules in this chapter are being tested. They are NOT part of the game yet. Play them if you want to help us decide, and tell us how your map turns out. If they are adopted they will move into the chapters above, and this chapter will disappear.*
+
+## Experimental: the fields
+
+As the game stands, a field walls a town in. Farmland sits at the bottom of the density ladder, so a home next to a field can never grow denser than a home, and on a map where the land never changes that wall is permanent. Towns end up ringed by their own fields forever, and cities almost never rise.
+
+This experiment takes farmland out of the ladder, which is what the rules always meant to say.
+
+1. **A field is not a person.** For the density ladder, a farmed unit never blocks a step, never supports one, and is never subject to one. It still occupies its ground: a home is never built on a field, and a field is never sown on a home.
+2. **Fields deepen before they spread.** When a growth step calls for farmland and the town already has a low field, deepen that field to high instead of clearing new ground. Only when every field is high does the town clear more.
+
+In the simulator these two rules live behind one switch, off by default.
+
+What we measured over five worlds of twenty eras, with the starting deck: fields fall from about 34 to 23, urban medium rises from about 3 to 8, and an urban high appears in four worlds out of five instead of one. With a settlement-heavy deck the cities go further still.
+
+What to tell us: does your map still look like a farming country, or have the cities taken it over? Does the town growing into its own fields feel right at the table?
