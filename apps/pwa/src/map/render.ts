@@ -137,8 +137,8 @@ export function draw(
           ctx.fillRect(x, y, s, s);
           if (s >= 8) {
             ctx.strokeStyle = CHROME.unitOutline;
-            ctx.lineWidth = 1;
-            ctx.strokeRect(x + 0.5, y + 0.5, s - 1, s - 1);
+            ctx.lineWidth = 0.5;
+            ctx.strokeRect(x + 0.25, y + 0.25, s - 0.5, s - 0.5);
           }
           const density = opts.patina ? (idx.patina.get(k) ?? 0) : 0;
           if (density > 0 && s >= 6) {
@@ -156,8 +156,8 @@ export function draw(
           ctx.fillRect(x, y, s, s);
           if (s >= 8) {
             ctx.strokeStyle = CHROME.emptyOutline;
-            ctx.lineWidth = 1;
-            ctx.strokeRect(x + 0.5, y + 0.5, s - 1, s - 1);
+            ctx.lineWidth = 0.5;
+            ctx.strokeRect(x + 0.25, y + 0.25, s - 0.5, s - 0.5);
           }
         }
         const person = idx.people.get(k);
@@ -201,7 +201,7 @@ export function draw(
   ctx.strokeStyle = CHROME.panelBorder;
   for (const [tx, ty] of idx.panels) {
     const [ox, oy] = origin(geo, tx, ty);
-    ctx.lineWidth = s >= 8 ? 2 : 1;
+    ctx.lineWidth = 1;
     ctx.strokeRect(px(ox), py(oy), geo.w * s, geo.h * s);
     if (opts.panelNames && s >= 7) {
       ctx.fillStyle = CHROME.panelBorder;

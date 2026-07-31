@@ -158,9 +158,9 @@ export function backToCanon(): void {
 
 // --- map view toggles -------------------------------------------------------
 export const followPanel = signal(false);
-export const showPanelNames = signal(true);
-export const traceReworks = signal(true);
-export const dimArchived = signal(true);
+export const showPanelNames = signal(false);
+export const traceReworks = signal(false);
+export const dimArchived = signal(false);
 
 // --- run state --------------------------------------------------------------
 export type Status = "idle" | "running" | "done" | "paused" | "error";

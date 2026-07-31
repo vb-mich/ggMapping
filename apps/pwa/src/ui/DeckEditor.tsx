@@ -102,10 +102,10 @@ export function DeckEditor() {
         <thead>
           <tr>
             <th />
-            <th>{STRINGS.deckCopies}</th>
-            <th>{STRINGS.deckWork}</th>
-            <th>{STRINGS.deckMood}</th>
-            <th>{STRINGS.deckWorkNumbers}</th>
+            <th><span data-tip={STRINGS.tipDeckCopies}>{STRINGS.deckCopies}</span></th>
+            <th><span data-tip={STRINGS.tipDeckWork}>{STRINGS.deckWork}</span></th>
+            <th><span data-tip={STRINGS.tipDeckMood}>{STRINGS.deckMood}</span></th>
+            <th><span data-tip={STRINGS.tipDeckPrinted}>{STRINGS.deckWorkNumbers}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -149,7 +149,7 @@ export function DeckEditor() {
           data-testid="toggle-flat-work"
           onChange={(e) => (flatWork.value = (e.target as HTMLInputElement).checked)}
         />
-        {STRINGS.flatWork}
+        <span data-tip={STRINGS.tipFlatWork}>{STRINGS.flatWork}</span>
       </label>
       <p class="note">{STRINGS.deckNoteAddpanel}</p>
       <p class="note">{STRINGS.deckNoteRemoveCard}</p>

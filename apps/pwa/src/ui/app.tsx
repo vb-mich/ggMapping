@@ -119,6 +119,9 @@ export function App() {
           <ReportCard />
         </div>
       </main>
+      <footer>
+        <small data-testid="app-version">v{__JM_VERSION__}</small>
+      </footer>
     </>
   );
 }

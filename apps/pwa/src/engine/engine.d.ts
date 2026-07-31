@@ -10,3 +10,6 @@ declare module "@engine/jerrymap.wasm?url" {
   const url: string;
   export default url;
 }
+
+// Build identity, injected by vite.config.ts (package version + git sha).
+declare const __JM_VERSION__: string;

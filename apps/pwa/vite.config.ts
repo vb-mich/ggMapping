@@ -1,3 +1,5 @@
+import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -11,7 +13,16 @@ import { CHROME } from "./src/contracts/palette";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
+const pkg = JSON.parse(readFileSync(path.join(here, "package.json"), "utf8"));
+let sha = "local";
+try {
+  sha = execSync("git rev-parse --short HEAD", { cwd: here }).toString().trim();
+} catch {
+  // not a git checkout: keep "local"
+}
+
 export default defineConfig({
+  define: { __JM_VERSION__: JSON.stringify(`${pkg.version}+${sha}`) },
   // Subpath hosting (e.g. GitHub Pages serves at /<repo>/): set JM_BASE there;
   // local dev and preview stay at the root.
   base: process.env.JM_BASE || "/",

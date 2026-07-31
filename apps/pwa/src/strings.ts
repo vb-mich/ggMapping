@@ -142,6 +142,32 @@ export const STRINGS = {
   themeLight: "Light",
   themeDark: "Dark",
 
+  // tuning tooltips (shown after a two-second hover)
+  tipSeed:
+    "The world's number: the same seed with the same setup repaints the same map, unit for unit.",
+  tipEras: "How many eras to run. An era is 25 ages.",
+  tipPanelSize:
+    "Panel geometry in units. 5×6 is the handbook's standard mini-map; 8×10 is the original full-map.",
+  tipArchiveChance:
+    "Percent chance (one decimal allowed) that a panel is archived when it first becomes complete. Archived panels leave the rotation but stay part of the world. 0 keeps every panel in play.",
+  tipExtendCap:
+    "Runs of this length or more count the same in Extend's border contest; 0 removes the cap and the true longest run wins.",
+  tipStrokeDie:
+    "The die rolled for stroke length wherever a length is rolled: basin strokes, free strokes, and Extend's inward carry.",
+  tipStrokeAdd: "Added to every stroke-length roll.",
+  tipGreatridgeMode:
+    "The handbook chooses the Great Ridge length, 4 to 10, and that is the default. Rolled mode makes the engine roll a die instead.",
+  tipGreatridgeDie: "The die rolled for the Great Ridge length.",
+  tipGreatridgeAdd: "Added to the Great Ridge length roll.",
+  tipFlatWork:
+    "Every card of a kind prints the kind's work average instead of the handbook's spread around it.",
+  tipDeckCopies: "How many cards of this kind the deck holds.",
+  tipDeckWork:
+    "The kind's work average. The printed numbers spread ±1 around it at the ends, keeping the mean exact.",
+  tipDeckMood: "The mood this kind's cards apply, as the handbook's deck table prints it.",
+  tipDeckPrinted:
+    "The printed work numbers, derived by the engine from copies and average.",
+
   // updates
   updateNow: "Update to newer version",
 

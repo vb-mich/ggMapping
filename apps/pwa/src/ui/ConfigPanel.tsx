@@ -27,10 +27,11 @@ function SpinField(props: {
   hint?: string;
   offCanon?: boolean;
   wide?: boolean;
+  tip?: string;
 }) {
   return (
     <label class={`field ${props.offCanon ? "off-canon" : ""}`}>
-      <span>{props.label}</span>
+      <span data-tip={props.tip}>{props.label}</span>
       <Spinner value={props.value} min={props.min} max={props.max}
         onChange={props.onChange} testid={props.testid} label={props.label}
         wide={props.wide} />
@@ -48,16 +49,18 @@ export function ConfigPanel() {
       <h2>{STRINGS.configTitle}</h2>
       <div class="field-row">
         <SpinField label={STRINGS.seed} value={seed.value} min={1} max={9999999}
-          onChange={(v) => (seed.value = v)} testid="input-seed" wide />
+          onChange={(v) => (seed.value = v)} testid="input-seed" wide
+          tip={STRINGS.tipSeed} />
         <button class="ghost" data-testid="btn-randomize" onClick={() => (seed.value = randomSeed())}>
           {STRINGS.randomize}
         </button>
       </div>
       <div class="field-row">
         <SpinField label={STRINGS.eras} value={eras.value} min={1} max={500}
-          onChange={(v) => (eras.value = v)} testid="input-eras" />
+          onChange={(v) => (eras.value = v)} testid="input-eras"
+          tip={STRINGS.tipEras} />
         <label class={`field ${panelSize.value !== "5x6" ? "off-canon" : ""}`}>
-          <span>{STRINGS.panelSize}</span>
+          <span data-tip={STRINGS.tipPanelSize}>{STRINGS.panelSize}</span>
           <select
             value={panelSize.value}
             data-testid="select-panel-size"
@@ -72,7 +75,7 @@ export function ConfigPanel() {
       <h3>{STRINGS.dialsTitle}</h3>
       <div class="field-row">
         <label class={`field ${archiveBad ? "invalid" : ""} ${permille > 0 ? "off-canon" : ""}`}>
-          <span>{STRINGS.archiveChance}</span>
+          <span data-tip={STRINGS.tipArchiveChance}>{STRINGS.archiveChance}</span>
           <input
             type="text"
             inputMode="decimal"
@@ -83,17 +86,19 @@ export function ConfigPanel() {
         </label>
         <SpinField label={STRINGS.extendCap} value={extendCap.value} min={0} max={20}
           onChange={(v) => (extendCap.value = v)} hint={STRINGS.extendCapHint}
-          offCanon={extendCap.value !== 4} />
+          offCanon={extendCap.value !== 4} tip={STRINGS.tipExtendCap} />
       </div>
       <div class="field-row">
         <SpinField label={STRINGS.strokeDie} value={strokeDie.value} min={2} max={20}
-          onChange={(v) => (strokeDie.value = v)} offCanon={strokeDie.value !== 4} />
+          onChange={(v) => (strokeDie.value = v)} offCanon={strokeDie.value !== 4}
+          tip={STRINGS.tipStrokeDie} />
         <SpinField label={STRINGS.strokeAdd} value={strokeAdd.value} min={0} max={10}
-          onChange={(v) => (strokeAdd.value = v)} offCanon={strokeAdd.value !== 1} />
+          onChange={(v) => (strokeAdd.value = v)} offCanon={strokeAdd.value !== 1}
+          tip={STRINGS.tipStrokeAdd} />
       </div>
       <div class="field-row">
         <label class={`field ${grRolled ? "off-canon" : ""}`}>
-          <span>{STRINGS.greatridgeMode}</span>
+          <span data-tip={STRINGS.tipGreatridgeMode}>{STRINGS.greatridgeMode}</span>
           <select
             value={grMode.value}
             data-testid="select-gr-mode"
@@ -106,9 +111,9 @@ export function ConfigPanel() {
         {grRolled && (
           <>
             <SpinField label={STRINGS.greatridgeDie} value={grDie.value} min={2} max={20}
-              onChange={(v) => (grDie.value = v)} offCanon />
+              onChange={(v) => (grDie.value = v)} offCanon tip={STRINGS.tipGreatridgeDie} />
             <SpinField label={STRINGS.greatridgeAdd} value={grAdd.value} min={0} max={10}
-              onChange={(v) => (grAdd.value = v)} offCanon />
+              onChange={(v) => (grAdd.value = v)} offCanon tip={STRINGS.tipGreatridgeAdd} />
           </>
         )}
       </div>
