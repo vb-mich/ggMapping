@@ -80,6 +80,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 .field.grow { flex: 1; }
 .field.grow input { max-width: none; }
 
+.table-scroll { overflow-x: auto; }
 .deck-table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
 .deck-table th {
   text-align: left; font-weight: 500; color: var(--muted);

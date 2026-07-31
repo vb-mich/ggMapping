@@ -106,6 +106,7 @@ export function DeckEditor() {
         {totals.value.cards} {STRINGS.deckCards} · {STRINGS.deckAvgWork}{" "}
         {totals.value.avg.toFixed(2)}
       </p>
+      <div class="table-scroll">
       <table class="deck-table">
         <thead>
           <tr>
@@ -141,6 +142,7 @@ export function DeckEditor() {
           </tr>
         </tbody>
       </table>
+      </div>
       <p class="note">{STRINGS.deckNoteAddpanel}</p>
       <p class="note">{STRINGS.deckNoteRemoveCard}</p>
       {warnings.value.length > 0 && (
