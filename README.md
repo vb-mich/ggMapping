@@ -7,12 +7,25 @@ The Jerrymapping mono-repo: a byte-exact digital lineage of the vbDeck system
 engine, apps, tools — conforms to it: the state schema, the Decider interface, the
 event stream, the coordinate convention, and the PCG32 contract.
 
+## Succession (v0.4-succession)
+
+The full oracle matrix went green in native **and** WASM, so per CONTRACTS §8.4 the
+succession is enacted, tagged `v0.4-succession`:
+
+* **The C++ engine (`/engine`) is the reference implementation of record.**
+* **`reference/sim.py` is frozen as the founding document** — history, not oracle;
+  it keeps defining the v0.4 lineage's byte-exact behavior as written.
+* **The three-way identity gate (Python, native, WASM) remains in CI permanently**
+  as the twin-implementation review: every future rules change must land in both
+  living implementations (native and WASM are built from one source; the frozen
+  Python pins the lineage) and pass the matrix byte-identically.
+
 ## Layout
 
 | path | what |
 |---|---|
 | `docs/` | the handbook, the fork notes, and **CONTRACTS.md** |
-| `reference/` | the frozen Python v0.4 oracle (`sim.py`) and its seed-42 sample log — history once succession lands |
+| `reference/` | the frozen Python v0.4 founding document (`sim.py`) and its seed-42 sample log — history; the oracle role passed to `/engine` at succession |
 | `engine/` | the C++20 headless engine, its CLI, and tests (no floats, no globals) |
 | `engine/wasm/` | Emscripten bindings and the Node identity harness |
 | `apps/pwa/` | the PWA shell (stub — future conversation) |
