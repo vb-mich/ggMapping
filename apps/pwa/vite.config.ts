@@ -12,6 +12,9 @@ import { CHROME } from "./src/contracts/palette";
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  // Subpath hosting (e.g. GitHub Pages serves at /<repo>/): set JM_BASE there;
+  // local dev and preview stay at the root.
+  base: process.env.JM_BASE || "/",
   plugins: [
     preact(),
     VitePWA({
