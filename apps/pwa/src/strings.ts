@@ -98,6 +98,8 @@ export const STRINGS = {
 
   // navigation
   navTitle: "Navigation",
+  chipViewing: "viewing era",
+  chipOf: "of",
   navFirst: "Start",
   navPrevEra: "Back one era",
   navPrevAge: "Back one age",
@@ -118,6 +120,7 @@ export const STRINGS = {
   exportDeck: "Export deck",
 
   // stats
+  statsHeading: "Elevation shares",
   statWater: "water",
   statCoastal: "coastal",
   statPlain: "plain",

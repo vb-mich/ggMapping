@@ -50,6 +50,7 @@ export function StatsStrip() {
   if (!s) return null;
   return (
     <section class="card stats" data-testid="stats-strip">
+      <h2>{STRINGS.statsHeading}</h2>
       <div class="stats-rungs">
         {(
           [

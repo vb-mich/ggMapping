@@ -225,6 +225,17 @@ pre {
 .era-rows pre, .report pre { max-height: 16rem; }
 details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
 
+.now-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.chip.viewing-chip {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-edge);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.78rem;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
 .now-line { margin: 0 0 0.2rem; }
 .now-headline { margin: 0 0 0.4rem; color: var(--muted); }
 .now-excerpt { max-height: 13rem; }

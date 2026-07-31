@@ -17,6 +17,7 @@ interface RawModule {
   _jm_log(h: number): number;
   _jm_report(h: number): number;
   _jm_state(h: number): number;
+  _jm_events(h: number): number;
   _jm_load(p: number): number;
   _jm_free(h: number): void;
   _malloc(n: number): number;
@@ -63,5 +64,76 @@ describe("web-flavored engine smoke", () => {
     expect(m.UTF8ToString(m._jm_state(h2))).toBe(state);
     m._jm_free(h);
     m._jm_free(h2);
+  });
+
+  it("obeys the v0.5 marker law: shuffles fire per cycle, never from Add Panel", async () => {
+    const m = await loadEngine();
+    const cfg = cstr(m, "{}");
+    const h = m._jm_create(cfg, 42n, 20);
+    m._free(cfg);
+    m._jm_run(h);
+    const events = JSON.parse(m.UTF8ToString(m._jm_events(h))) as {
+      kind: string;
+      payload: Record<string, unknown>;
+    }[];
+    let shuffles = 0,
+      cycles = 0,
+      orphanShuffles = 0,
+      cycleOpen = false,
+      ageIndex = 0;
+    const addpanelAges: number[] = [];
+    for (const e of events) {
+      if (e.kind === "age_start") {
+        ageIndex += 1;
+        cycleOpen = false;
+        if (e.payload.card === "addpanel") addpanelAges.push(ageIndex);
+      } else if (e.kind === "cycle_complete") {
+        cycles += 1;
+        cycleOpen = true;
+      } else if (e.kind === "deck_shuffled") {
+        shuffles += 1;
+        if (!cycleOpen) orphanShuffles += 1;
+        cycleOpen = false;
+      }
+    }
+    expect(orphanShuffles).toBe(0); // no shuffle without its cycle marker
+    expect(shuffles).toBe(cycles); // one shuffle per completed cycle
+    expect(shuffles).toBeGreaterThan(15); // the whole game, ~500/20 ages
+
+    // deck recurrence sanity: Add Panel roughly every 20 ages once awake
+    const gaps = addpanelAges.slice(1).map((a, i) => a - addpanelAges[i]);
+    const avg = gaps.reduce((s, g) => s + g, 0) / gaps.length;
+    expect(avg).toBeGreaterThan(15);
+    expect(avg).toBeLessThan(30);
+    m._jm_free(h);
+  });
+
+  it("is deterministic: the same seed twice produces identical bytes", async () => {
+    const m = await loadEngine();
+    const run = () => {
+      const cfg = cstr(m, "{}");
+      const h = m._jm_create(cfg, 7n, 8);
+      m._free(cfg);
+      m._jm_run(h);
+      const out =
+        m.UTF8ToString(m._jm_log(h)) + m.UTF8ToString(m._jm_report(h));
+      m._jm_free(h);
+      return out;
+    };
+    expect(run()).toBe(run());
+  });
+
+  it("keeps the total vocabulary law over the rendered log and report", async () => {
+    const m = await loadEngine();
+    const cfg = cstr(m, "{}");
+    const h = m._jm_create(cfg, 11n, 20);
+    m._free(cfg);
+    m._jm_run(h);
+    const text =
+      m.UTF8ToString(m._jm_log(h)) + m.UTF8ToString(m._jm_report(h));
+    expect(text).not.toMatch(/tile|visit|rung/i);
+    expect(text).toContain("=== JERRYMAPPING, simulator run ===");
+    expect(text).toContain("elevation shares:");
+    m._jm_free(h);
   });
 });

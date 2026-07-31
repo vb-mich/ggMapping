@@ -7,8 +7,9 @@ import preact from "@preact/preset-vite";
 import { defineConfig } from "vitest/config";
 import { VitePWA } from "vite-plugin-pwa";
 
-// The manifest derives from the one display constant (CONTRACTS §10).
-import { DISPLAY_NAME } from "./src/strings";
+// The manifest and the static page title derive from the one display
+// constant (CONTRACTS §10) at build time.
+import { DISPLAY_NAME, STRINGS } from "./src/strings";
 import { CHROME } from "./src/contracts/palette";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -28,6 +29,17 @@ export default defineConfig({
   base: process.env.JM_BASE || "/",
   plugins: [
     preact(),
+    {
+      // The source index.html carries the neutral package id; the BUILT page's
+      // static title is injected from the display constant (CONTRACTS §10).
+      name: "jm-static-title",
+      transformIndexHtml(html: string) {
+        return html.replace(
+          /<title>[^<]*<\/title>/,
+          `<title>${DISPLAY_NAME} — ${STRINGS.tagline}</title>`,
+        );
+      },
+    },
     VitePWA({
       registerType: "prompt",
       manifest: {

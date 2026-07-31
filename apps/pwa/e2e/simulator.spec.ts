@@ -5,6 +5,8 @@ import { readFileSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { DISPLAY_NAME, STRINGS } from "../src/strings";
+
 async function setRun(page: Page, seed: number, eras: number) {
   await page.getByTestId("input-seed").fill(String(seed));
   await page.getByTestId("input-eras").fill(String(eras));
@@ -82,6 +84,28 @@ test("navigation shows true engine state at any age", async ({ page }) => {
   await expect.poll(snap).toBe(atEnd);
 });
 
+test("the built page's static title derives from the display constant", async ({ page }) => {
+  const res = await page.request.get("/index.html");
+  expect(await res.text()).toContain(
+    `<title>${DISPLAY_NAME} — ${STRINGS.tagline}</title>`,
+  );
+});
+
+test("time travel shows the viewing chip away from the end", async ({ page }) => {
+  await page.goto("/");
+  await setRun(page, 42, 6);
+  await runToDone(page);
+  await expect(page.getByTestId("viewing-chip")).toHaveCount(0);
+
+  await page.getByTestId("nav-prev-era").click();
+  await expect(page.getByTestId("viewing-chip")).toContainText(
+    "viewing era 5 of 6",
+  );
+
+  await page.getByTestId("nav-last").click();
+  await expect(page.getByTestId("viewing-chip")).toHaveCount(0);
+});
+
 test("the theme defaults to dark and switches", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -145,6 +169,16 @@ test("screenshots at mobile and desktop widths", async ({ page }) => {
   await runToDone(page);
   await page.screenshot({ path: "e2e-artifacts/desktop.png", fullPage: false });
   await page.screenshot({ path: "e2e-artifacts/desktop-full.png", fullPage: true });
+
+  await page
+    .getByTestId("stats-strip")
+    .screenshot({ path: "e2e-artifacts/elevation-shares.png" });
+  await page.getByTestId("nav-prev-era").click();
+  await expect(page.getByTestId("viewing-chip")).toBeVisible();
+  await page
+    .getByTestId("now-panel")
+    .screenshot({ path: "e2e-artifacts/viewing-chip.png" });
+  await page.getByTestId("nav-last").click();
 
   await page.setViewportSize({ width: 375, height: 812 });
   await page.waitForTimeout(400);

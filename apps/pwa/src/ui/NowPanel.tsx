@@ -3,7 +3,7 @@
 import { useComputed } from "@preact/signals";
 
 import { STRINGS } from "../strings";
-import { annotatedEvents, position, shownWorld } from "../state";
+import { annotatedEvents, endPosition, position, shownWorld } from "../state";
 
 export function NowPanel() {
   const p = position.value;
@@ -27,9 +27,19 @@ export function NowPanel() {
       (ageStart.panel ? ` ${STRINGS.nowOn} ${ageStart.panel}` : "")
     : STRINGS.nowGenesis;
 
+  const end = endPosition.value;
+  const viewingPast = end && (p.era !== end.era || p.age !== end.age);
+
   return (
     <section class="card now" data-testid="now-panel">
-      <h2>{STRINGS.nowTitle}</h2>
+      <div class="now-head">
+        <h2>{STRINGS.nowTitle}</h2>
+        {viewingPast && (
+          <span class="chip viewing-chip" data-testid="viewing-chip">
+            {STRINGS.chipViewing} {p.era} {STRINGS.chipOf} {end.era}
+          </span>
+        )}
+      </div>
       <p class="now-line" data-testid="now-line">
         <b>
           {STRINGS.nowEra} {p.era} · {STRINGS.nowAge} {p.age}/25 ·{" "}

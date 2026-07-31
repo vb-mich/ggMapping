@@ -5,7 +5,8 @@ import { KIND_LABELS } from "../src/deck";
 import { RUNG_NAMES } from "../src/contracts/palette";
 import { DISPLAY_NAME, STRINGS } from "../src/strings";
 
-const FORBIDDEN = /tile|visit/i;
+// Total since v0.5 (CONTRACTS §1): rung joins tile and visit, no exemptions.
+const FORBIDDEN = /tile|visit|rung/i;
 
 describe("vocabulary law", () => {
   it("bans the words in every centralized UI string", () => {

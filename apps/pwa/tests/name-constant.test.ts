@@ -6,7 +6,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { DISPLAY_NAME } from "../src/strings";
+import { DISPLAY_NAME, STRINGS } from "../src/strings";
 
 const APP = join(__dirname, "..");
 
@@ -43,5 +43,12 @@ describe("naming policy", () => {
     expect(m.name).toBe(DISPLAY_NAME);
     expect(m.short_name).toBe(DISPLAY_NAME);
     expect(m.id).toBe("jm-pwa");
+  });
+
+  it("injects the built page's static title from the constant (when a build exists)", () => {
+    const idx = join(APP, "dist", "index.html");
+    if (!existsSync(idx)) return; // the e2e suite asserts this unconditionally
+    const title = readFileSync(idx, "utf8").match(/<title>([^<]*)<\/title>/)?.[1];
+    expect(title).toBe(`${DISPLAY_NAME} — ${STRINGS.tagline}`);
   });
 });
