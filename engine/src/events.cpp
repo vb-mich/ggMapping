@@ -207,4 +207,127 @@ void render_event(const Event& e, const Geo& geo, std::vector<std::string>& out)
     }
 }
 
+namespace {
+
+const char* kind_name(Ev k) {
+    switch (k) {
+        case Ev::RunStart: return "run_start";
+        case Ev::EraStart: return "era_start";
+        case Ev::AgeStart: return "age_start";
+        case Ev::FreePanel: return "free_panel";
+        case Ev::AddpanelWake: return "addpanel_wake";
+        case Ev::EraSummary: return "era_summary";
+        case Ev::Die: return "die";
+        case Ev::Choice: return "choice";
+        case Ev::Chance: return "chance";
+        case Ev::Calm: return "calm";
+        case Ev::Work: return "work";
+        case Ev::CardSkip: return "card_skip";
+        case Ev::StrokeNote: return "stroke_note";
+        case Ev::ExtendRun: return "extend_run";
+        case Ev::WorkFollows: return "work_follows";
+        case Ev::Foundation: return "foundation";
+        case Ev::Upgrade: return "upgrade";
+        case Ev::Sprawl: return "sprawl";
+        case Ev::CityLives: return "city_lives";
+        case Ev::Cliff: return "cliff";
+        case Ev::CycleComplete: return "cycle_complete";
+        case Ev::AnomalyResult: return "anomaly_result";
+        case Ev::PanelArchived: return "panel_archived";
+        case Ev::PanelStays: return "panel_stays";
+        case Ev::PanelReturns: return "panel_returns";
+        case Ev::Paint: return "paint";
+        case Ev::Trace: return "trace";
+        case Ev::ShoreHeal: return "shore_heal";
+        case Ev::Hold: return "hold";
+        case Ev::ReworkChange: return "rework_change";
+        case Ev::HomesLost: return "homes_lost";
+        case Ev::FullEmbellish: return "full_embellish";
+        case Ev::Crumble: return "crumble";
+        case Ev::Mark: return "mark";
+        case Ev::People: return "people";
+        case Ev::AnomalyStrike: return "anomaly_strike";
+        case Ev::VolcanoRing: return "volcano_ring";
+        case Ev::NewPanel: return "new_panel";
+        case Ev::DeckShuffled: return "deck_shuffled";
+        case Ev::SkipEmbellish: return "skip_embellish";
+    }
+    return "?";
+}
+
+} // namespace
+
+Json event_json(const Event& e) {
+    Json p = Json::object();
+    auto S = [&](const char* k, const std::string& v) { p.set(k, Json::of(v)); };
+    auto I = [&](const char* k, std::int64_t v) { p.set(k, Json::of(v)); };
+    switch (e.kind) {
+        case Ev::RunStart: I("seed", e.a); I("eras", e.b); break;
+        case Ev::EraStart: case Ev::FreePanel: I("era", e.a); break;
+        case Ev::AgeStart: I("era", e.a); I("age", e.b); S("card", e.s1); break;
+        case Ev::EraSummary: {
+            I("era", e.a); I("ages", e.b); I("painted", e.c);
+            Json rc = Json::array();
+            for (int i = 0; i < 8; ++i) rc.push(Json::of(e.counts[i]));
+            p.set("rung_counts", std::move(rc));
+            I("done", e.counts[8]); I("panels", e.counts[9]);
+            I("archived", e.counts[10]); I("cliffs", e.counts[11]);
+            I("merges", e.counts[12]); p.set("archive_on", Json::of(e.flag));
+            break;
+        }
+        case Ev::Die: I("n", e.a); I("value", e.b); S("purpose", e.s1); break;
+        case Ev::Choice: I("count", e.a); S("purpose", e.s1); break;
+        case Ev::Chance:
+            I("permille", e.a); p.set("hit", Json::of(e.flag)); S("purpose", e.s1);
+            break;
+        case Ev::Work: I("quota", e.a); S("mood", e.s1); break;
+        case Ev::CardSkip: S("card", e.s1); S("reason", e.s2); break;
+        case Ev::StrokeNote: S("label", e.s1); S("cause", e.s2); S("detail", e.s3); break;
+        case Ev::ExtendRun: I("length", e.a); S("cls", e.s1); S("side", e.s2); break;
+        case Ev::Foundation: S("which", e.s1); break;
+        case Ev::Upgrade: S("kind", e.s1); break;
+        case Ev::AnomalyResult: S("name", e.s1); break;
+        case Ev::PanelReturns: I("filled", e.a); I("area", e.b); break;
+        case Ev::Paint: I("rung", e.a); S("why", e.s1); break;
+        case Ev::Trace: S("label", e.s1); break;
+        case Ev::Hold: S("what", e.s1); break;
+        case Ev::ReworkChange: I("from", e.a); I("to", e.b); break;
+        case Ev::FullEmbellish: I("n", e.a); break;
+        case Ev::Mark: S("name", e.s1); break;
+        case Ev::People:
+            S("kind", e.s1);
+            if (!e.s2.empty()) S("why", e.s2);
+            break;
+        case Ev::NewPanel: I("sum", e.a); break;
+        case Ev::SkipEmbellish:
+            S("card", e.s1); S("reason", e.s2); S("spirit", e.s3);
+            break;
+        default: break; // addpanel_wake, calm, work_follows, sprawl, city_lives,
+                        // cliff, cycle_complete, panel_archived, panel_stays,
+                        // shore_heal, homes_lost, crumble, anomaly_strike,
+                        // volcano_ring, deck_shuffled: empty payload
+    }
+    if (e.step > 0) p.set("step", Json::of(e.step));
+
+    Json j = Json::object();
+    j.set("seq", Json::of(e.seq));
+    j.set("kind", Json::of(kind_name(e.kind)));
+    if (e.has_panel) {
+        Json pn = Json::array();
+        pn.push(Json::of(e.panel.tx)); pn.push(Json::of(e.panel.ty));
+        j.set("panel", std::move(pn));
+    } else {
+        j.set("panel", Json::null());
+    }
+    if (e.has_unit) {
+        Json un = Json::array();
+        un.push(Json::of(e.unit.x)); un.push(Json::of(e.unit.y));
+        j.set("unit", std::move(un));
+    } else {
+        j.set("unit", Json::null());
+    }
+    j.set("payload", std::move(p));
+    return j;
+}
+
 } // namespace jerrymap

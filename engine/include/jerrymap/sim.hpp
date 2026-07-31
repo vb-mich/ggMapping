@@ -80,6 +80,12 @@ private:
     std::map<GPos, std::size_t> index_;
 };
 
+// A retained event and the half-open range of log lines it rendered.
+struct StoredEvent {
+    Event e;
+    std::size_t line_lo = 0, line_hi = 0;
+};
+
 class Sim {
 public:
     // Fresh world: emits the run header, seeds genesis, builds and shuffles the
@@ -93,6 +99,7 @@ public:
     bool finished() const { return finished_; }
 
     const std::vector<std::string>& loglines() const { return log_; }
+    const std::vector<StoredEvent>& events() const { return events_; }
     std::string final_report() const;
     Json save_state() const;     // legal at age boundaries only
 
@@ -200,6 +207,7 @@ private:
 
     Decider* dec_ = nullptr;
     std::vector<std::string> log_;
+    std::vector<StoredEvent> events_;
     std::int64_t ev_seq_ = 0;
 
     // per-age transients (always quiescent at age boundaries)

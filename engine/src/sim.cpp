@@ -102,7 +102,9 @@ bool in_cls(int rung, bool water_cls) {
 
 void Sim::emit(Event e) {
     e.seq = ev_seq_++;
+    std::size_t lo = log_.size();
     render_event(e, geo, log_);
+    events_.push_back({std::move(e), lo, log_.size()});
 }
 
 void Sim::note(Ev kind, const std::string& s1, const std::string& s2,
@@ -1448,7 +1450,8 @@ bool Sim::step() {
         }
     } else {
         stack.push_back(t);
-        Event e; e.kind = Ev::PanelReturns; e.a = panels.at(t); e.b = geo.area();
+        Event e; e.kind = Ev::PanelReturns; e.has_panel = true; e.panel = t;
+        e.a = panels.at(t); e.b = geo.area();
         emit(std::move(e));
     }
     deck.push_back(c);

@@ -41,6 +41,12 @@ Config config_from_json(const std::string& text) {
     };
     geti("panel_w", cfg.panel_w);
     geti("panel_h", cfg.panel_h);
+    if (j.has("deck")) { // CONTRACTS §6: [[kind, copies], ...] in fixed kind order
+        cfg.deck.clear();
+        for (auto& row : j.at("deck").as_arr())
+            cfg.deck.emplace_back(row.as_arr().at(0).as_str(),
+                                  static_cast<int>(row.as_arr().at(1).as_int()));
+    }
     geti("addpanel_copies", cfg.addpanel_copies);
     geti("archive_permille", cfg.archive_permille);
     geti("stroke_die", cfg.stroke_die);
@@ -67,7 +73,7 @@ const char* stash(Bundle& b, std::string s) {
 
 extern "C" {
 
-const char* jm_version() { return "jerrymap-engine 1.0.0 (lineage v0.4)"; }
+const char* jm_version() { return "jerrymap-engine 1.1.0 (lineage v0.4)"; }
 
 // Fresh world from a config JSON (CONTRACTS §6 "config" keys, all optional).
 int jm_create(const char* config_json, std::int64_t seed, int eras) {
@@ -130,6 +136,39 @@ const char* jm_state(int h) { // CONTRACTS §6 save document
     auto it = registry().find(h);
     if (it == registry().end()) return "";
     return stash(*it->second, json_emit(it->second->sim->save_state(), 2));
+}
+
+// The structured event stream so far (CONTRACTS §5), a JSON array. Each element
+// is the §5 document plus "text": the log lines this event rendered — so the
+// familiar log is engine-rendered end to end and the app never renders rules text.
+const char* jm_events(int h) {
+    auto it = registry().find(h);
+    if (it == registry().end()) return "";
+    Sim& sim = *it->second->sim;
+    Json arr = Json::array();
+    for (const StoredEvent& se : sim.events()) {
+        Json j = event_json(se.e);
+        Json text = Json::array();
+        for (std::size_t i = se.line_lo; i < se.line_hi; ++i)
+            text.push(Json::of(sim.loglines()[i]));
+        j.set("text", std::move(text));
+        arr.push(std::move(j));
+    }
+    return stash(*it->second, json_emit(arr));
+}
+
+// Cheap progress probe: where the run stands, without serializing the world.
+const char* jm_time(int h) {
+    auto it = registry().find(h);
+    if (it == registry().end()) return "";
+    Sim& sim = *it->second->sim;
+    Json j = Json::object();
+    j.set("era", Json::of(sim.era));
+    j.set("age_in_era", Json::of(sim.age_in_era));
+    j.set("ages_total", Json::of(sim.ages_total));
+    j.set("eras_wanted", Json::of(sim.eras_wanted));
+    j.set("finished", Json::of(sim.finished()));
+    return stash(*it->second, json_emit(j));
 }
 
 void jm_free(int h) { registry().erase(h); }

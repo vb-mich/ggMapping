@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "geometry.hpp"
+#include "json.hpp"
 
 namespace jerrymap {
 
@@ -48,5 +49,9 @@ std::string format_era_row(int era, int ages, std::int64_t painted,
 // Render one event into log lines (RunStart renders two). Geometry is needed
 // for r/c and panel names.
 void render_event(const Event& e, const Geo& geo, std::vector<std::string>& out);
+
+// The CONTRACTS §5 document for one event: { seq, kind, panel, unit, payload },
+// payload fields named per the §5.1 catalog (payload.step on numbered actions).
+Json event_json(const Event& e);
 
 } // namespace jerrymap
