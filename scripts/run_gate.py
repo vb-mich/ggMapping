@@ -23,6 +23,9 @@ MATRIX = [
     ("dial-stroke",     ["--seed", "42",  "--eras", "20", "--stroke-die", "6", "--stroke-add", "2"]),
     ("dial-greatridge", ["--seed", "42",  "--eras", "20", "--greatridge-die", "6", "--greatridge-add", "2"]),
     ("dial-extendcap",  ["--seed", "42",  "--eras", "20", "--extend-cap", "0"]),
+    ("combined-dials",  ["--seed", "42",  "--eras", "20",
+                         "--archive-chance", "25", "--stroke-die", "6", "--stroke-add", "2",
+                         "--greatridge-die", "6", "--greatridge-add", "2", "--extend-cap", "0"]),
 ]
 
 FORBIDDEN = re.compile(rb"tile|visit", re.IGNORECASE)

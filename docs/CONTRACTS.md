@@ -1,6 +1,6 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **1.0.0** · State schema: **1** · Event schema: **1** · World lineage: **v0.4**
+Contract version: **1.1.0** · State schema: **1** · Event schema: **1** · World lineage: **v0.4**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
@@ -392,6 +392,7 @@ Byte-identity of `seed{N}_log.txt`, Python vs native C++ vs WASM:
 | dial-stroke | 42 | 20 | `--stroke-die 6 --stroke-add 2` |
 | dial-greatridge | 42 | 20 | `--greatridge-die 6 --greatridge-add 2` |
 | dial-extendcap | 42 | 20 | `--extend-cap 0` |
+| combined-dials | 42 | 20 | `--archive-chance 25 --stroke-die 6 --stroke-add 2 --greatridge-die 6 --greatridge-add 2 --extend-cap 0` |
 
 ### 8.2 CI
 Every commit: build native, run Python and native over the full matrix, byte-compare;

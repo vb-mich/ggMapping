@@ -36,10 +36,10 @@ succession is enacted, tagged `v0.4-succession`:
 
 ## The gate
 
-Cross-language byte-identity over the oracle matrix (CONTRACTS §8): seeds 11/42/303 at
-20 eras, seed 42 at 40 eras, and four dialed cells at seed 42/20 eras. CI runs the full
-matrix — Python vs native C++ vs WASM — on every commit. Python retires as oracle only
-when the matrix is fully green.
+Cross-language byte-identity over the oracle matrix (CONTRACTS §8), nine cells: seeds
+11/42/303 at 20 eras, seed 42 at 40 eras, four single-dial cells at seed 42/20 eras,
+and the combined-dials cell (all four dials at once). CI runs the full matrix —
+Python vs native C++ vs WASM — on every commit, permanently (see Succession above).
 
 ## Building
 

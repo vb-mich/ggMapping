@@ -80,6 +80,9 @@ def main():
         ("stroke d6+2", ["--stroke-die", "6", "--stroke-add", "2"]),
         ("greatridge die 6 add 2", ["--greatridge-die", "6", "--greatridge-add", "2"]),
         ("extend-cap 0", ["--extend-cap", "0"]),
+        ("combined dials", ["--archive-chance", "25", "--stroke-die", "6",
+                            "--stroke-add", "2", "--greatridge-die", "6",
+                            "--greatridge-add", "2", "--extend-cap", "0"]),
     ]:
         out = d("dial_" + name.replace(" ", "_"))
         run([exe, "--seed", "42", "--eras", "20", "--out", out] + flags)
