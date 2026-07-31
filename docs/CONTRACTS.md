@@ -63,6 +63,46 @@ WATER = {0,1,2,3}; HEIGHTS = {6,7}. People kinds: `farm_lo, farm_hi, rural, urb_
 urb_md, urb_hi`; densities 0,0,1,2,3,4. Marks: `sunken, marsh, volcano, canyon, ruins,
 star`.
 
+### 2.4 The canonical palette
+
+Extracted from the frozen reference's renderer; the one true palette for **every**
+renderer of this lineage (PNG, canvas, print). Colors are `#RRGGBB` (`#RRGGBBAA`
+where an alpha is stated).
+
+Rungs 0..7:
+
+| rung | color | rung | color |
+|---|---|---|---|
+| verydeep | `#14364F` | coastal | `#E8D18F` |
+| deep | `#205E82` | plain | `#8FBE6E` |
+| medium | `#4193BC` | hills | `#B3A15E` |
+| shallow | `#A7D5E4` | mountains | `#77573F` |
+
+People overlays (cover the unit's interior):
+
+| kind | color | kind | color |
+|---|---|---|---|
+| farm_lo | `#C9DFA0` | urb_lo | `#D3D3D3` |
+| farm_hi | `#5E8F45` | urb_md | `#A6A6A6` |
+| rural | `#C7A472` | urb_hi | `#6B6B6B` |
+
+Farm overlays carry furrow lines `#00000055`; rural carries a house block `#6B4E2E`.
+
+Marks: marsh reeds `#2E5E50`; volcano triangle `#C0392B`; canyon stroke `#5A3E22`;
+ruins cross `#555555`; star `#B8860B`. A base unit marked `sunken` renders `#7FAF9C`
+in place of its rung color (the mark tints the base; all other marks draw on top).
+
+Chrome: map background `#F3EFE7`; unpainted unit `#FFFFFF` with outline `#D8D2C6`;
+painted unit outline `#00000022`; panel border `#4A4238`.
+
+**Patina** (the rework density marks): a unit's density is `embellish[u]` plus its
+share of the panel's `embellish_panel[t]`, distributed round-robin over the panel's
+units sorted by `(gx, gy)` (unit at sorted index `i mod area` receives one for each
+`i < n`). Up to `min(density, 3)` dots at relative offsets `(0.30, 0.34)`,
+`(0.68, 0.52)`, `(0.44, 0.74)` of the unit square, radius `max(1, unit_px / 10)`,
+colored the unit's rendered base color darkened per-channel by
+`floor(channel × 0.55)`.
+
 ## 3. The portable RNG (PCG32, the v0.4 contract)
 
 One generator, one specification, so every port is bit-exact. Restated from FORK_NOTES:
@@ -228,6 +268,11 @@ CPython formats IEEE-754 doubles with `:.0f`/`:.1f` (round-half-even on the bina
 value, two-step arithmetic: `count/total` rounded, then `×100` rounded). The C++
 renderer reproduces this with an integer-only binary64 emulation; no float types exist
 in the engine. Everything else is pure integer text.
+
+**New event text is integer-only.** The soft-float emulator exists solely to
+reproduce the frozen v0.4 surfaces above; it never grows. Any event kind or payload
+field added after contract 1.0.0 must format its numbers with integer arithmetic
+only — no new float-formatted surfaces, ever.
 
 ### 5.3 Ordering quirks frozen by the oracle
 * The free-panel event and its `new_panel` action fire **before** the age header of the
@@ -431,3 +476,25 @@ text, and formatting stay untouchable. The first such change is `--no-render` (�
 * **Event schema version**: integer; additive payload fields are minor.
 * **World lineage**: `v0.4` — the PCG32 dialect. A lineage bump means old seeds speak
   a different world; it never changes saved-state replayability within its lineage.
+
+### 9.1 Changelog
+
+* **1.1.0** — additive, no migration, byte-identity untouched: the combined-dials
+  matrix cell (§8.1); `--no-render` and the behavioral-freeze clarification (§7,
+  §8.4); the integer-only rule for new event text (§5.2); the canonical palette
+  (§2.4); the naming policy (§10).
+* **1.0.0** — the founding contract.
+
+## 10. Naming policy
+
+The product name is a **placeholder pending approval**. Rules:
+
+* The display name lives in **exactly one display constant per app**; every
+  user-facing surface — titles, headers, the PWA manifest, exports — derives from
+  that constant (build-time derivation included). Currently `"Jerrymapping"`; the
+  approved fallback is `"ggMapping"`. Renaming the product is a one-constant change.
+* Package names, ids, bundle names, and paths never carry the display name: they use
+  the neutral prefix **`jm`** (`jm-pwa`, `jm_*` APIs, `jerrymap` engine artifacts
+  keep their existing names).
+* CI proves the rule: the name-constant test asserts exactly one occurrence of the
+  display name across the app's source constants.
