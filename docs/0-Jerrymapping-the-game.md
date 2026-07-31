@@ -195,7 +195,7 @@ Here below is the list of cards of your very first deck, a total of 20 cards to 
 | 2      | 6, 8         | Settle   | Free Stroke             |
 | 3      | 6, 7, 8      | Settle   | Settlement              |
 | 1      | 7            | Rise     | Anomaly                 |
-| 1\*    | 4\*          | Settle\* | Add Panel and shuffle\* |
+| 1\*    | 4\*          | Settle\* | Add Panel\*             |
 \*The Add Panel card will be added only at the end of the 1st era of your map
 
 The meaning of the cards are explained in a later chapter.
@@ -212,7 +212,7 @@ The whole game is this loop:
 3. **Make the Spread.** Find the panels that sit beside the current panel on the map (up to four) and lay them in their correct places around the current panel. Leave a marker in each one's place in the Stack so it can go back to the same position.
 4. **Do the instructions.** This is the big move: a ridge, a basin, a town. If it cannot happen, use the Rework.
 5. **Do the card's fill part.** Fill or rework as many units as the card's printed **work number** says how many.
-6. **Put things back.** The played card goes to the **front of the deck**. The Spread panels go back where they came from. The current panel goes to the **back of the Stack**. If it is completely full, you can decide to put the panel in an archive instead. If the card you just played was the marked first card of the deck and no shuffle cards are yet present, then shuffle the deck. 
+6. **Put things back.** The played card goes to the **front of the deck**. The Spread panels go back where they came from. The current panel goes to the **back of the Stack**. If it is completely full, you can decide to put the panel in an archive instead. If the card you just played was the marked first card of the deck, then shuffle the deck and mark the new first card on the bottom. The deck shuffles once per cycle, for the whole game. 
 7. **Advance the calendar.** Move the time dial by 1 age. Remember, every **25 ages**, a new **era** begins. 
 
 That is the entire game. 
