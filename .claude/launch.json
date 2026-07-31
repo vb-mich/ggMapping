@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "apps/pwa"],
       "port": 5173
+    },
+    {
+      "name": "jm-pwa-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview", "--prefix", "apps/pwa"],
+      "port": 4173
     }
   ]
 }

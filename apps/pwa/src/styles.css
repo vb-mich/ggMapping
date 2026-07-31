@@ -177,6 +177,15 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
 
 .record-head { display: flex; justify-content: space-between; align-items: center; }
 
+.update-toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
 .files-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .file-button {
   display: inline-block; border: 1px solid var(--border); border-radius: 6px;

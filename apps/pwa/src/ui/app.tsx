@@ -22,6 +22,7 @@ import {
   theme,
   workOverrides,
 } from "../state";
+import { applyUpdate, updateAvailable } from "../updates";
 import { ConfigPanel } from "./ConfigPanel";
 import { DeckEditor } from "./DeckEditor";
 import { FilesBar } from "./FilesBar";
@@ -98,6 +99,11 @@ export function App() {
           {theme.value === "dark" ? STRINGS.themeLight : STRINGS.themeDark}
         </button>
       </header>
+      {updateAvailable.value && (
+        <button class="primary update-toast" data-testid="btn-update" onClick={applyUpdate}>
+          {STRINGS.updateNow}
+        </button>
+      )}
       <RunBar />
       <main>
         <div class="col-side">

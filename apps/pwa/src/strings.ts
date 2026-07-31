@@ -153,6 +153,9 @@ export const STRINGS = {
   themeLight: "Light",
   themeDark: "Dark",
 
+  // updates
+  updateNow: "Update to newer version",
+
   // misc
   offlineReady: "Ready to work offline.",
 } as const;

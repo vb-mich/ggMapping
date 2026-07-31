@@ -85,8 +85,7 @@ test("navigation shows true engine state at any age", async ({ page }) => {
 
   await page.getByTestId("nav-prev-era").click();
   await expect(page.getByTestId("now-line")).toContainText("Era 2 · Age 0/25");
-  const atEra2 = await snap();
-  expect(atEra2).not.toBe(atEnd);
+  await expect.poll(snap).not.toBe(atEnd); // the seeked state lands async
 
   await page.getByTestId("nav-next-age").click();
   await expect(page.getByTestId("now-line")).toContainText("Era 2 · Age 1/25");
@@ -94,7 +93,7 @@ test("navigation shows true engine state at any age", async ({ page }) => {
 
   await page.getByTestId("nav-last").click();
   await expect(page.getByTestId("now-line")).toContainText("Era 3 · Age 25/25");
-  expect(await snap()).toBe(atEnd);
+  await expect.poll(snap).toBe(atEnd);
 });
 
 test("the theme defaults to dark and switches", async ({ page }) => {

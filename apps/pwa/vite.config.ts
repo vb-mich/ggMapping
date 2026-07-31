@@ -18,7 +18,7 @@ export default defineConfig({
   plugins: [
     preact(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       manifest: {
         name: DISPLAY_NAME,
         short_name: DISPLAY_NAME,
@@ -35,6 +35,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,wasm,png,webmanifest}"],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
+        // prompt flow: never auto-activate a new worker, but do claim pages,
+        // so the update button's controllerchange reload always fires
+        skipWaiting: false,
+        clientsClaim: true,
       },
     }),
   ],
