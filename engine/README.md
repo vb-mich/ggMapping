@@ -39,13 +39,19 @@ Same flags and defaults as the reference (CONTRACTS §7). Engine extensions:
 ## WASM
 
 ```bash
-bash engine/wasm/build.sh        # needs emcc on PATH (emsdk)
+bash engine/wasm/build.sh        # both flavors; or `build.sh node` / `build.sh web`
 node engine/wasm/dist/jerrymap.js --seed 42 --eras 20 --out /tmp/w
 ```
 
-The module is Node-flavored (NODERAWFS) so the identity gate can run it against
-Python and native byte-for-byte; it also exports the `jm_*` C API
-(`engine/wasm/bindings.cpp`) for the PWA conversation. The gate:
+Two flavors from the same sources (`engine/wasm/bindings.cpp`):
+
+* **node** (`dist/jerrymap.js`) — NODERAWFS + the CLI main, so the identity gate
+  runs it against Python and native byte-for-byte;
+* **web** (`dist/web/jerrymap.mjs`) — no filesystem, MODULARIZE'd ES6, exposing
+  only the `jm_*` C API (create/load/step/run/log/report/state/events/time);
+  this is the PWA's engine, smoke-checked in CI against the committed oracle log.
+
+The gate:
 
 ```bash
 python scripts/run_gate.py --native build/jerrymap --wasm engine/wasm/dist/jerrymap.js

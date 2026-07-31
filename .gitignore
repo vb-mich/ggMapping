@@ -11,6 +11,11 @@ runs/
 *.wasm.map
 node_modules/
 
+# app test output
+playwright-report/
+test-results/
+e2e-artifacts/
+
 # python
 __pycache__/
 *.pyc

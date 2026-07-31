@@ -1395,7 +1395,11 @@ Sim::Sim(const Config& config, std::int64_t sd, int eras, Decider& dec)
 }
 
 bool Sim::step() {
-    if (finished_ || era > eras_wanted) return false;
+    if (finished_) return false;
+    if (era > eras_wanted) { // a world loaded at its end finishes here
+        finish_run();
+        return false;
+    }
     Card c = deck.front();
     deck.pop_front();
     if (stack.empty()) {

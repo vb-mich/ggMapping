@@ -28,7 +28,7 @@ succession is enacted, tagged `v0.4-succession`:
 | `reference/` | the frozen Python v0.4 founding document (`sim.py`) and its seed-42 sample log — history; the oracle role passed to `/engine` at succession |
 | `engine/` | the C++20 headless engine, its CLI, and tests (no floats, no globals) |
 | `engine/wasm/` | Emscripten bindings and the Node identity harness |
-| `apps/pwa/` | the PWA shell (stub — future conversation) |
+| `apps/pwa/` | the PWA shell (`jm-pwa`): the Simulator — config, deck editor, worker-run engine, canvas map, record, local files |
 | `tools/dice/` | the dice roller (stub — future conversation) |
 | `tools/helper/` | the helper tool: decision records and re-rolls (stub — future conversation) |
 | `tools/digitalizer/` | the map digitalizer (stub — future conversation) |

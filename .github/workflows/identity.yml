@@ -35,3 +35,28 @@ jobs:
         run: bash engine/wasm/build.sh
       - name: Identity gate, Python vs native vs WASM
         run: python scripts/run_gate.py --native ./jerrymap --wasm engine/wasm/dist/jerrymap.js
+
+  app:
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: apps/pwa }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mymindstorm/setup-emsdk@v14
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Build the web-flavored engine
+        run: bash engine/wasm/build.sh web
+        working-directory: .
+      - name: Install app dependencies
+        run: npm ci
+      - name: Unit tests + browser-build smoke (base-42 vs the oracle log)
+        run: npm test
+      - name: Build (typecheck + bundle + name-derived manifest)
+        run: npm run build
+      - name: Name-constant + manifest checks over the build
+        run: npx vitest run tests/name-constant.test.ts
+      - name: Playwright e2e
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test
