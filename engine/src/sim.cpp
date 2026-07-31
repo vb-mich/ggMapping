@@ -558,7 +558,7 @@ void Sim::fill_one(Panel t) {
     }
     int rung;
     if (nbs.empty()) {
-        int fr = roll_die(6, "first rung");
+        int fr = roll_die(6, "first elevation");
         static const int FIRST[7] = {0, SH, CO, PL, PL, HI, MO};
         rung = FIRST[fr];
     } else {
@@ -1459,15 +1459,16 @@ bool Sim::step() {
         emit(std::move(e));
     }
     deck.push_back(c);
-    bool do_shuffle = c.kind == "addpanel";
+    // v0.5, the depth erratum: Add Panel carries no shuffle rider; the
+    // cycle-marker shuffle applies for the whole game. The next card played
+    // after a shuffle becomes the new marker.
+    bool do_shuffle = false;
     if (marker_uid < 0) {
         marker_uid = c.uid;
     } else if (c.uid == marker_uid) {
-        if (!woken) {
-            do_shuffle = true;
-            note(Ev::CycleComplete);
-        }
-        if (woken) marker_uid = -1;
+        do_shuffle = true;
+        note(Ev::CycleComplete);
+        marker_uid = -1;
     }
     if (do_shuffle) {
         shuffle_deck_now();
@@ -1548,7 +1549,7 @@ std::string Sim::final_report() const {
                     std::to_string(panels.size()) + " (atlas " +
                     std::to_string(atlas.size()) + ")");
     {
-        std::string s = "rung shares:";
+        std::string s = "elevation shares:";
         for (int i = 0; i < 8; ++i)
             s += std::string(" ") + RUNG_NAME[i] + " " + sf_fmt(sh[i], 1) + "%";
         lines.push_back(s);

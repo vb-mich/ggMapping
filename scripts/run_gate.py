@@ -12,7 +12,7 @@ Usage:
 import argparse, os, re, subprocess, sys, tempfile
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ORACLE = os.path.join(REPO, "reference", "sim.py")
+ORACLE = os.path.join(REPO, "reference", "sim_v05.py")
 
 MATRIX = [
     ("base-11",         ["--seed", "11",  "--eras", "20"]),
@@ -28,7 +28,8 @@ MATRIX = [
                          "--greatridge-die", "6", "--greatridge-add", "2", "--extend-cap", "0"]),
 ]
 
-FORBIDDEN = re.compile(rb"tile|visit", re.IGNORECASE)
+# The total vocabulary law (CONTRACTS §1, v0.5): no exemptions remaining.
+FORBIDDEN = re.compile(rb"tile|visit|rung", re.IGNORECASE)
 
 
 def read_log(outdir, seed, normalize_crlf):

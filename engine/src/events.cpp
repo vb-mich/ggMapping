@@ -61,7 +61,7 @@ void render_event(const Event& e, const Geo& geo, std::vector<std::string>& out)
     };
     switch (e.kind) {
         case Ev::RunStart:
-            out.push_back("=== THE ENDLESS MAP, simulator run ===");
+            out.push_back("=== JERRYMAPPING, simulator run ===");
             out.push_back("seed: " + std::to_string(e.a) + "  eras: " + std::to_string(e.b));
             break;
         case Ev::EraStart:
@@ -113,7 +113,7 @@ void render_event(const Event& e, const Geo& geo, std::vector<std::string>& out)
             else if (e.s2 == "blocked")
                 out.push_back("    " + e.s1 + ": blocked by " + e.s3 + ", ends");
             else
-                out.push_back("    " + e.s1 + ": no legal rung ahead, ends");
+                out.push_back("    " + e.s1 + ": no legal step ahead, ends");
             break;
         case Ev::ExtendRun:
             out.push_back("    extend: run len " + std::to_string(e.a) + " (" + e.s1 +

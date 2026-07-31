@@ -14,7 +14,8 @@ Usage: python scripts/run_proofs.py --native build/jerrymap.exe
 """
 import argparse, os, re, subprocess, sys, tempfile
 
-FORBIDDEN = re.compile(rb"tile|visit", re.IGNORECASE)
+# The total vocabulary law (CONTRACTS §1, v0.5): no exemptions remaining.
+FORBIDDEN = re.compile(rb"tile|visit|rung", re.IGNORECASE)
 checks = []
 
 
@@ -91,7 +92,7 @@ def main():
         check(f"dial live: {name} diverges from baseline", data != base)
 
     # -- 4. vocabulary ------------------------------------------------------
-    check("vocabulary law: no 'tile', no 'visit', any case",
+    check("vocabulary law: no 'tile', no 'visit', no 'rung', any case",
           not any(FORBIDDEN.search(l) for l in logs))
 
     bad = [n for n, ok in checks if not ok]

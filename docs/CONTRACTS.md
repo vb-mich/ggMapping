@@ -1,26 +1,33 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **1.1.0** · State schema: **1** · Event schema: **1** · World lineage: **v0.4**
+Contract version: **2.0.0** · State schema: **1** · Event schema: **1** · World lineage: **v0.5**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
 Nothing in `/engine`, `/apps`, or `/tools` may contradict it. Changes here bump the
 contract version and must state their migration story.
 
-Authority chain: `docs/0-Jerrymapping-the-game.md` (the handbook, beta 0.1) defines the
-game; `docs/FORK_NOTES.md` defines this lineage's deltas and dials; `reference/sim.py`
-(the frozen v0.4 oracle) defines byte-exact behavior until succession (§9). Where prose
-and oracle disagree, the oracle wins until the fork notes say otherwise.
+Authority chain: `docs/0-Jerrymapping-the-game.md` (the handbook, beta 0.1, amended by
+the v0.5 depth erratum) defines the game; `docs/FORK_NOTES.md` defines this lineage's
+deltas and dials; the **C++ engine is the reference of record** (succession, §8.4), and
+`reference/sim_v05.py` is the **living twin** whose byte-identity the gate proves —
+every rules increment lands in both, and the matrix must be green three ways before
+the increment is law. `reference/sim.py` is the frozen v0.4 founding document,
+history. Where prose and implementations disagree, the twin-proven engine wins until
+the fork notes say otherwise.
 
 ---
 
-## 1. Vocabulary law
+## 1. Vocabulary law — total since v0.5
 
-The words are **panel**, **age**, **era**, **rework**, **unit**, **rung**. The words
-*tile* and *visit* are banned from every log line, event name, schema key, CLI surface,
-and UI string, in any case. CI enforces this over the rendered log (§8.4). The card that
-grows the map is **addpanel** end to end: config key, CLI flag, engine identifier, log
-text.
+The words are **panel**, **age**, **era**, **rework**, **unit**, **elevation**. The
+words *tile*, *visit*, and *rung* are banned — any case, no exemptions remaining —
+from every rendered output: every log line, the metrics footer, and every UI string.
+CI enforces this over every rendered log of the matrix and over the app's string
+tables. The ban governs **output text**: schema keys (`rung_counts`, `paint.rung`),
+the `--tile` CLI flag, and code identifiers keep their historical names, exactly as
+the twin itself does. The card that grows the map is **addpanel** end to end: config
+key, CLI flag, engine identifier, log text.
 
 Naming note carried from the oracle: the *completed* set is called `atlas` and the
 *archived* set is called `binder` (§6). The log phrase for archival is
@@ -171,7 +178,7 @@ Rules:
 `domain` is `n` for die, `count` for pick, `permille` for chance, `len` for shuffle.
 `result` is the integer result, `true/false` for chance, or the permutation array for
 shuffle. `purpose` strings are fixed by the oracle (they appear verbatim in log lines)
-and are part of this contract: `row`, `column`, `first rung`, `dominant tie`,
+and are part of this contract: `row`, `column`, `first elevation`, `dominant tie`,
 `rework dominant`, `away direction`, `fill spot`, `wobble`, `wobble (choice)`,
 `heading`, `heading (choice)`, `len`, `length`, `length (choice)`, `grow`,
 `foundation`, `farm intensity`, `anomaly`, `islets`, `nudge {what}`,
@@ -200,7 +207,7 @@ Framing (no step number):
 
 | kind | payload | template |
 |---|---|---|
-| `run_start` | seed, eras | `=== THE ENDLESS MAP, simulator run ===` ⏎ `seed: {seed}  eras: {eras}` |
+| `run_start` | seed, eras | `=== JERRYMAPPING, simulator run ===` ⏎ `seed: {seed}  eras: {eras}` |
 | `era_start` | era | `--- era {era} ---` |
 | `age_start` | era, age, panel, card | `[e{era} a{age:02d}] panel {panel} \| {CARD}` (card uppercased) |
 | `free_panel` | era | `[e{era}] stack empty: a panel is added for free` |
@@ -223,7 +230,7 @@ Age notes (no step number):
 | `calm` | — | `    calm: nothing` |
 | `work` | quota, mood | `    work {quota}, mood {mood}` |
 | `card_skip` | card, reason | `    {card}: {reason}` (empty current panel; else becomes numbered `skip_embellish`) |
-| `stroke_note` | label, cause, detail | `    {label}: first unit not legal, ends` · `    {label}: ends at map edge, heading {D}` · `    {label}: merges into {rung}, ends` · `    {label}: blocked by {anomaly\|rung}, ends` · `    {label}: no legal rung ahead, ends` |
+| `stroke_note` | label, cause, detail | `    {label}: first unit not legal, ends` · `    {label}: ends at map edge, heading {D}` · `    {label}: merges into {name}, ends` · `    {label}: blocked by {name}, ends` · `    {label}: no legal step ahead, ends` |
 | `extend_run` | length, cls, side | `    extend: run len {length} ({water\|heights}) on {D} border` |
 | `work_follows` | panel | `    the work follows the new panel {panel}` |
 | `foundation` | which | `    found hamlet` · `    found village` · `    found town` |
@@ -279,10 +286,12 @@ only — no new float-formatted surfaces, ever.
   age that triggered them, and `new_panel` continues the **previous** age's step
   counter.
 * `deck_shuffled` fires after the age's fill (its step counter is the current age's).
-* The era-cycle marker is the first card drawn each cycle; while addpanel sleeps, the
-  marker's reappearance triggers `cycle_complete` + shuffle; once addpanel wakes, the
-  marker retires silently. Card identity, not equality: two cards with the same kind
-  and work are distinct (uids, §6).
+* **The cycle marker, v0.5 (the depth erratum):** the first card played of the game —
+  and the first played after each shuffle — becomes the marker. When the marked card
+  is played again, `cycle_complete` + shuffle fire and the marker clears; the deck
+  shuffles once per cycle, for the whole game. addpanel carries **no shuffle rider**.
+  Card identity, not equality: two cards with the same kind and work are distinct
+  (uids, §6).
 
 ## 6. The state schema (save/load/resume, bit-exact)
 
@@ -294,7 +303,7 @@ byte-identical to never having stopped (log continuation included). Save points 
 {
   "schema": "jerrymap-state",
   "version": 1,
-  "lineage": "v0.4",
+  "lineage": "v0.5",
 
   "config": {
     "panel_w": 5, "panel_h": 6,
@@ -367,9 +376,11 @@ them — a `set_mark` adds to both; lone island / crater lake / trench / mesa /
 archipelago add only to `wild`). `atlas` = panels that have ever completed; `binder` =
 archived panels (out of rotation forever; still part of the world for every rule).
 
-### 6.3 Numbers
+### 6.3 Numbers and lineage
 `rng.state` is a decimal string (u64 does not fit safely in JSON numbers). All other
-values fit in 32 bits. `archive_permille` is the integer per-mille (§3); the CLI's
+values fit in 32 bits. Loaders reject unknown schema versions **and foreign
+lineages**: a world resumed under different rules would silently speak the wrong
+dialect (§9). `archive_permille` is the integer per-mille (§3); the CLI's
 percent input is converted once at config time. `greatridge_die: 0` means "not set"
 (the handbook's chosen length applies).
 
@@ -426,7 +437,8 @@ event-rendered lines, then the final report — **LF line endings always**; stdo
 ## 8. The gate
 
 ### 8.1 Oracle matrix
-Byte-identity of `seed{N}_log.txt`, Python vs native C++ vs WASM:
+Byte-identity of `seed{N}_log.txt`, the Python twin (`reference/sim_v05.py`) vs
+native C++ vs WASM, on the v0.5 lineage:
 
 | cell | seed | eras | dials |
 |---|---|---|---|
@@ -468,17 +480,33 @@ engine becomes the oracle of record, with this document as its specification.
 changes — changes whose log byte-identity the gate proves — and nothing else. Rules,
 text, and formatting stay untouchable. The first such change is `--no-render` (§7).
 
+**The twin regime** (first exercised by v0.5): every rules increment updates the
+Python twin and the C++ engine together. The increment is law only when the full
+matrix is byte-identical three ways — twin, native, WASM — in CI. The outgoing
+lineage's fixtures retire to `reference/history-<lineage>/`; the outgoing twin stays
+in `/reference` as history under the behavioral freeze.
+
 ## 9. Versioning
 
 * **Contract version** (this file): semver. Renderer/text changes are **major** (they
   break byte-identity with the oracle and require a lineage bump).
 * **State schema version**: integer; loaders reject unknown versions.
 * **Event schema version**: integer; additive payload fields are minor.
-* **World lineage**: `v0.4` — the PCG32 dialect. A lineage bump means old seeds speak
-  a different world; it never changes saved-state replayability within its lineage.
+* **World lineage**: `v0.5` — the PCG32 dialect with the depth erratum. A lineage
+  bump means old seeds speak a different world; it never changes saved-state
+  replayability within its lineage (loaders reject foreign lineages, §6.3).
 
 ### 9.1 Changelog
 
+* **2.0.0** — the first rules increment since succession, lineage `v0.4 → v0.5`
+  (major: renderer text and rules changed). The depth erratum: addpanel loses the
+  shuffle rider; the cycle-marker shuffle applies for the whole game (§5.3). The
+  rename ledger: run header `JERRYMAPPING`, purpose `first elevation` (§4), stroke
+  note `no legal step ahead, ends`, metrics footer `elevation shares` (§5.1). The
+  vocabulary law becomes total: *rung* joins *tile* and *visit*, banned from all
+  output text (§1). State documents carry `lineage: v0.5`; loaders reject foreign
+  lineages (§6.3). The gate's oracle is the v0.5 twin (§8.1); v0.4 fixtures retired
+  to `reference/history-v0.4/`.
 * **1.1.0** — additive, no migration, byte-identity untouched: the combined-dials
   matrix cell (§8.1); `--no-render` and the behavioral-freeze clarification (§7,
   §8.4); the integer-only rule for new event text (§5.2); the canonical palette
@@ -496,5 +524,8 @@ The product name is a **placeholder pending approval**. Rules:
 * Package names, ids, bundle names, and paths never carry the display name: they use
   the neutral prefix **`jm`** (`jm-pwa`, `jm_*` APIs, `jerrymap` engine artifacts
   keep their existing names).
+* Since v0.5 the **engine run header** (§5.1) carries the name as byte-frozen log
+  text. That surface rides **lineage bumps**, not the display constant: renaming the
+  product in the log is a rules-text change under the twin regime.
 * CI proves the rule: the name-constant test asserts exactly one occurrence of the
   display name across the app's source constants.

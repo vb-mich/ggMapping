@@ -39,7 +39,7 @@ Json Sim::save_state() const {
     Json root = Json::object();
     root.set("schema", Json::of("jerrymap-state"));
     root.set("version", Json::of(1));
-    root.set("lineage", Json::of("v0.4"));
+    root.set("lineage", Json::of("v0.5"));
 
     Json jc = Json::object();
     jc.set("panel_w", Json::of(cfg.panel_w));
@@ -237,6 +237,10 @@ Json Sim::save_state() const {
 Sim::Sim(const Json& st, Decider& dec) : dec_(&dec) {
     if (st.at("schema").as_str() != "jerrymap-state" || st.at("version").as_int() != 1)
         throw std::runtime_error("unsupported state schema/version");
+    // A lineage bump never changes replayability WITHIN a lineage (CONTRACTS
+    // §9); a foreign-lineage world resumed here would speak the wrong dialect.
+    if (st.at("lineage").as_str() != "v0.5")
+        throw std::runtime_error("foreign world lineage: " + st.at("lineage").as_str());
 
     const Json& jc = st.at("config");
     cfg.panel_w = static_cast<int>(jc.at("panel_w").as_int());
