@@ -197,18 +197,24 @@ export function draw(
     ctx.globalAlpha = 1;
   }
 
-  // panel borders + N1/E1 labels
-  ctx.strokeStyle = CHROME.panelBorder;
-  for (const [tx, ty] of idx.panels) {
-    const [ox, oy] = origin(geo, tx, ty);
-    ctx.lineWidth = 1;
-    ctx.strokeRect(px(ox), py(oy), geo.w * s, geo.h * s);
-    if (opts.panelNames && s >= 7) {
-      ctx.fillStyle = CHROME.panelBorder;
-      ctx.font = `${Math.max(9, Math.min(13, s))}px system-ui, sans-serif`;
-      ctx.textBaseline = "top";
-      ctx.fillText(panelName(tx, ty), px(ox) + 3, py(oy) + 2);
+  // panel borders + N1/E1 labels; borders fade away as the view zooms out,
+  // so a distant map reads as pure paint, not a lattice
+  const borderAlpha = s >= 8 ? 1 : Math.max(0, (s - 3) / 5);
+  if (borderAlpha > 0) {
+    ctx.globalAlpha = borderAlpha;
+    ctx.strokeStyle = CHROME.panelBorder;
+    ctx.lineWidth = s >= 8 ? 1 : 0.75;
+    for (const [tx, ty] of idx.panels) {
+      const [ox, oy] = origin(geo, tx, ty);
+      ctx.strokeRect(px(ox), py(oy), geo.w * s, geo.h * s);
+      if (opts.panelNames && s >= 7) {
+        ctx.fillStyle = CHROME.panelBorder;
+        ctx.font = `${Math.max(9, Math.min(13, s))}px system-ui, sans-serif`;
+        ctx.textBaseline = "top";
+        ctx.fillText(panelName(tx, ty), px(ox) + 3, py(oy) + 2);
+      }
     }
+    ctx.globalAlpha = 1;
   }
 
   // the current panel, outlined (volcano red from the canonical palette)
