@@ -3,7 +3,7 @@
 import { useComputed } from "@preact/signals";
 
 import { STRINGS } from "../strings";
-import { events, world } from "../state";
+import { events, experimental, world } from "../state";
 
 // §2.3 people densities, for the peak-density readout.
 const DENSITY: Record<string, number> = {
@@ -27,8 +27,14 @@ export function StatsStrip() {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([k, e]) => `${k} e${e}`)
       .join(", ");
+    // the people breakdown, so testers report numbers rather than impressions
+    const tally: Record<string, number> = {
+      farm_lo: 0, farm_hi: 0, rural: 0, urb_lo: 0, urb_md: 0, urb_hi: 0,
+    };
+    for (const [, , k] of w.world.people) tally[k] = (tally[k] ?? 0) + 1;
     const m = w.chronicle.metrics;
     return {
+      tally,
       water: pct(byRung[0] + byRung[1] + byRung[2] + byRung[3]),
       coastal: pct(byRung[4]),
       plain: pct(byRung[5]),
@@ -50,7 +56,15 @@ export function StatsStrip() {
   if (!s) return null;
   return (
     <section class="card stats" data-testid="stats-strip">
-      <h2>{STRINGS.statsHeading}</h2>
+      <div class="stats-head">
+        <h2>{STRINGS.statsHeading}</h2>
+        {experimental.value && (
+          <span class="chip exp-chip" data-testid="experimental-badge"
+            title={STRINGS.expBadgeTitle}>
+            {STRINGS.expBadge}
+          </span>
+        )}
+      </div>
       <div class="stats-rungs">
         {(
           [
@@ -74,6 +88,24 @@ export function StatsStrip() {
         {s.reworks} · {STRINGS.statCrumbles} {s.crumbles} ·{" "}
         {STRINGS.statEmbellish} {s.embellish}
       </p>
+      <h3>{STRINGS.peopleHeading}</h3>
+      <div class="stats-rungs" data-testid="people-breakdown">
+        {(
+          [
+            [STRINGS.peopleFieldsLow, s.tally.farm_lo],
+            [STRINGS.peopleFieldsHigh, s.tally.farm_hi],
+            [STRINGS.peopleRural, s.tally.rural],
+            [STRINGS.peopleUrbanLow, s.tally.urb_lo],
+            [STRINGS.peopleUrbanMedium, s.tally.urb_md],
+            [STRINGS.peopleUrbanHigh, s.tally.urb_hi],
+          ] as const
+        ).map(([label, value]) => (
+          <span key={label} class="stat">
+            <small>{label}</small>
+            <b>{value}</b>
+          </span>
+        ))}
+      </div>
       <p class="stats-line">
         {STRINGS.statFirsts}: {s.firsts} · {STRINGS.deckTitle.toLowerCase()}:{" "}
         {s.deckCards} {STRINGS.deckCards}

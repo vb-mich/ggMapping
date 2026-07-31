@@ -108,6 +108,42 @@ describe("web-flavored engine smoke", () => {
     m._jm_free(h);
   });
 
+  it("honors the experimental fields dial, and only when asked", async () => {
+    const m = await loadEngine();
+    const run = (cfgJson: string, seed: bigint) => {
+      const p = cstr(m, cfgJson);
+      const h = m._jm_create(p, seed, 20);
+      m._free(p);
+      m._jm_run(h);
+      const log = m.UTF8ToString(m._jm_log(h));
+      const events = JSON.parse(m.UTF8ToString(m._jm_events(h))) as {
+        kind: string;
+      }[];
+      m._jm_free(h);
+      return { log, deepenings: events.filter((e) => e.kind === "field_deepens").length };
+    };
+
+    // off (both spellings): the canon bytes, and the dial's event unreachable
+    const canon = run("{}", 42n);
+    const explicitOff = run(JSON.stringify({ exp_fields: false }), 42n);
+    const golden = readFileSync(
+      join(ROOT, "reference", "sample_log_seed42.txt"),
+      "latin1",
+    );
+    expect(canon.log).toBe(golden.slice(0, canon.log.length));
+    expect(explicitOff.log).toBe(canon.log);
+    expect(canon.deepenings).toBe(0);
+    expect(canon.log).not.toContain("the field deepens");
+
+    // on: a different world, fields deepen, and it is reproducible
+    const on = run(JSON.stringify({ exp_fields: true }), 42n);
+    expect(on.log).not.toBe(canon.log);
+    expect(on.deepenings).toBeGreaterThan(0);
+    expect(on.log).toContain("    the field deepens");
+    expect(run(JSON.stringify({ exp_fields: true }), 42n).log).toBe(on.log);
+    expect(on.log).not.toMatch(/tile|visit|rung/i);
+  });
+
   it("is deterministic: the same seed twice produces identical bytes", async () => {
     const m = await loadEngine();
     const run = () => {

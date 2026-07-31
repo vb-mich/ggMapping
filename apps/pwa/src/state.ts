@@ -31,6 +31,10 @@ export const grAdd = signal(0);
 export const extendCap = signal(4);
 export const flatWork = signal(false);
 
+// EXPERIMENTAL (CONTRACTS §11, handbook ch. 11): not part of the game.
+export const expFields = signal(false);
+export const experimental = computed(() => expFields.value);
+
 export const deckCopies = signal<Record<Kind, number>>({ ...DEFAULT_COPIES });
 export const addpanelCopies = signal(1);
 export const workOverrides = signal<Partial<Record<string, number>>>({});
@@ -69,6 +73,7 @@ export function buildConfig(): JmConfig {
     greatridge_add: grMode.value === "rolled" ? grAdd.value : 0,
     extend_cap: extendCap.value,
   };
+  if (expFields.value) cfg.exp_fields = true;
   if (flatWork.value) cfg.work_spread = false;
   const wo = Object.fromEntries(
     Object.entries(workOverrides.value).filter(([, v]) => v != null),
@@ -81,10 +86,18 @@ export function buildConfig(): JmConfig {
   return cfg;
 }
 
-// The shareable determinism capsule: seed + eras + full config.
+// The shareable determinism capsule: seed + eras + full config. An
+// experimental run is marked explicitly (CONTRACTS §11) so a shared world can
+// never be mistaken for a canon one.
 export function shareableConfig(): string {
+  const cfg = buildConfig();
   return JSON.stringify(
-    { seed: seed.value, eras: eras.value, config: buildConfig() },
+    {
+      seed: seed.value,
+      eras: eras.value,
+      ...(experimental.value ? { experimental: true } : {}),
+      config: cfg,
+    },
     null,
     2,
   );
@@ -110,6 +123,7 @@ export function loadConfigJson(json: string): boolean {
   grDie.value = cfg.greatridge_die || 6;
   grAdd.value = cfg.greatridge_add ?? 0;
   extendCap.value = cfg.extend_cap ?? 4;
+  expFields.value = cfg.exp_fields === true;
   flatWork.value = cfg.work_spread === false;
   addpanelCopies.value = cfg.addpanel_copies ?? 1;
   if (cfg.deck) {
@@ -149,6 +163,7 @@ export function backToCanon(): void {
   grDie.value = 6;
   grAdd.value = 0;
   extendCap.value = 4;
+  expFields.value = false; // canon is never experimental
   flatWork.value = false;
   deckCopies.value = { ...DEFAULT_COPIES };
   addpanelCopies.value = 1;

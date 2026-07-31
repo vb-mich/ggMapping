@@ -18,8 +18,9 @@ succession is enacted, tagged `v0.4-succession`:
 * **The three-way identity gate (Python, native, WASM) remains in CI permanently**
   as the twin-implementation review: every rules change lands in the Python twin
   and the C++ engine together and must pass the matrix byte-identically. The
-  current twin is `reference/sim_v05.py` (lineage **v0.5**, the depth erratum and
-  the rename ledger — the first increment through this regime).
+  current twin is `reference/sim_v06.py` (lineage **v0.5** — the depth erratum and
+  the rename ledger — plus the **experimental fields dial**, default off, which
+  leaves every canon surface byte-identical).
 
 ## Layout
 
@@ -40,8 +41,9 @@ succession is enacted, tagged `v0.4-succession`:
 Cross-language byte-identity over the oracle matrix (CONTRACTS §8), nine cells: seeds
 11/42/303 at 20 eras, seed 42 at 40 eras, four single-dial cells at seed 42/20 eras,
 and the combined-dials cell (all four dials at once). CI runs the full matrix — the
-Python twin (`reference/sim_v05.py`) vs native C++ vs WASM — on every commit,
-permanently (see Succession above).
+Python twin (`reference/sim_v06.py`) vs native C++ vs WASM — on every commit,
+permanently (see Succession above). Experimental dials (CONTRACTS §11) add their
+own cells, reported separately and never mixed into the canon result.
 
 ## Building
 

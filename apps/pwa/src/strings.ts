@@ -119,8 +119,26 @@ export const STRINGS = {
   deckOk: "Deck within the book's recommendations.",
   exportDeck: "Export deck",
 
+  // experimental group (handbook chapter 11 — rules under test, not the game)
+  expTitle: "Experimental",
+  expNotGame:
+    "These rules are being tested. They are NOT part of the game. Turn them on only to help decide — see the handbook, chapter 11.",
+  expFieldsLabel: "Fields out of the density ladder",
+  expFieldsDesc:
+    "A field never blocks a step, never supports one, and is never subject to one; and a town deepens its low fields before clearing new ground.",
+  expBadge: "experimental",
+  expBadgeTitle:
+    "This run uses experimental rules from chapter 11. It is not a canon world.",
+
   // stats
   statsHeading: "Elevation shares",
+  peopleHeading: "People",
+  peopleFieldsLow: "fields low",
+  peopleFieldsHigh: "fields high",
+  peopleRural: "rural",
+  peopleUrbanLow: "urban low",
+  peopleUrbanMedium: "urban medium",
+  peopleUrbanHigh: "urban high",
   statWater: "water",
   statCoastal: "coastal",
   statPlain: "plain",

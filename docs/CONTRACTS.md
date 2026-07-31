@@ -8,9 +8,10 @@ Nothing in `/engine`, `/apps`, or `/tools` may contradict it. Changes here bump 
 contract version and must state their migration story.
 
 Authority chain: `docs/0-Jerrymapping-the-game.md` (the handbook, beta 0.1, amended by
-the v0.5 depth erratum) defines the game; `docs/FORK_NOTES.md` defines this lineage's
-deltas and dials; the **C++ engine is the reference of record** (succession, §8.4), and
-`reference/sim_v05.py` is the **living twin** whose byte-identity the gate proves —
+the v0.5 depth erratum, plus chapter 11's rules under test) defines the game;
+`docs/FORK_NOTES.md` defines this lineage's deltas and dials; the **C++ engine is the
+reference of record** (succession, §8.4), and
+`reference/sim_v06.py` is the **living twin** whose byte-identity the gate proves —
 every rules increment lands in both, and the matrix must be green three ways before
 the increment is law. `reference/sim.py` is the frozen v0.4 founding document,
 history. Where prose and implementations disagree, the twin-proven engine wins until
@@ -441,7 +442,7 @@ event-rendered lines, then the final report — **LF line endings always**; stdo
 ## 8. The gate
 
 ### 8.1 Oracle matrix
-Byte-identity of `seed{N}_log.txt`, the Python twin (`reference/sim_v05.py`) vs
+Byte-identity of `seed{N}_log.txt`, the Python twin (`reference/sim_v06.py`) vs
 native C++ vs WASM, on the v0.5 lineage:
 
 | cell | seed | eras | dials |

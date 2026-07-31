@@ -25,6 +25,7 @@ import {
 import { applyUpdate, updateAvailable } from "../updates";
 import { ConfigPanel } from "./ConfigPanel";
 import { DeckEditor } from "./DeckEditor";
+import { ExperimentalPanel } from "./ExperimentalPanel";
 import { FilesBar } from "./FilesBar";
 import { MapView } from "./MapView";
 import { NavPanel } from "./NavPanel";
@@ -109,6 +110,7 @@ export function App() {
         <div class="col-side">
           <ConfigPanel />
           <DeckEditor />
+          <ExperimentalPanel />
           <FilesBar />
         </div>
         <div class="col-main">

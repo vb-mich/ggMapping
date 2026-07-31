@@ -18,6 +18,7 @@ export interface JmConfig {
   greatridge_die?: number; // 0 = unset: the length stays chosen
   greatridge_add?: number;
   extend_cap?: number; // 0 = uncapped
+  exp_fields?: boolean; // EXPERIMENTAL, CONTRACTS §11 — default false
 }
 
 export interface WorldState {

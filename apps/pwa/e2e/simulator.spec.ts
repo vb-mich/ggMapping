@@ -24,6 +24,17 @@ async function runToDone(page: Page) {
 const reportText = (page: Page) =>
   page.getByTestId("final-report").textContent() as Promise<string>;
 
+async function downloadText(page: Page, testid: string): Promise<string> {
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByTestId(testid).click(),
+  ]);
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const c of stream) chunks.push(c as Buffer);
+  return Buffer.concat(chunks).toString("utf8");
+}
+
 test("a run completes and paints", async ({ page }) => {
   await page.goto("/");
   await setRun(page, 42, 3);
@@ -106,6 +117,38 @@ test("time travel shows the viewing chip away from the end", async ({ page }) =>
   await expect(page.getByTestId("viewing-chip")).toHaveCount(0);
 });
 
+test("the experimental badge and config marker appear only with the dial on", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await setRun(page, 42, 3);
+  await runToDone(page);
+
+  // canon: no badge anywhere, and the exported config says nothing
+  await expect(page.getByTestId("experimental-badge")).toHaveCount(0);
+  const canonConfig = await downloadText(page, "btn-save-config");
+  expect(JSON.parse(canonConfig).experimental).toBeUndefined();
+  expect(JSON.parse(canonConfig).config.exp_fields).toBeUndefined();
+
+  // dial on: the badge marks the run and the export marks the file
+  await page.getByTestId("toggle-exp-fields").check();
+  await expect(page.getByTestId("experimental-badge")).toBeVisible();
+  const expConfig = JSON.parse(await downloadText(page, "btn-save-config"));
+  expect(expConfig.experimental).toBe(true);
+  expect(expConfig.config.exp_fields).toBe(true);
+
+  // and the dialed run really is a different world
+  const canonPeople = await page.getByTestId("people-breakdown").textContent();
+  await runToDone(page);
+  expect(await page.getByTestId("people-breakdown").textContent()).not.toBe(
+    canonPeople,
+  );
+
+  // back to canon clears the experiment
+  await page.getByTestId("btn-canon").click();
+  await expect(page.getByTestId("toggle-exp-fields")).not.toBeChecked();
+});
+
 test("the theme defaults to dark and switches", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -173,6 +216,18 @@ test("screenshots at mobile and desktop widths", async ({ page }) => {
   await page
     .getByTestId("stats-strip")
     .screenshot({ path: "e2e-artifacts/elevation-shares.png" });
+
+  // the Experimental group, and the badge it puts on a dialed run
+  await page.getByTestId("toggle-exp-fields").check();
+  await runToDone(page);
+  await page
+    .getByTestId("experimental-panel")
+    .screenshot({ path: "e2e-artifacts/experimental-group.png" });
+  await page
+    .getByTestId("stats-strip")
+    .screenshot({ path: "e2e-artifacts/experimental-badge.png" });
+  await page.getByTestId("btn-canon").click();
+  await runToDone(page);
   await page.getByTestId("nav-prev-era").click();
   await expect(page.getByTestId("viewing-chip")).toBeVisible();
   await page
