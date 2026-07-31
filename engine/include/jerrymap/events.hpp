@@ -18,7 +18,7 @@ enum class Ev {
     // age notes
     Calm, Work, CardSkip, StrokeNote, ExtendRun, WorkFollows, Foundation,
     Upgrade, Sprawl, CityLives, Cliff, CycleComplete, AnomalyResult,
-    PanelArchived, PanelStays, PanelReturns,
+    PanelArchived, PanelStays, PanelReturns, FieldDeepens,
     // numbered actions (carry step)
     Paint, Trace, ShoreHeal, Hold, ReworkChange, HomesLost, FullEmbellish,
     Crumble, Mark, People, AnomalyStrike, VolcanoRing, NewPanel, DeckShuffled,

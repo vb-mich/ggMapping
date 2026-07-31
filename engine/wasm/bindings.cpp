@@ -54,6 +54,7 @@ Config config_from_json(const std::string& text) {
     geti("greatridge_die", cfg.greatridge_die);
     geti("greatridge_add", cfg.greatridge_add);
     geti("extend_cap", cfg.extend_cap);
+    if (j.has("exp_fields")) cfg.exp_fields = j.at("exp_fields").as_bool();
     if (j.has("work_spread")) cfg.work_spread = j.at("work_spread").as_bool();
     if (j.has("work_overrides"))
         for (auto& kv : j.at("work_overrides").as_obj())
@@ -73,7 +74,7 @@ const char* stash(Bundle& b, std::string s) {
 
 extern "C" {
 
-const char* jm_version() { return "jerrymap-engine 2.0.0 (lineage v0.5)"; }
+const char* jm_version() { return "jerrymap-engine 2.1.0 (lineage v0.5)"; }
 
 // Fresh world from a config JSON (CONTRACTS §6 "config" keys, all optional).
 int jm_create(const char* config_json, std::int64_t seed, int eras) {

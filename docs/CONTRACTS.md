@@ -1,6 +1,6 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **2.0.0** · State schema: **1** · Event schema: **1** · World lineage: **v0.5**
+Contract version: **2.1.0** · State schema: **1** · Event schema: **1** · World lineage: **v0.5**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
@@ -183,6 +183,7 @@ and are part of this contract: `row`, `column`, `first elevation`, `dominant tie
 `heading`, `heading (choice)`, `len`, `length`, `length (choice)`, `grow`,
 `foundation`, `farm intensity`, `anomaly`, `islets`, `nudge {what}`,
 `ridge seed (choice)`, `free class (choice)`, `free seed (choice)`, `basin start`,
+`deepen field` (experimental, §11),
 `extend run`, `extend entry`, `place {kind}`, `people base`, `riser`, `living city`,
 `lead city`, `panel position`, `archive`, `deck` (shuffles).
 
@@ -243,6 +244,7 @@ Age notes (no step number):
 | `panel_archived` | panel | `    panel {panel} COMPLETE, to the Atlas` |
 | `panel_stays` | panel | `    panel {panel} full, stays in play` |
 | `panel_returns` | panel, filled, area | `    panel to back of stack ({filled}/{area})` |
+| `field_deepens` | — | `    the field deepens` (experimental only, §11) |
 
 Numbered actions (carry `payload.step`; template prefix `    {step}. `):
 
@@ -315,7 +317,8 @@ byte-identical to never having stopped (log continuation included). Save points 
     "archive_permille": 0,
     "stroke_die": 4, "stroke_add": 1,
     "greatridge_die": 0, "greatridge_add": 0,
-    "extend_cap": 4
+    "extend_cap": 4,
+    "exp_fields": false
   },
 
   "rng": { "algo": "pcg32/stream54", "state": "18446744073709551615" },
@@ -422,6 +425,7 @@ reference's defaults:
 --greatridge-die N (unset)  --greatridge-add N (0)  --extend-cap N (4)
 --work k=v,…  --mood k=v,…
 --snapshots --alive --semi --no-patina --no-render --flat-work --fragile
+--exp-fields (EXPERIMENTAL, §11)
 --living-deck --ld-start --ld-add --ld-retire --ld-shuffle --ld-floor --ld-ceiling
 ```
 
@@ -451,6 +455,14 @@ native C++ vs WASM, on the v0.5 lineage:
 | dial-greatridge | 42 | 20 | `--greatridge-die 6 --greatridge-add 2` |
 | dial-extendcap | 42 | 20 | `--extend-cap 0` |
 | combined-dials | 42 | 20 | `--archive-chance 25 --stroke-die 6 --stroke-add 2 --greatridge-die 6 --greatridge-add 2 --extend-cap 0` |
+
+**Experimental cells** (§11) run beside the matrix and are reported separately;
+they are never mixed into the canon result, because a canon cell exercises none
+of an experimental dial's code paths:
+
+| cell | seed | eras | dials |
+|---|---|---|---|
+| exp-fields-42 | 42 | 20 | `--exp-fields` |
 
 ### 8.2 CI
 Every commit: build native, run Python and native over the full matrix, byte-compare;
@@ -498,6 +510,11 @@ in `/reference` as history under the behavioral freeze.
 
 ### 9.1 Changelog
 
+* **2.1.0** — additive, **no lineage change**: the experimental fields dial
+  (§11, `exp_fields` / `--exp-fields`, default off), its `field_deepens` event
+  and `deepen field` purpose, and the experimental gate cells (§8.1). Every
+  canon fixture is byte-identical and the oracle matrix was not regenerated.
+  The gate's twin becomes `reference/sim_v06.py`, superseding `sim_v05.py`.
 * **2.0.0** — the first rules increment since succession, lineage `v0.4 → v0.5`
   (major: renderer text and rules changed). The depth erratum: addpanel loses the
   shuffle rider; the cycle-marker shuffle applies for the whole game (§5.3). The
@@ -529,3 +546,38 @@ The product name is a **placeholder pending approval**. Rules:
   product in the log is a rules-text change under the twin regime.
 * CI proves the rule: the name-constant test asserts exactly one occurrence of the
   display name across the app's source constants.
+
+## 11. Experimental dials
+
+The handbook's chapter 11 holds rules under test — **not part of the game**. Each
+arrives here as one **dial, default OFF**, and lives under these rules:
+
+* **Canon is untouchable.** With every experimental dial off, the engine is
+  byte-identical to the lineage it ships in: the same fixtures, the same matrix,
+  no regeneration. This is the headline test, not a footnote — the gate proves it
+  on every commit, and a dial-only event (`field_deepens`) must be unreachable
+  with the dial off.
+* **No lineage bump.** An experimental dial is a config key like any other dial
+  (§6), so state documents keep the lineage they had. If the experiment is
+  promoted, the switch disappears, the rules move into the handbook proper, and
+  **that** is the lineage break.
+* **Proven, not merely implemented.** A canon cell exercises none of a dial's
+  code paths, so each dial carries an **experimental cell** (§8.1) proving twin ==
+  native == WASM under the dial, reported separately from the canon matrix.
+* **Marked wherever a world can travel.** The dial is a config key in saved
+  worlds, and any exported config carries an explicit experimental marker, so a
+  shared world can never be mistaken for a canon one. Apps must show the run is
+  experimental while it is on.
+
+### 11.1 exp_fields — the fields dial (FORK_NOTES §v0.6)
+
+`exp_fields` / `--exp-fields`, default `false`. Two rules in one switch:
+
+1. **The density ladder ignores farmed units.** A field never blocks a step
+   (`constrains` is false for it), never supports one (it leaves the crowd count),
+   and is never itself subject to one (a farm placement skips the ladder check).
+   It still occupies its unit: no home on a field, no field on a home.
+2. **Fields deepen before they spread.** When the farm growth step fires and the
+   settlement holds a low field, one is chosen (`deepen field`, silent when
+   single) and becomes high, emitting `field_deepens`; only when every field is
+   high does the town clear new ground.

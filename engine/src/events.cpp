@@ -153,6 +153,9 @@ void render_event(const Event& e, const Geo& geo, std::vector<std::string>& out)
             out.push_back("    panel to back of stack (" + std::to_string(e.a) + "/" +
                           std::to_string(e.b) + ")");
             break;
+        case Ev::FieldDeepens: // experimental dial only (CONTRACTS §11)
+            out.push_back("    the field deepens");
+            break;
         case Ev::Paint:
             num("paint " + rc_panel(geo, e.unit) + " " + RUNG_NAME[e.a] + " (" + e.s1 + ")");
             break;
@@ -236,6 +239,7 @@ const char* kind_name(Ev k) {
         case Ev::PanelArchived: return "panel_archived";
         case Ev::PanelStays: return "panel_stays";
         case Ev::PanelReturns: return "panel_returns";
+        case Ev::FieldDeepens: return "field_deepens";
         case Ev::Paint: return "paint";
         case Ev::Trace: return "trace";
         case Ev::ShoreHeal: return "shore_heal";

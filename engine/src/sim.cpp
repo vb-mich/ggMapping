@@ -811,10 +811,17 @@ int Sim::dens(GPos u) const {
     return k ? dens_of_kind(*k) : 0;
 }
 
+bool Sim::is_field(GPos u) const {
+    const std::string* k = people.get(u);
+    return k && k->rfind("farm", 0) == 0;
+}
+
 bool Sim::constrains(GPos u) const {
     auto it = base.find(u);
     return it != base.end() && (it->second == PL || it->second == CO) &&
-           !wild.count(u);
+           !wild.count(u) &&
+           // exp_fields: a field never blocks a density step
+           !(cfg.exp_fields && is_field(u));
 }
 
 bool Sim::dens_legal(GPos u, int d) const {
@@ -827,8 +834,13 @@ bool Sim::dens_legal(GPos u, int d) const {
 bool Sim::neighbors_of_height(GPos u, int need) const {
     int n = 0;
     for (int dx = -1; dx <= 1; ++dx)
-        for (int dy = -1; dy <= 1; ++dy)
-            if ((dx || dy) && people.contains({u.x + dx, u.y + dy})) ++n;
+        for (int dy = -1; dy <= 1; ++dy) {
+            GPos v{u.x + dx, u.y + dy};
+            // exp_fields: a field never supports a step (out of the crowd count)
+            if ((dx || dy) && people.contains(v) &&
+                !(cfg.exp_fields && is_field(v)))
+                ++n;
+        }
     return n >= need;
 }
 
@@ -913,7 +925,9 @@ bool Sim::place_people(const std::vector<GPos>& cand_units, const std::string& k
     std::vector<PlaceCand> ok;
     for (GPos u : cand_units) {
         if (people.contains(u) || wild.count(u)) continue;
-        if (!dens_legal(u, d)) continue;
+        // exp_fields: a field is never itself subject to the step rule
+        if (!((cfg.exp_fields && kind.rfind("farm", 0) == 0) || dens_legal(u, d)))
+            continue;
         auto it = base.find(u);
         if (it != base.end()) {
             if (std::find(bases.begin(), bases.end(), it->second) != bases.end())
@@ -1007,8 +1021,22 @@ bool Sim::try_upgrade(const std::vector<GPos>& comp) {
 void Sim::grow_once(const std::vector<GPos>& comp) {
     int g = roll_die(6, "grow");
     if (g <= 2) {
-        if (!place_people(touching(comp), "farm_lo", {PL}))
+        // exp_fields: deepen a low field of the settlement before clearing new
+        // ground; only when every field is high does the town clear more.
+        std::vector<GPos> lows;
+        if (cfg.exp_fields) {
+            for (GPos u : comp) {
+                const std::string* k = people.get(u);
+                if (k && *k == "farm_lo") lows.push_back(u);
+            }
+        }
+        if (!lows.empty()) {
+            GPos u = pick(lows, "deepen field"); // sorts; silent when single
+            people.set(u, "farm_hi");
+            note(Ev::FieldDeepens);
+        } else if (!place_people(touching(comp), "farm_lo", {PL})) {
             skip_card("settlement", "no room for farmland");
+        }
     } else if (g <= 4) {
         if (!rural_spot(comp)) skip_card("settlement", "no room for rural");
     } else {

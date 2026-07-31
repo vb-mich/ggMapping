@@ -12,7 +12,7 @@ Usage:
 import argparse, os, re, subprocess, sys, tempfile
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ORACLE = os.path.join(REPO, "reference", "sim_v05.py")
+ORACLE = os.path.join(REPO, "reference", "sim_v06.py")
 
 MATRIX = [
     ("base-11",         ["--seed", "11",  "--eras", "20"]),
@@ -26,6 +26,13 @@ MATRIX = [
     ("combined-dials",  ["--seed", "42",  "--eras", "20",
                          "--archive-chance", "25", "--stroke-die", "6", "--stroke-add", "2",
                          "--greatridge-die", "6", "--greatridge-add", "2", "--extend-cap", "0"]),
+]
+
+# EXPERIMENTAL cells (handbook ch. 11): never part of the canon matrix, never
+# mixed into its result. They prove the DIALED code paths agree across
+# implementations — the canon cells above exercise none of them.
+EXPERIMENTAL = [
+    ("exp-fields-42", ["--seed", "42", "--eras", "20", "--exp-fields"]),
 ]
 
 # The total vocabulary law (CONTRACTS §1, v0.5): no exemptions remaining.
@@ -55,6 +62,8 @@ def main():
     ap.add_argument("--native", help="path to the native jerrymap CLI")
     ap.add_argument("--wasm", help="path to the wasm module (.mjs), run via node harness")
     ap.add_argument("--skip-python", action="store_true")
+    ap.add_argument("--skip-experimental", action="store_true",
+                    help="run only the canon matrix")
     ap.add_argument("--workdir", default=None)
     args = ap.parse_args()
     if not (args.native or args.wasm):
@@ -66,44 +75,62 @@ def main():
 
     work = args.workdir or tempfile.mkdtemp(prefix="jerrymap-gate-")
     harness = os.path.join(REPO, "engine", "wasm", "harness.mjs")
-    results, ok = [], True
 
-    for name, flags in MATRIX:
-        seed = flags[flags.index("--seed") + 1]
-        logs = {}
-        if not args.skip_python:
-            d = os.path.join(work, "py", name)
-            run_cell([sys.executable, ORACLE, "--out", d, "--no-render"] + flags, d)
-            logs["python"] = read_log(d, seed, normalize_crlf=(os.name == "nt"))
-        if args.native:
-            d = os.path.join(work, "native", name)
-            run_cell([args.native, "--out", d] + flags, d)
-            logs["native"] = read_log(d, seed, normalize_crlf=False)
-        if args.wasm:
-            d = os.path.join(work, "wasm", name)
-            run_cell(["node", harness, args.wasm, "--out", d] + flags, d)
-            logs["wasm"] = read_log(d, seed, normalize_crlf=False)
+    def run_matrix(cells, tag):
+        results, ok = [], True
+        for name, flags in cells:
+            seed = flags[flags.index("--seed") + 1]
+            logs = {}
+            if not args.skip_python:
+                d = os.path.join(work, tag, "py", name)
+                run_cell([sys.executable, ORACLE, "--out", d, "--no-render"] + flags, d)
+                logs["python"] = read_log(d, seed, normalize_crlf=(os.name == "nt"))
+            if args.native:
+                d = os.path.join(work, tag, "native", name)
+                run_cell([args.native, "--out", d] + flags, d)
+                logs["native"] = read_log(d, seed, normalize_crlf=False)
+            if args.wasm:
+                d = os.path.join(work, tag, "wasm", name)
+                run_cell(["node", harness, args.wasm, "--out", d] + flags, d)
+                logs["wasm"] = read_log(d, seed, normalize_crlf=False)
 
-        ref_name, ref = next(iter(logs.items()))
-        row = {"cell": name}
-        for impl, data in logs.items():
-            same = data == ref
-            row[impl] = "OK" if same else "MISMATCH"
-            ok &= same
-            if FORBIDDEN.search(data):
-                row[impl] = "VOCAB-FAIL"
-                ok = False
-        row["bytes"] = len(ref)
-        results.append(row)
+            ref = next(iter(logs.values()))
+            row = {"cell": name}
+            for impl, data in logs.items():
+                same = data == ref
+                row[impl] = "OK" if same else "MISMATCH"
+                ok &= same
+                if FORBIDDEN.search(data):
+                    row[impl] = "VOCAB-FAIL"
+                    ok = False
+            row["bytes"] = len(ref)
+            results.append(row)
+        return results, ok
 
-    cols = ["cell"] + [k for k in ("python", "native", "wasm") if k in results[0]] + ["bytes"]
-    widths = {c: max(len(c), *(len(str(r.get(c, ""))) for r in results)) for c in cols}
-    line = " | ".join(c.ljust(widths[c]) for c in cols)
-    print(line); print("-" * len(line))
-    for r in results:
-        print(" | ".join(str(r.get(c, "")).ljust(widths[c]) for c in cols))
-    print()
-    print("GATE: " + ("GREEN - byte-identical across all cells" if ok else "RED - mismatches above"))
+    def report(results, title):
+        cols = (["cell"] + [k for k in ("python", "native", "wasm") if k in results[0]]
+                + ["bytes"])
+        widths = {c: max(len(c), *(len(str(r.get(c, ""))) for r in results)) for c in cols}
+        line = " | ".join(c.ljust(widths[c]) for c in cols)
+        print(title)
+        print(line); print("-" * len(line))
+        for r in results:
+            print(" | ".join(str(r.get(c, "")).ljust(widths[c]) for c in cols))
+        print()
+
+    canon, ok = run_matrix(MATRIX, "canon")
+    report(canon, "CANON MATRIX (the oracle lineage)")
+    print("GATE: " + ("GREEN - byte-identical across all cells" if ok
+                      else "RED - mismatches above"))
+
+    if not args.skip_experimental:
+        exp, exp_ok = run_matrix(EXPERIMENTAL, "exp")
+        print()
+        report(exp, "EXPERIMENTAL CELLS (handbook ch. 11 - NOT canon)")
+        print("EXPERIMENTAL: " + ("GREEN - byte-identical across all cells" if exp_ok
+                                  else "RED - mismatches above"))
+        ok &= exp_ok
+
     raise SystemExit(0 if ok else 1)
 
 

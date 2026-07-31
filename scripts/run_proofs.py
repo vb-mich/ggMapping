@@ -91,7 +91,21 @@ def main():
         logs.append(data)
         check(f"dial live: {name} diverges from baseline", data != base)
 
-    # -- 4. vocabulary ------------------------------------------------------
+    # -- 4. the experimental fields dial (handbook ch. 11) -------------------
+    # Default byte-identity is the headline: the dial off changes nothing.
+    check("dial off: no 'the field deepens' line can appear",
+          not any(b"the field deepens" in l for l in logs))
+
+    run([exe, "--seed", "42", "--eras", "20", "--out", d("exp1"), "--exp-fields"])
+    run([exe, "--seed", "42", "--eras", "20", "--out", d("exp2"), "--exp-fields"])
+    exp1 = read(d("exp1", "seed42_log.txt"))
+    exp2 = read(d("exp2", "seed42_log.txt"))
+    logs += [exp1]
+    check("dial on: deterministic (same seed twice, byte-identical)", exp1 == exp2)
+    check("dial on: diverges from canon (the dial is live)", exp1 != base)
+    check("dial on: the field deepens", b"the field deepens" in exp1)
+
+    # -- 5. vocabulary (canon and dialed logs alike) ------------------------
     check("vocabulary law: no 'tile', no 'visit', no 'rung', any case",
           not any(FORBIDDEN.search(l) for l in logs))
 

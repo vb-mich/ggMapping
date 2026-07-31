@@ -34,6 +34,10 @@ struct Config {
     int greatridge_die = 0;          // 0 = unset (the length stays chosen)
     int greatridge_add = 0;
     int extend_cap = 4;              // 0 = uncapped
+    // EXPERIMENTAL (handbook ch. 11, FORK_NOTES §v0.6), default OFF: the
+    // density ladder ignores fields, and fields deepen before they spread.
+    // Off, every canon surface is byte-identical — the gate proves it.
+    bool exp_fields = false;
 };
 
 struct Card {
@@ -86,8 +90,14 @@ struct StoredEvent {
     std::size_t line_lo = 0, line_hi = 0;
 };
 
+// Test seam: the unit tests reach the private rule predicates to construct
+// the experimental dial's cases directly (engine/tests/test_engine.cpp).
+struct SimTestAccess;
+
 class Sim {
 public:
+    friend struct SimTestAccess;
+
     // Fresh world: emits the run header, seeds genesis, builds and shuffles the
     // deck, emits the era-1 header.
     Sim(const Config& cfg, std::int64_t seed, int eras, Decider& dec);
@@ -177,6 +187,7 @@ private:
     void rework_body(GPos g);
     void fill_one(Panel t);
     int dens(GPos u) const;
+    bool is_field(GPos u) const;     // a farmed unit (exp_fields only asks)
     bool constrains(GPos u) const;
     bool dens_legal(GPos u, int d) const;
     bool neighbors_of_height(GPos u, int need) const;
@@ -233,6 +244,7 @@ struct CliOptions {
     int stroke_die = 4, stroke_add = 1;
     int greatridge_die = 0, greatridge_add = 0;
     int extend_cap = 4;
+    bool exp_fields = false;     // EXPERIMENTAL (handbook ch. 11)
     bool flat_work = false;
     std::string work, mood;      // k=v,... overrides
     std::string save_path, load_path, record_path, replay_path;
