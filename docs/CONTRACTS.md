@@ -365,14 +365,15 @@ reference's defaults:
 --stroke-die N (4)  --stroke-add N (1)
 --greatridge-die N (unset)  --greatridge-add N (0)  --extend-cap N (4)
 --work k=v,…  --mood k=v,…
---snapshots --alive --semi --no-patina --flat-work --fragile
+--snapshots --alive --semi --no-patina --no-render --flat-work --fragile
 --living-deck --ld-start --ld-add --ld-retire --ld-shuffle --ld-floor --ld-ceiling
 ```
 
 `--flat-work` disables the work spread. `--alive`, `--semi`, `--fragile` are accepted
 and inert (this lineage hard-enables all three). The living-deck family is accepted
-and inert (machinery removed from play). `--snapshots`/`--no-patina` affect only PNG
-rendering, which the C++ CLI does not do. Output: `{out}/seed{seed}_log.txt` — all
+and inert (machinery removed from play). `--snapshots`/`--no-patina`/`--no-render`
+affect only PNG rendering, which the C++ CLI does not do (`--no-render` skips it
+entirely in the reference; the gate uses it so CI needs no Pillow). Output: `{out}/seed{seed}_log.txt` — all
 event-rendered lines, then the final report — **LF line endings always**; stdout gets
 `seed {seed}` and the report. `--save FILE` / `--load FILE` / `--record FILE` /
 `--replay FILE` are engine extensions (state §6, decisions §4) and additive only.
@@ -416,6 +417,11 @@ C++/WASM logs must be LF-pure.
 `/reference` is frozen. Python retires as oracle only when the full matrix is green in
 native **and** WASM; after succession `/reference` remains as history and the C++
 engine becomes the oracle of record, with this document as its specification.
+
+**Enacted** at tag `v0.4-succession` (matrix green, native and WASM). The freeze is
+**behavioral**: after succession `/reference` may accept behavior-neutral *tooling*
+changes — changes whose log byte-identity the gate proves — and nothing else. Rules,
+text, and formatting stay untouchable. The first such change is `--no-render` (§7).
 
 ## 9. Versioning
 

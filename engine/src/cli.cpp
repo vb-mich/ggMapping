@@ -87,7 +87,8 @@ int run_cli(int argc, char** argv) {
         else if (a == "--work") o.work = val();
         else if (a == "--mood") o.mood = val();
         else if (a == "--snapshots" || a == "--alive" || a == "--semi" ||
-                 a == "--no-patina" || a == "--living-deck" || a == "--fragile") {
+                 a == "--no-patina" || a == "--no-render" ||
+                 a == "--living-deck" || a == "--fragile") {
             // inert in this lineage (or PNG-only in the reference)
         } else if (a == "--ld-start" || a == "--ld-add" || a == "--ld-retire" ||
                    a == "--ld-shuffle" || a == "--ld-floor" || a == "--ld-ceiling") {

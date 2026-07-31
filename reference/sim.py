@@ -1336,6 +1336,9 @@ def main():
                     help="the Semi-Living Map: the land rests, the people flow")
     ap.add_argument("--no-patina", action="store_true",
                     help="do not trace embellishments in rendered maps")
+    ap.add_argument("--no-render", action="store_true",
+                    help="skip all PNG rendering; log bytes are unaffected "
+                         "(post-succession tooling flag, CONTRACTS S8.4)")
     ap.add_argument("--flat-work", action="store_true",
                     help="disable the per-card work spread (canon: on)")
     ap.add_argument("--living-deck", action="store_true",
@@ -1378,7 +1381,7 @@ def main():
                                                (p.split("=") for p in args.work.split(","))}
                                           if args.work else None)))
     # patch: snapshot per era
-    if args.snapshots:
+    if args.snapshots and not args.no_render:
         orig = sim.era_summary
         def snap(v):
             orig(v)
@@ -1386,8 +1389,9 @@ def main():
                    patina=not args.no_patina)
         sim.era_summary = snap
     sim.run()
-    render(sim, os.path.join(args.out, f"seed{seed}_final.png"),
-           patina=not args.no_patina)
+    if not args.no_render:
+        render(sim, os.path.join(args.out, f"seed{seed}_final.png"),
+               patina=not args.no_patina)
     report = sim.final_report()
     print(f"seed {seed}")
     print(report)

@@ -9,7 +9,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install pillow
       - name: Build engine + tests
         run: |
           g++ -std=c++20 -O2 -Wall -Iengine/include -o jerrymap engine/cli/main.cpp engine/src/*.cpp
@@ -27,7 +26,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install pillow
       - uses: mymindstorm/setup-emsdk@v14
       - uses: actions/setup-node@v4
         with: { node-version: "22" }

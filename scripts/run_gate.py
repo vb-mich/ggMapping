@@ -72,7 +72,7 @@ def main():
         logs = {}
         if not args.skip_python:
             d = os.path.join(work, "py", name)
-            run_cell([sys.executable, ORACLE, "--out", d] + flags, d)
+            run_cell([sys.executable, ORACLE, "--out", d, "--no-render"] + flags, d)
             logs["python"] = read_log(d, seed, normalize_crlf=(os.name == "nt"))
         if args.native:
             d = os.path.join(work, "native", name)
