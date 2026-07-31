@@ -1,3 +1,5 @@
+// Run setup. Labels turn bold dark-orange when a parameter leaves canon
+// (the handbook's defaults), like the desktop tool.
 import { STRINGS } from "../strings";
 import {
   archiveChance,
@@ -13,8 +15,9 @@ import {
   strokeAdd,
   strokeDie,
 } from "../state";
+import { Spinner } from "./Spinner";
 
-function NumberField(props: {
+function SpinField(props: {
   label: string;
   value: number;
   min: number;
@@ -22,54 +25,38 @@ function NumberField(props: {
   onChange: (v: number) => void;
   testid?: string;
   hint?: string;
+  offCanon?: boolean;
+  wide?: boolean;
 }) {
   return (
-    <label class="field">
+    <label class={`field ${props.offCanon ? "off-canon" : ""}`}>
       <span>{props.label}</span>
-      <input
-        type="number"
-        min={props.min}
-        max={props.max}
-        value={props.value}
-        data-testid={props.testid}
-        onInput={(e) => {
-          const v = parseInt((e.target as HTMLInputElement).value, 10);
-          if (!Number.isNaN(v)) props.onChange(Math.max(props.min, Math.min(props.max, v)));
-        }}
-      />
+      <Spinner value={props.value} min={props.min} max={props.max}
+        onChange={props.onChange} testid={props.testid} label={props.label}
+        wide={props.wide} />
       {props.hint && <small>{props.hint}</small>}
     </label>
   );
 }
 
 export function ConfigPanel() {
-  const archiveBad = Number.isNaN(percentToPermille(archiveChance.value));
+  const permille = percentToPermille(archiveChance.value);
+  const archiveBad = Number.isNaN(permille);
+  const grRolled = grMode.value === "rolled";
   return (
     <section class="card">
       <h2>{STRINGS.configTitle}</h2>
       <div class="field-row">
-        <label class="field grow">
-          <span>{STRINGS.seed}</span>
-          <input
-            type="number"
-            min={1}
-            max={9999999}
-            value={seed.value}
-            data-testid="input-seed"
-            onInput={(e) => {
-              const v = parseInt((e.target as HTMLInputElement).value, 10);
-              if (!Number.isNaN(v)) seed.value = v;
-            }}
-          />
-        </label>
+        <SpinField label={STRINGS.seed} value={seed.value} min={1} max={9999999}
+          onChange={(v) => (seed.value = v)} testid="input-seed" wide />
         <button class="ghost" data-testid="btn-randomize" onClick={() => (seed.value = randomSeed())}>
           {STRINGS.randomize}
         </button>
       </div>
       <div class="field-row">
-        <NumberField label={STRINGS.eras} value={eras.value} min={1} max={60}
+        <SpinField label={STRINGS.eras} value={eras.value} min={1} max={500}
           onChange={(v) => (eras.value = v)} testid="input-eras" />
-        <label class="field">
+        <label class={`field ${panelSize.value !== "5x6" ? "off-canon" : ""}`}>
           <span>{STRINGS.panelSize}</span>
           <select
             value={panelSize.value}
@@ -84,7 +71,7 @@ export function ConfigPanel() {
 
       <h3>{STRINGS.dialsTitle}</h3>
       <div class="field-row">
-        <label class={`field ${archiveBad ? "invalid" : ""}`}>
+        <label class={`field ${archiveBad ? "invalid" : ""} ${permille > 0 ? "off-canon" : ""}`}>
           <span>{STRINGS.archiveChance}</span>
           <input
             type="text"
@@ -94,17 +81,18 @@ export function ConfigPanel() {
             onInput={(e) => (archiveChance.value = (e.target as HTMLInputElement).value)}
           />
         </label>
-        <NumberField label={STRINGS.extendCap} value={extendCap.value} min={0} max={20}
-          onChange={(v) => (extendCap.value = v)} hint={STRINGS.extendCapHint} />
+        <SpinField label={STRINGS.extendCap} value={extendCap.value} min={0} max={20}
+          onChange={(v) => (extendCap.value = v)} hint={STRINGS.extendCapHint}
+          offCanon={extendCap.value !== 4} />
       </div>
       <div class="field-row">
-        <NumberField label={STRINGS.strokeDie} value={strokeDie.value} min={2} max={20}
-          onChange={(v) => (strokeDie.value = v)} />
-        <NumberField label={STRINGS.strokeAdd} value={strokeAdd.value} min={0} max={10}
-          onChange={(v) => (strokeAdd.value = v)} />
+        <SpinField label={STRINGS.strokeDie} value={strokeDie.value} min={2} max={20}
+          onChange={(v) => (strokeDie.value = v)} offCanon={strokeDie.value !== 4} />
+        <SpinField label={STRINGS.strokeAdd} value={strokeAdd.value} min={0} max={10}
+          onChange={(v) => (strokeAdd.value = v)} offCanon={strokeAdd.value !== 1} />
       </div>
       <div class="field-row">
-        <label class="field">
+        <label class={`field ${grRolled ? "off-canon" : ""}`}>
           <span>{STRINGS.greatridgeMode}</span>
           <select
             value={grMode.value}
@@ -115,12 +103,12 @@ export function ConfigPanel() {
             <option value="rolled">{STRINGS.greatridgeRolled}</option>
           </select>
         </label>
-        {grMode.value === "rolled" && (
+        {grRolled && (
           <>
-            <NumberField label={STRINGS.greatridgeDie} value={grDie.value} min={2} max={20}
-              onChange={(v) => (grDie.value = v)} />
-            <NumberField label={STRINGS.greatridgeAdd} value={grAdd.value} min={0} max={10}
-              onChange={(v) => (grAdd.value = v)} />
+            <SpinField label={STRINGS.greatridgeDie} value={grDie.value} min={2} max={20}
+              onChange={(v) => (grDie.value = v)} offCanon />
+            <SpinField label={STRINGS.greatridgeAdd} value={grAdd.value} min={0} max={10}
+              onChange={(v) => (grAdd.value = v)} offCanon />
           </>
         )}
       </div>

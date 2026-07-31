@@ -29,7 +29,7 @@ import { FilesBar } from "./FilesBar";
 import { MapView } from "./MapView";
 import { NavPanel } from "./NavPanel";
 import { NowPanel } from "./NowPanel";
-import { RecordView } from "./RecordView";
+import { ReportCard } from "./ReportCard";
 import { StatsStrip } from "./StatsStrip";
 
 function RunBar() {
@@ -112,13 +112,11 @@ export function App() {
           <FilesBar />
         </div>
         <div class="col-main">
+          <NavPanel />
           <MapView />
-          <div class="now-nav">
-            <NowPanel />
-            <NavPanel />
-          </div>
+          <NowPanel />
           <StatsStrip />
-          <RecordView />
+          <ReportCard />
         </div>
       </main>
     </>

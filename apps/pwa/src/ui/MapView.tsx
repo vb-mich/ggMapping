@@ -176,14 +176,6 @@ export function MapView() {
           </span>
         ))}
       </div>
-      {world.value && world.value.chronicle.era_rows.length > 0 && (
-        <details class="era-rows" open>
-          <summary>{STRINGS.eraRowsTitle}</summary>
-          <pre data-testid="era-rows">
-            {world.value.chronicle.era_rows.join("\n")}
-          </pre>
-        </details>
-      )}
     </section>
   );
 }

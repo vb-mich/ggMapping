@@ -16,6 +16,7 @@
   --ok: #6fae4e;
   --error: #e06050;
   --chip-bg: #2b2721;
+  --off-canon: #d9822b;
 }
 
 :root[data-theme="light"] {
@@ -33,6 +34,7 @@
   --ok: #3e7d24;
   --error: #c0392b;
   --chip-bg: #f3efe7;
+  --off-canon: #b35c00;
 }
 
 * { box-sizing: border-box; }
@@ -111,6 +113,32 @@ button:disabled { opacity: 0.45; cursor: default; }
   font-size: 0.82rem; color: var(--muted); cursor: pointer;
   margin: 0.15rem 0;
 }
+
+/* out-of-canon signal: bold dark orange on the parameter's label */
+.field.off-canon > span,
+td.off-canon,
+.toggle.off-canon {
+  color: var(--off-canon);
+  font-weight: 700;
+}
+
+/* the numeric spinbox */
+.spin {
+  display: inline-flex; align-items: center;
+  border: 1px solid var(--card-edge); border-radius: 6px;
+  background: var(--field-bg); padding: 0.1rem 0.15rem;
+}
+.spin input {
+  border: none; background: transparent; color: var(--ink);
+  width: 2.6rem; font: inherit; padding: 0.15rem 0.3rem;
+}
+.spin input.wide { width: 5.2rem; }
+.spin input:focus { outline: none; }
+.spin button.spin-btn {
+  border: none; background: transparent; color: var(--muted);
+  padding: 0.15rem 0.3rem; font-size: 0.6rem; line-height: 1; cursor: pointer;
+}
+.spin button.spin-btn:hover { color: var(--ink); }
 
 .table-scroll { overflow-x: auto; }
 .deck-table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }

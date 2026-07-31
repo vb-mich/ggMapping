@@ -37,7 +37,6 @@ export const STRINGS = {
   deckWork: "Work avg",
   deckMood: "Mood",
   deckWorkNumbers: "Printed work numbers",
-  moodDefault: "default",
   moodSettle: "settle",
   moodLevel: "level",
   moodRise: "rise",
@@ -67,16 +66,9 @@ export const STRINGS = {
   zoomIn: "Zoom in",
   zoomOut: "Zoom out",
   zoomFit: "Fit",
-  eraRowsTitle: "Era rows",
   legendTitle: "Legend",
 
-  // record view
-  recordTitle: "Record",
-  filterEra: "Era",
-  filterAge: "Age",
-  filterPanel: "Panel",
-  filterAll: "all",
-  recordEmpty: "No record yet: run the simulator.",
+  // report
   reportTitle: "Final report",
 
   // files
@@ -140,9 +132,6 @@ export const STRINGS = {
   statEmbellish: "embellish",
   statFirsts: "firsts",
   statNone: "none",
-
-  // record extras
-  ageDetails: "Age details",
 
   // files extras
   saveConfig: "Save config",

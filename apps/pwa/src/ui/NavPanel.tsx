@@ -5,6 +5,7 @@ import { useSignal, useSignalEffect } from "@preact/signals";
 
 import { STRINGS } from "../strings";
 import { endPosition, position, seekTo, snapshotEras, status } from "../state";
+import { Spinner } from "./Spinner";
 
 export function NavPanel() {
   const eraBox = useSignal("1");
@@ -57,15 +58,15 @@ export function NavPanel() {
       <div class="field-row">
         <label class="field">
           <span>{STRINGS.nowEra}</span>
-          <input type="number" min={firstEra} max={end.era} value={eraBox.value}
-            data-testid="nav-era"
-            onInput={(e) => (eraBox.value = (e.target as HTMLInputElement).value)} />
+          <Spinner value={parseInt(eraBox.value, 10) || firstEra} min={firstEra}
+            max={end.era} label={STRINGS.nowEra} testid="nav-era"
+            onChange={(v) => (eraBox.value = String(v))} />
         </label>
         <label class="field">
           <span>{STRINGS.nowAge}</span>
-          <input type="number" min={0} max={25} value={ageBox.value}
-            data-testid="nav-age"
-            onInput={(e) => (ageBox.value = (e.target as HTMLInputElement).value)} />
+          <Spinner value={parseInt(ageBox.value, 10) || 0} min={0} max={25}
+            label={STRINGS.nowAge} testid="nav-age"
+            onChange={(v) => (ageBox.value = String(v))} />
         </label>
         <button disabled={disabled} data-testid="nav-go"
           onClick={() => seekTo(parseInt(eraBox.value, 10) || firstEra, parseInt(ageBox.value, 10) || 0)}>

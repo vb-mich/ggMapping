@@ -1,57 +1,38 @@
 // The deck editor: add, remove, and edit cards at the CONTRACTS §6 config
 // granularity. Printed work numbers come from the engine's own deck preview.
+// A row's label turns bold dark-orange when it leaves the handbook's canon.
 // Chapter 10's recommendations appear as soft warnings — never blocks.
 import { useComputed } from "@preact/signals";
 
-import { DEFAULT_MOODS, DEFAULT_WORK_AVG, KINDS, KIND_LABELS, type Kind } from "../deck";
+import { DEFAULT_COPIES, DEFAULT_MOODS, DEFAULT_WORK_AVG, KINDS, KIND_LABELS, type Kind } from "../deck";
 import { STRINGS } from "../strings";
-import { deckExportJson } from "../state";
-import { download } from "./download";
 import {
   addpanelCopies,
   deckCopies,
+  deckExportJson,
   deckPreview,
   flatWork,
   moodOverrides,
   warnings,
   workOverrides,
 } from "../state";
-
-function Stepper(props: { kind: string; value: number; max: number; onChange: (v: number) => void }) {
-  return (
-    <span class="stepper" data-testid={`deck-copies-${props.kind}`}>
-      <button
-        class="ghost"
-        aria-label={`${KIND_LABELS[props.kind]} -`}
-        data-testid={`deck-dec-${props.kind}`}
-        onClick={() => props.onChange(Math.max(0, props.value - 1))}
-      >
-        −
-      </button>
-      <b>{props.value}</b>
-      <button
-        class="ghost"
-        aria-label={`${KIND_LABELS[props.kind]} +`}
-        data-testid={`deck-inc-${props.kind}`}
-        onClick={() => props.onChange(Math.min(props.max, props.value + 1))}
-      >
-        +
-      </button>
-    </span>
-  );
-}
+import { download } from "./download";
+import { Spinner } from "./Spinner";
 
 function MoodSelect(props: { kind: string }) {
-  const current = moodOverrides.value[props.kind] ?? "";
+  const effective = moodOverrides.value[props.kind] ?? DEFAULT_MOODS[props.kind];
   return (
     <select
-      value={current}
+      value={effective}
+      data-testid={`deck-mood-${props.kind}`}
       onChange={(e) => {
         const v = (e.target as HTMLSelectElement).value;
-        moodOverrides.value = { ...moodOverrides.value, [props.kind]: v || undefined };
+        moodOverrides.value = {
+          ...moodOverrides.value,
+          [props.kind]: v === DEFAULT_MOODS[props.kind] ? undefined : v,
+        };
       }}
     >
-      <option value="">{`${STRINGS.moodDefault} (${DEFAULT_MOODS[props.kind]})`}</option>
       <option value="settle">{STRINGS.moodSettle}</option>
       <option value="level">{STRINGS.moodLevel}</option>
       <option value="rise">{STRINGS.moodRise}</option>
@@ -59,26 +40,31 @@ function MoodSelect(props: { kind: string }) {
   );
 }
 
-function WorkInput(props: { kind: string }) {
-  const v = workOverrides.value[props.kind];
+function WorkSpinner(props: { kind: string }) {
+  const effective = workOverrides.value[props.kind] ?? DEFAULT_WORK_AVG[props.kind];
   return (
-    <input
-      type="number"
+    <Spinner
+      value={effective}
       min={3}
       max={12}
-      class="work"
-      placeholder={String(DEFAULT_WORK_AVG[props.kind])}
-      value={v ?? ""}
-      data-testid={`deck-work-${props.kind}`}
-      onInput={(e) => {
-        const raw = (e.target as HTMLInputElement).value;
-        const n = parseInt(raw, 10);
+      label={`${KIND_LABELS[props.kind]} ${STRINGS.deckWork}`}
+      testid={`deck-work-${props.kind}`}
+      onChange={(v) => {
         workOverrides.value = {
           ...workOverrides.value,
-          [props.kind]: raw === "" || Number.isNaN(n) ? undefined : n,
+          [props.kind]: v === DEFAULT_WORK_AVG[props.kind] ? undefined : v,
         };
       }}
     />
+  );
+}
+
+function offCanon(kind: string, copies: number, defaultCopies: number): boolean {
+  return (
+    copies !== defaultCopies ||
+    workOverrides.value[kind] != null ||
+    (moodOverrides.value[kind] != null &&
+      moodOverrides.value[kind] !== DEFAULT_MOODS[kind])
   );
 }
 
@@ -125,30 +111,38 @@ export function DeckEditor() {
         <tbody>
           {KINDS.map((k) => (
             <tr key={k}>
-              <td>{KIND_LABELS[k]}</td>
+              <td class={offCanon(k, deckCopies.value[k], DEFAULT_COPIES[k]) ? "off-canon" : ""}>
+                {KIND_LABELS[k]}
+              </td>
               <td>
-                <Stepper kind={k} value={deckCopies.value[k]} max={12}
+                <Spinner value={deckCopies.value[k]} min={0} max={12}
+                  label={KIND_LABELS[k]}
+                  incTestid={`deck-inc-${k}`} decTestid={`deck-dec-${k}`}
                   onChange={(v) => setCopies(k, v)} />
               </td>
-              <td><WorkInput kind={k} /></td>
+              <td><WorkSpinner kind={k} /></td>
               <td><MoodSelect kind={k} /></td>
               <td class="printed">{(printed.value[k] ?? []).join(", ")}</td>
             </tr>
           ))}
           <tr class="addpanel-row">
-            <td>{KIND_LABELS.addpanel}</td>
+            <td class={offCanon("addpanel", addpanelCopies.value, 1) ? "off-canon" : ""}>
+              {KIND_LABELS.addpanel}
+            </td>
             <td>
-              <Stepper kind="addpanel" value={addpanelCopies.value} max={4}
+              <Spinner value={addpanelCopies.value} min={0} max={4}
+                label={KIND_LABELS.addpanel}
+                incTestid="deck-inc-addpanel" decTestid="deck-dec-addpanel"
                 onChange={(v) => (addpanelCopies.value = v)} />
             </td>
-            <td><WorkInput kind="addpanel" /></td>
+            <td><WorkSpinner kind="addpanel" /></td>
             <td><MoodSelect kind="addpanel" /></td>
             <td class="printed" />
           </tr>
         </tbody>
       </table>
       </div>
-      <label class="toggle">
+      <label class={`toggle ${flatWork.value ? "off-canon" : ""}`}>
         <input
           type="checkbox"
           checked={flatWork.value}

@@ -161,7 +161,6 @@ export const followPanel = signal(false);
 export const showPanelNames = signal(true);
 export const traceReworks = signal(true);
 export const dimArchived = signal(true);
-export const ageDetails = signal(false); // the record's detail toggle
 
 // --- run state --------------------------------------------------------------
 export type Status = "idle" | "running" | "done" | "paused" | "error";
