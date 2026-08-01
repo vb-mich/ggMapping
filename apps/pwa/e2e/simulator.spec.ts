@@ -216,8 +216,11 @@ test("the lineage badge comes from the engine and rides exported configs", async
   // and the exported config carries it, distinct from the package version
   const cfg = JSON.parse(await downloadText(page, "btn-save-config"));
   expect(cfg.lineage).toBe(shown);
-  const version = await page.getByTestId("app-version").textContent();
-  expect(version).not.toContain(shown); // the two are different facts
+  // the package version is a separate fact in a separate place: same shape
+  // family, different value, and neither is derived from the other
+  const version = (await page.getByTestId("app-version").textContent())?.trim();
+  expect(version).toMatch(/^v\d+\.\d+\.\d+\+/); // package version + build sha
+  expect(version).not.toBe(shown);
 });
 
 test("a foreign-lineage file loads, with a notice, and is not migrated", async ({
