@@ -59,3 +59,10 @@ Every random draw flows through one generator with one specification, so any por
 * The city lives, documented: every visit to a full panel gives its tallest settlement one climb or sprawl step, whatever the card. The rule was always in the engine (parent Living Map heritage) and in the community's hands; chapter 6 now states it.
 * New oracle lineage (the removed city-lives-on-addpanel draws shift the stream). Canon at 20 eras: about 36 panels, 95 reworks per panel, water near 39: the loved game, unchanged in character.
 * Update packages are repo-shaped from this version on: docs/ and reference/sim_vNN.py paths, an UPDATE.md at the root, no collisions with frozen files.
+
+## v0.7 canon, measured honestly (20 seeds), and a methodology rule
+* Twenty seeds at 20 eras: panels 34.6 (sd 0.8, band 33-36); reworks per panel 96.8 (sd 3.4, band 90-104); water 38.3 (sd 9.0, band 19.9-56.8).
+* METHODOLOGY, on the record: water is a high-variance statistic in this game. Its seed-to-seed spread (sd 9 points) dwarfs every lineage-to-lineage shift measured so far, and only 8 of 20 canon worlds fall inside 30-40 at all. Panels and patina are stable at three seeds; WATER IS NOT. Every single-number water claim in these notes before this section (39, 41, 35.4, 44) was a three or five seed read and should be treated as noise, not calibration. Quote water as a band from 20+ seeds, or do not quote it.
+* Consequence for tuning: no deck, dial, or rules change may be justified by a water delta measured at small n. Panels, patina, elongation, and unity remain usable at three to five seeds.
+* Tooling parity: --no-render is now in the research reference (it guards both the final render and the per-era snapshot hook), log bytes proven unchanged. It ships inside the twin from the next package on; the app repo need not re-add it again.
+* Flag for the next lineage break: the metrics footer prints "target 30-40" beside water. That target describes a mean, not a per-world expectation, and it is inherited from the parent lineage's calibration. Candidate fix: reword to a typical band or drop it. It is log text, so it rides a lineage break with the gate.
