@@ -50,7 +50,9 @@ async function makeFixture(page: Page, seed = 0): Promise<Truth> {
     cv.width = frameW;
     cv.height = frameH;
     const g = cv.getContext("2d")!;
-    g.fillStyle = "#2a2622";
+    // the HARD background: a light wooden table, barely darker than paper —
+    // brightness cannot separate this; the detector's color pass must
+    g.fillStyle = "#ba9469";
     g.fillRect(0, 0, frameW, frameH);
     g.fillStyle = "#efe8d8";
     g.beginPath();
@@ -73,6 +75,14 @@ async function makeFixture(page: Page, seed = 0): Promise<Truth> {
       const a = lerp(quad[0], quad[1], t), b = lerp(quad[3], quad[2], t);
       g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
     }
+    // a soft diagonal shadow band over paper and table alike, like a phone
+    // held over a table always casts
+    const shade = g.createLinearGradient(0, 0, frameW, frameH);
+    shade.addColorStop(0, "rgba(0,0,0,0.30)");
+    shade.addColorStop(0.5, "rgba(0,0,0,0.10)");
+    shade.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = shade;
+    g.fillRect(0, 0, frameW, frameH);
     return { dataUrl: cv.toDataURL("image/png"), corners: quad };
   }, { ...FIXTURE, seed });
 }
@@ -203,10 +213,37 @@ test("the manual quad path completes: corners drag, the scan still files", async
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
   await page.mouse.move(end.x, end.y, { steps: 8 });
+  // while a handle drags, the loupe magnifies the spot the finger covers
+  await expect(page.getByTestId("drag-loupe")).toBeVisible();
+  if (test.info().project.name === "mobile") {
+    await page.screenshot({ path: "e2e-artifacts/mymap-loupe.png" });
+  }
   await page.mouse.up();
+  await expect(page.getByTestId("drag-loupe")).toBeHidden();
 
   const moved = await handlePos(page, 0);
   expect(Math.hypot(moved.x - target.x, moved.y - target.y)).toBeLessThan(imgW * 0.03);
+
+  // dragging a mid-edge handle translates its whole edge: both corners move
+  const midHandle = page.getByTestId("quad-mid-0");
+  const mid = {
+    x: Number(await midHandle.getAttribute("data-x")),
+    y: Number(await midHandle.getAttribute("data-y")),
+  };
+  const c0 = await handlePos(page, 0);
+  const c1 = await handlePos(page, 1);
+  const delta = { x: -40, y: 35 };
+  const midStart = toScreen(mid);
+  const midEnd = toScreen({ x: mid.x + delta.x, y: mid.y + delta.y });
+  await page.mouse.move(midStart.x, midStart.y);
+  await page.mouse.down();
+  await page.mouse.move(midEnd.x, midEnd.y, { steps: 8 });
+  await page.mouse.up();
+  const c0b = await handlePos(page, 0);
+  const c1b = await handlePos(page, 1);
+  const tol = imgW * 0.03;
+  expect(Math.hypot(c0b.x - (c0.x + delta.x), c0b.y - (c0.y + delta.y))).toBeLessThan(tol);
+  expect(Math.hypot(c1b.x - (c1.x + delta.x), c1b.y - (c1.y + delta.y))).toBeLessThan(tol);
 
   await page.getByTestId("btn-straighten").click();
   await expect(page.getByTestId("scan-flow")).toHaveAttribute("data-stage", "adjust", {

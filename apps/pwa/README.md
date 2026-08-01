@@ -57,11 +57,18 @@ gone.
 
 ### Border detection — the choice and its size
 
-Hand-rolled, dependency-free: grayscale → box blur → Otsu threshold → largest
-bright connected component → convex hull → maximum-area quad (the subject is a
-bright sheet on a darker table, which a brightness threshold separates well).
+Hand-rolled, dependency-free, two passes. First, COLOR: the table's
+chromaticity is estimated from the frame's border ring (median), every pixel
+is scored by its chromatic distance from that background, and Otsu splits the
+scores — chromaticity survives what brightness does not: white paper on a
+light wooden table, and the soft shadow band a phone at a table always casts.
+Second, when color finds nothing (a neutral-colored dark table): the plain
+brightness threshold. Both passes end the same way: morphological cleanup →
+largest connected component → convex hull → maximum-area quad, validated
+against a real invoice-on-light-wood photo and locked in by a synthetic
+wood-and-shadow fixture in the unit and e2e suites.
 It lives in [src/digitalizer/detect.ts](src/digitalizer/detect.ts) behind a
-dynamic import, so it builds to its **own lazy chunk: ~2.7 KB (~1.2 KB gzip)**
+dynamic import, so it builds to its **own lazy chunk: ~3.6 KB (~1.5 KB gzip)**
 — loaded on first use of the scan screen, never with the app shell, and
 precached by the service worker so scanning works offline after the first
 load. A vision library (OpenCV-class, megabytes of WASM) was considered and

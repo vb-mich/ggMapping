@@ -1,15 +1,30 @@
-// Border detection on synthetic frames: a bright sheet on a dark table must
-// yield its four corners; hostile frames must yield null (the caller then
-// offers the default quad — detection is a convenience, never a requirement).
+// Border detection on synthetic frames. The hard case is the law here: WHITE
+// paper on a LIGHT wooden table under a soft shadow band — brightness cannot
+// separate that (the color pass must); the bright-sheet-on-dark-table case
+// proves the brightness fallback; hostile frames must yield null (the caller
+// then offers the default quad — detection is a convenience, never a
+// requirement).
 import { describe, expect, it } from "vitest";
 
 import { detectQuad } from "../src/digitalizer/detect";
 import { defaultQuad, type Pt, type Quad } from "../src/digitalizer/geometry";
 import { makeRaster, type Raster } from "../src/digitalizer/raster";
 
-// A filled convex quad (the "paper") over a dark background, plus faint grid
-// lines inside so the fixture looks like a drawn panel, not a blank card.
-function frame(w: number, h: number, quad: Quad, bg = 40, paper = 220): Raster {
+type Rgb = [number, number, number];
+
+// A filled convex quad (the "paper") over a background, plus grid lines
+// inside so the fixture looks like a drawn panel, not a blank card. The
+// background can be a flat gray or wood-toned with grain and a diagonal
+// shadow gradient that dims paper and table alike (a phone at a table).
+function frame(
+  w: number,
+  h: number,
+  quad: Quad,
+  opts: { bg: Rgb; paper: Rgb; grain?: number; shadow?: boolean } = {
+    bg: [40, 40, 40],
+    paper: [220, 220, 220],
+  },
+): Raster {
   const r = makeRaster(w, h);
   const inside = (x: number, y: number) => {
     let sign = 0;
@@ -26,8 +41,17 @@ function frame(w: number, h: number, quad: Quad, bg = 40, paper = 220): Raster {
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
-      const v = inside(x, y) ? paper : bg;
-      r.data[i] = r.data[i + 1] = r.data[i + 2] = v;
+      const src = inside(x, y) ? opts.paper : opts.bg;
+      // deterministic "grain": a streaky hash along x, table only
+      const grain =
+        !inside(x, y) && opts.grain
+          ? ((((x * 7 + (y >> 3) * 131) * 2654435761) >>> 24) % opts.grain) - opts.grain / 2
+          : 0;
+      // a soft diagonal shadow over EVERYTHING, darkest at the top-left
+      const shade = opts.shadow ? 0.72 + (0.28 * (x + y)) / (w + h) : 1;
+      r.data[i] = Math.max(0, Math.min(255, (src[0] + grain) * shade));
+      r.data[i + 1] = Math.max(0, Math.min(255, (src[1] + grain) * shade));
+      r.data[i + 2] = Math.max(0, Math.min(255, (src[2] + grain) * shade));
       r.data[i + 3] = 255;
     }
   // grid strokes: darker lines across the quad's interior
@@ -57,8 +81,30 @@ function frame(w: number, h: number, quad: Quad, bg = 40, paper = 220): Raster {
 
 const near = (a: Pt, b: Pt, tol: number) => Math.hypot(a.x - b.x, a.y - b.y) <= tol;
 
+const WOOD: Rgb = [186, 148, 105]; // a light table, barely darker than paper
+const PAPER: Rgb = [235, 231, 222];
+
 describe("detectQuad", () => {
-  it("finds the corners of a skewed bright sheet", () => {
+  it("finds white paper on a LIGHT wooden table under a shadow band (the color pass)", () => {
+    const truth: Quad = [
+      { x: 55, y: 35 },
+      { x: 275, y: 50 },
+      { x: 260, y: 215 },
+      { x: 70, y: 200 },
+    ];
+    const img = frame(320, 240, truth, {
+      bg: WOOD,
+      paper: PAPER,
+      grain: 18,
+      shadow: true,
+    });
+    const found = detectQuad(img);
+    expect(found).not.toBeNull();
+    const tol = Math.hypot(320, 240) * 0.03; // 3% of the diagonal
+    for (let i = 0; i < 4; i++) expect(near(found![i], truth[i], tol)).toBe(true);
+  });
+
+  it("finds the corners of a bright sheet on a dark neutral table (the brightness fallback)", () => {
     const truth: Quad = [
       { x: 60, y: 40 },
       { x: 270, y: 55 },
