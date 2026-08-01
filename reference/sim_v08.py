@@ -127,7 +127,7 @@ class Sim:
         self.cfg = dict(deck=DEFAULT_DECK, wake_era=2, alive=True, fragile=True,
                         tile_w=5, tile_h=6, addpanel=None, semi=True,
                         work_spread=True, work=None, mood=None,
-                        archive_chance=0, exp_fields=False,
+                        archive_chance=0,
                         stroke_die=4, stroke_add=1,
                         greatridge_die=None, greatridge_add=0,
                         extend_cap=4)
@@ -645,10 +645,10 @@ class Sim:
         return DENS.get(self.people.get(u), 0)
 
     def constrains(self, u):
+        # fields are not people: a farmed unit never restricts a density step
         return (u in self.base and self.base[u] in (PL, CO)
                 and u not in self.wild
-                and not (self.cfg["exp_fields"]
-                         and str(self.people.get(u, "")).startswith("farm")))
+                and not str(self.people.get(u, "")).startswith("farm"))
 
     def dens_legal(self, u, d):
         for n in self.side_nb(u):
@@ -661,9 +661,8 @@ class Sim:
         for dx in (-1, 0, 1):
             for dy in (-1, 0, 1):
                 v = (u[0] + dx, u[1] + dy)
-                if (dx or dy) and v in self.people and not (
-                        self.cfg["exp_fields"]
-                        and str(self.people[v]).startswith("farm")):
+                if (dx or dy) and v in self.people and not str(
+                        self.people[v]).startswith("farm"):
                     n += 1
         return n >= need
 
@@ -724,8 +723,7 @@ class Sim:
         for u in cand_units:
             if u in self.people or u in self.wild:
                 continue
-            if not ((self.cfg["exp_fields"] and kind.startswith("farm"))
-                    or self.dens_legal(u, d)):
+            if not (kind.startswith("farm") or self.dens_legal(u, d)):
                 continue
             if u in self.base:
                 if self.base[u] in bases:
@@ -781,12 +779,12 @@ class Sim:
     def grow_once(self, comp):
         g = self.die(6, "grow")
         if g <= 2:
-            lows = (sorted(u for u in comp if self.people.get(u) == "farm_lo")
-                    if self.cfg["exp_fields"] else [])
+            lows = sorted(u for u in comp if self.people.get(u) == "farm_lo")
             if lows:
                 u = lows[0] if len(lows) == 1 else self.pick(lows, "deepen field")
                 self.people[u] = "farm_hi"
-                self.log("    the field deepens")
+                r0, c0 = rc_of(u)
+                self.ev(f"the field deepens at r{r0}c{c0} {tname(tile_of(u))}")
             elif not self.place_people(self.touching(comp), "farm_lo", {PL}):
                 self.skip("settlement", "no room for farmland")
         elif g <= 4:
@@ -1357,9 +1355,6 @@ def main():
                     help="tile geometry WxH: 5x6 mini-map (canon), 8x10 full-map, or any")
     ap.add_argument("--addpanel", type=int, default=None,
                     help="Add a Tile copies at the wake (full-map recipe: 2)")
-    ap.add_argument("--exp-fields", action="store_true",
-                    help="EXPERIMENTAL: the density ladder ignores fields, "
-                         "and fields deepen before they spread")
     ap.add_argument("--archive-chance", type=float, default=0,
                     help="percent chance a panel is archived upon completion")
     ap.add_argument("--stroke-die", type=int, default=4)
@@ -1396,7 +1391,7 @@ def main():
     os.makedirs(args.out, exist_ok=True)
     tw, th = (int(v) for v in args.tile.lower().split("x"))
     sim = Sim(seed, args.eras, dict(alive=True, semi=True,
-                                    archive_chance=args.archive_chance, exp_fields=args.exp_fields,
+                                    archive_chance=args.archive_chance,
                                     stroke_die=args.stroke_die, stroke_add=args.stroke_add,
                                     greatridge_die=args.greatridge_die,
                                     greatridge_add=args.greatridge_add,

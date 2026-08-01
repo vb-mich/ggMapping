@@ -12,7 +12,7 @@ Usage:
 import argparse, os, re, subprocess, sys, tempfile
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ORACLE = os.path.join(REPO, "reference", "sim_v07.py")
+ORACLE = os.path.join(REPO, "reference", "sim_v08.py")
 
 MATRIX = [
     ("base-11",         ["--seed", "11",  "--eras", "20"]),
@@ -28,12 +28,10 @@ MATRIX = [
                          "--greatridge-die", "6", "--greatridge-add", "2", "--extend-cap", "0"]),
 ]
 
-# EXPERIMENTAL cells (handbook ch. 11): never part of the canon matrix, never
-# mixed into its result. They prove the DIALED code paths agree across
-# implementations — the canon cells above exercise none of them.
-EXPERIMENTAL = [
-    ("exp-fields-42", ["--seed", "42", "--eras", "20", "--exp-fields"]),
-]
+# Experimental cells (CONTRACTS §11) live here while an experiment is live.
+# None is: v0.8 promoted the fields dial into canon, so its configuration is
+# simply the default and every canon cell above exercises those paths.
+EXPERIMENTAL: list[tuple[str, list[str]]] = []
 
 # The total vocabulary law (CONTRACTS §1, v0.5): no exemptions remaining.
 FORBIDDEN = re.compile(rb"tile|visit|rung", re.IGNORECASE)
@@ -123,10 +121,10 @@ def main():
     print("GATE: " + ("GREEN - byte-identical across all cells" if ok
                       else "RED - mismatches above"))
 
-    if not args.skip_experimental:
+    if EXPERIMENTAL and not args.skip_experimental:
         exp, exp_ok = run_matrix(EXPERIMENTAL, "exp")
         print()
-        report(exp, "EXPERIMENTAL CELLS (handbook ch. 11 - NOT canon)")
+        report(exp, "EXPERIMENTAL CELLS (CONTRACTS S11 - NOT canon)")
         print("EXPERIMENTAL: " + ("GREEN - byte-identical across all cells" if exp_ok
                                   else "RED - mismatches above"))
         ok &= exp_ok

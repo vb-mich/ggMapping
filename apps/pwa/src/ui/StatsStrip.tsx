@@ -3,7 +3,7 @@
 import { useComputed } from "@preact/signals";
 
 import { STRINGS } from "../strings";
-import { events, experimental, world } from "../state";
+import { events, world } from "../state";
 
 // §2.3 people densities, for the peak-density readout.
 const DENSITY: Record<string, number> = {
@@ -58,12 +58,6 @@ export function StatsStrip() {
     <section class="card stats" data-testid="stats-strip">
       <div class="stats-head">
         <h2>{STRINGS.statsHeading}</h2>
-        {experimental.value && (
-          <span class="chip exp-chip" data-testid="experimental-badge"
-            title={STRINGS.expBadgeTitle}>
-            {STRINGS.expBadge}
-          </span>
-        )}
       </div>
       <div class="stats-rungs">
         {(

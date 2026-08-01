@@ -14,7 +14,7 @@ Checks read the rendered log and the engine's structured event stream; they
 assert properties of the game, never byte equality (that is the gate's job).
 
 Usage:
-  python scripts/run_conformance.py --native build/jerrymap.exe [--twin reference/sim_v07.py]
+  python scripts/run_conformance.py --native build/jerrymap.exe [--twin reference/sim_v08.py]
 """
 import argparse
 import os
@@ -24,7 +24,7 @@ import sys
 import tempfile
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_TWIN = os.path.join(REPO, "reference", "sim_v07.py")
+DEFAULT_TWIN = os.path.join(REPO, "reference", "sim_v08.py")
 
 checks = []
 
@@ -67,6 +67,89 @@ def ages(lines):
     if cur:
         out.append(cur)
     return out
+
+
+# --------------------------------------------------------------------------
+# The people map, rebuilt from the log.
+#
+# Every settlement rule in chapter 9 is about neighbours, so a check on those
+# rules needs positions. The log gives them: every placement names its unit,
+# and the two things that move afterwards — an upgrade and a crumble — change a
+# unit's KIND, never the set of occupied units, which is what a settlement
+# component is built from. One event escapes: "the anomaly strikes the homes"
+# names no unit, so a run carrying one is reconstructed with that unit still
+# standing. The checks below count those and say so.
+PANEL_W, PANEL_H = 5, 6
+
+
+def panel_of_name(s):
+    m = re.match(r"^([NS])(\d+)/([EW])(\d+)$", s)
+    if not m:
+        return None
+    ty = int(m.group(2)) * (1 if m.group(1) == "N" else -1)
+    tx = int(m.group(4)) * (1 if m.group(3) == "E" else -1)
+    return tx, ty
+
+
+def unit_at(t, row, col):
+    """The handbook's r/c inside a panel -> the world unit (twin geometry)."""
+    tx, ty = t
+    ox = (tx - 1 if tx > 0 else tx) * PANEL_W
+    oy = (-ty if ty > 0 else -ty - 1) * PANEL_H
+    return ox + col - 1, oy + row - 1
+
+
+def around(u):
+    return [(u[0] + dx, u[1] + dy)
+            for dx in (-1, 0, 1) for dy in (-1, 0, 1) if dx or dy]
+
+
+def component_at(people, u):
+    """The settlement component u belongs to: people, flooded 8-ways."""
+    comp, q = set(), [u]
+    while q:
+        w = q.pop()
+        if w in comp:
+            continue
+        comp.add(w)
+        for v in around(w):
+            if v in people and v not in comp:
+                q.append(v)
+    return comp
+
+
+PLACE_RE = re.compile(r"^    \d+\. people (\w+) at r(\d+)c(\d+) (\S+)")
+DEEPEN_RE = re.compile(r"^    \d+\. the field deepens at r(\d+)c(\d+) (\S+)")
+GROWDIE_RE = re.compile(r"^    d6=(\d) \(grow\)$")
+
+
+def walk_people(lines):
+    """Replay the log's settlement events, yielding (event, unit, kind, band,
+    people-before) with `people` mutated in place after each yield."""
+    people, band = {}, None
+    for l in lines:
+        g = GROWDIE_RE.match(l)
+        if g:
+            band = int(g.group(1))
+            continue
+        d = DEEPEN_RE.match(l)
+        if d:
+            p = panel_of_name(d.group(3))
+            u = unit_at(p, int(d.group(1)), int(d.group(2)))
+            yield "deepen", u, people.get(u), band, people
+            people[u] = "farm_hi"
+            band = None
+            continue
+        m = PLACE_RE.match(l)
+        if m:
+            p = panel_of_name(m.group(4))
+            u = unit_at(p, int(m.group(2)), int(m.group(3)))
+            yield "place", u, m.group(1), band, people
+            people[u] = m.group(1)
+            band = None
+            continue
+        if l.startswith("    ") and "settlement: " in l:
+            band = None
 
 
 # --------------------------------------------------------------------------
@@ -268,6 +351,64 @@ def conform(lines, label):
     check("ch.9", f"{label}: the growth d6 bands are obeyed",
           not bad_grow,
           f"{len(bad_grow)} stray outcome(s), e.g. {bad_grow[0] if bad_grow else ''}")
+
+    # ---- chapter 9: fields are not people (canon since v0.8) --------------
+    # "A farmed unit is not a home. It never blocks a density step, never
+    #  counts as support for one, and is never itself subject to one."
+    # Where the units are is not printed as a map, so the checks below rebuild
+    # it from the placements (see walk_people).
+    #
+    # Beside a town: a field may be sown next to a home however dense. Only
+    # directly-placed urban units can be seen in a log (a climb prints no
+    # unit), so this counts witnesses and asserts there is at least one; it
+    # cannot over-report.
+    URBAN = ("urb_lo", "urb_md", "urb_hi")
+    beside_urban, strikes = [], 0
+    deepenings, clearings, early_clear, unlocatable = [], 0, [], 0
+    for l in lines:
+        if "the anomaly strikes the homes" in l:
+            strikes += 1
+    for ev, u, kind, band, people in walk_people(lines):
+        if ev == "deepen":
+            # it deepened something, and that something was a LOW field, in the
+            # farmland band: "deepen it to high" acts on a low field or not at all
+            deepenings.append((u, kind, band))
+            continue
+        if not kind.startswith("farm"):
+            continue
+        near_urban = [people[v] for v in around(u) if people.get(v) in URBAN]
+        if near_urban:
+            beside_urban.append((u, sorted(near_urban)))
+        if band in (1, 2):
+            # this farmland step cleared new ground; the settlement it grew
+            # from is one of the components the new field touches
+            clearings += 1
+            comps = [component_at(people, v) for v in around(u) if v in people]
+            clean = [c for c in comps
+                     if not any(people.get(w) == "farm_lo" for w in c)]
+            if comps and not clean:
+                early_clear.append(u)
+
+    check("ch.9", f"{label}: a field is sown beside a town, whatever its density",
+          bool(beside_urban),
+          "no witness in this run (climbs print no unit, so only directly "
+          "placed urban units are visible here; the constructed case is in "
+          "engine/tests)")
+    check("ch.9", f"{label}: deepening only ever takes a LOW field, in the d6 1-2 band",
+          bool(deepenings) and all(k == "farm_lo" and b in (1, 2)
+                                   for _, k, b in deepenings),
+          f"{len(deepenings)} deepening(s), offenders: "
+          f"{[d for d in deepenings if d[1] != 'farm_lo' or d[2] not in (1, 2)][:3]}")
+    check("ch.9", f"{label}: the farm step deepens while a low field remains, "
+          f"and only then clears new ground",
+          not early_clear,
+          f"{len(early_clear)} of {clearings} clearing(s) left a low field "
+          f"standing, e.g. {early_clear[:3]}"
+          + (f" (note: {strikes} unlocatable removal(s) in this run)"
+             if strikes else ""))
+    check("ch.9", f"{label}: fields are worked in both intensities and deepen",
+          len(deepenings) > 0 and clearings > 0,
+          f"{len(deepenings)} deepening(s), {clearings} clearing(s)")
 
     # ---- chapter 6, step 7: the calendar ---------------------------------
     # "Move the time dial by 1 age. Remember, every 25 ages, a new era begins."

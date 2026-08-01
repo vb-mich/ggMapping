@@ -18,7 +18,8 @@ export interface JmConfig {
   greatridge_die?: number; // 0 = unset: the length stays chosen
   greatridge_add?: number;
   extend_cap?: number; // 0 = uncapped
-  exp_fields?: boolean; // EXPERIMENTAL, CONTRACTS §11 — default false
+  // a document may still carry the retired `exp_fields` key; it is ignored
+  // and noticed once (CONTRACTS §6.3), never typed back into the config
 }
 
 export interface WorldState {

@@ -27,7 +27,7 @@ import tempfile
 import types
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TWIN = os.path.join(REPO, "reference", "sim_v07.py")
+TWIN = os.path.join(REPO, "reference", "sim_v08.py")
 
 checks = []
 

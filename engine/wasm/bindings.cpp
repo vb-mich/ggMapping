@@ -54,7 +54,7 @@ Config config_from_json(const std::string& text) {
     geti("greatridge_die", cfg.greatridge_die);
     geti("greatridge_add", cfg.greatridge_add);
     geti("extend_cap", cfg.extend_cap);
-    if (j.has("exp_fields")) cfg.exp_fields = j.at("exp_fields").as_bool();
+    // "exp_fields" from the dial era is ignored: those rules are canon now.
     if (j.has("work_spread")) cfg.work_spread = j.at("work_spread").as_bool();
     if (j.has("work_overrides"))
         for (auto& kv : j.at("work_overrides").as_obj())
@@ -74,7 +74,7 @@ const char* stash(Bundle& b, std::string s) {
 
 extern "C" {
 
-const char* jm_version() { return "jerrymap-engine 3.1.0"; }
+const char* jm_version() { return "jerrymap-engine 4.0.0"; }
 
 // The rules lineage this engine speaks (CONTRACTS §9). Seeds do not survive a
 // lineage break, so anything that shares or compares maps must report it — and

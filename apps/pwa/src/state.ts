@@ -31,9 +31,6 @@ export const grAdd = signal(0);
 export const extendCap = signal(4);
 export const flatWork = signal(false);
 
-// EXPERIMENTAL (CONTRACTS §11, handbook ch. 11): not part of the game.
-export const expFields = signal(false);
-export const experimental = computed(() => expFields.value);
 
 // --- the rules lineage ------------------------------------------------------
 // Read from the engine, never hardcoded here: seeds do not survive a lineage
@@ -42,6 +39,9 @@ export const engineLineage = signal("");
 export const engineVersion = signal("");
 // Set when a loaded file names a different lineage; a notice, never a block.
 export const foreignLineage = signal<string | null>(null);
+// Set when a loaded file still carries a dial this lineage retired. Also a
+// notice, never a block: the world opens, the key does nothing (CONTRACTS §6.3).
+export const retiredKey = signal<string | null>(null);
 
 export const deckCopies = signal<Record<Kind, number>>({ ...DEFAULT_COPIES });
 export const addpanelCopies = signal(1);
@@ -81,7 +81,6 @@ export function buildConfig(): JmConfig {
     greatridge_add: grMode.value === "rolled" ? grAdd.value : 0,
     extend_cap: extendCap.value,
   };
-  if (expFields.value) cfg.exp_fields = true;
   if (flatWork.value) cfg.work_spread = false;
   const wo = Object.fromEntries(
     Object.entries(workOverrides.value).filter(([, v]) => v != null),
@@ -94,9 +93,9 @@ export function buildConfig(): JmConfig {
   return cfg;
 }
 
-// The shareable determinism capsule: seed + eras + full config. An
-// experimental run is marked explicitly (CONTRACTS §11) so a shared world can
-// never be mistaken for a canon one.
+// The shareable determinism capsule: seed + eras + full config. No run marker:
+// with the fields promoted (v0.8) there is no live experiment to mark, and §11
+// requires the marker to arrive with the next dial, not to linger after one.
 export function shareableConfig(): string {
   const cfg = buildConfig();
   return JSON.stringify(
@@ -105,7 +104,6 @@ export function shareableConfig(): string {
       eras: eras.value,
       // the rules that produced it: a seed means nothing without its lineage
       lineage: engineLineage.value,
-      ...(experimental.value ? { experimental: true } : {}),
       config: cfg,
     },
     null,
@@ -124,6 +122,7 @@ export function loadConfigJson(json: string): boolean {
   const cfg = c.config;
   if (!cfg || typeof c.seed !== "number" || typeof c.eras !== "number") return false;
   noteLineage(c.lineage);
+  noteRetired(cfg);
   seed.value = c.seed;
   eras.value = c.eras;
   panelSize.value = cfg.panel_w === 8 ? "8x10" : "5x6";
@@ -134,7 +133,6 @@ export function loadConfigJson(json: string): boolean {
   grDie.value = cfg.greatridge_die || 6;
   grAdd.value = cfg.greatridge_add ?? 0;
   extendCap.value = cfg.extend_cap ?? 4;
-  expFields.value = cfg.exp_fields === true;
   flatWork.value = cfg.work_spread === false;
   addpanelCopies.value = cfg.addpanel_copies ?? 1;
   if (cfg.deck) {
@@ -154,6 +152,13 @@ export function loadConfigJson(json: string): boolean {
 function noteLineage(theirs: string | undefined): void {
   foreignLineage.value =
     theirs && engineLineage.value && theirs !== engineLineage.value ? theirs : null;
+}
+
+// Dials this lineage has retired. A config saved days ago may still carry one;
+// it loads, the key is ignored, and the notice says so once (CONTRACTS §6.3).
+const RETIRED = ["exp_fields"] as const;
+function noteRetired(cfg: object): void {
+  retiredKey.value = RETIRED.find((k) => k in cfg) ?? null;
 }
 
 // The deck section alone, for the deck export file.
@@ -182,7 +187,6 @@ export function backToCanon(): void {
   grDie.value = 6;
   grAdd.value = 0;
   extendCap.value = 4;
-  expFields.value = false; // canon is never experimental
   flatWork.value = false;
   deckCopies.value = { ...DEFAULT_COPIES };
   addpanelCopies.value = 1;

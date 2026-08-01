@@ -52,7 +52,7 @@ describe("web-flavored engine smoke", () => {
     m._jm_run(h);
     const produced = m.UTF8ToString(m._jm_log(h)) + m.UTF8ToString(m._jm_report(h)) + "\n";
     const golden = readFileSync(
-      join(ROOT, "reference", "sample_log_seed42_v07.txt"),
+      join(ROOT, "reference", "sample_log_seed42_v08.txt"),
       "latin1",
     );
     expect(produced.length).toBe(golden.length);
@@ -111,7 +111,10 @@ describe("web-flavored engine smoke", () => {
     m._jm_free(h);
   });
 
-  it("honors the experimental fields dial, and only when asked", async () => {
+  // ch. 9, canon since v0.8: the fields rules cannot be turned off. The dial
+  // that used to select them is gone; a config still carrying its key loads
+  // and is ignored (CONTRACTS §6.3), producing the very same canon bytes.
+  it("runs the fields rules as canon, with no switch to turn them off", async () => {
     const m = await loadEngine();
     const run = (cfgJson: string, seed: bigint) => {
       const p = cstr(m, cfgJson);
@@ -121,35 +124,106 @@ describe("web-flavored engine smoke", () => {
       const log = m.UTF8ToString(m._jm_log(h));
       const events = JSON.parse(m.UTF8ToString(m._jm_events(h))) as {
         kind: string;
+        unit: [number, number] | null;
+        payload: Record<string, unknown>;
       }[];
       m._jm_free(h);
-      return { log, deepenings: events.filter((e) => e.kind === "field_deepens").length };
+      return { log, deepenings: events.filter((e) => e.kind === "field_deepens") };
     };
 
-    // off (both spellings): the canon bytes, and the dial's event unreachable
     const canon = run("{}", 42n);
-    const explicitOff = run(JSON.stringify({ exp_fields: false }), 42n);
     const golden = readFileSync(
-      join(ROOT, "reference", "sample_log_seed42_v07.txt"),
+      join(ROOT, "reference", "sample_log_seed42_v08.txt"),
       "latin1",
     );
     expect(canon.log).toBe(golden.slice(0, canon.log.length));
-    expect(explicitOff.log).toBe(canon.log);
-    expect(canon.deepenings).toBe(0);
-    expect(canon.log).not.toContain("the field deepens");
+    expect(canon.deepenings.length).toBeGreaterThan(0);
+    expect(canon.log).toMatch(/^ +\d+\. the field deepens at r\d+c\d+ /m);
+    // a numbered action now, carrying the unit it happened on (CONTRACTS §5)
+    for (const e of canon.deepenings) {
+      expect(e.payload.step).toBeGreaterThan(0); // numbered
+      expect(Array.isArray(e.unit)).toBe(true); // and placed
+    }
 
-    // on: a different world, fields deepen, and it is reproducible
-    const on = run(JSON.stringify({ exp_fields: true }), 42n);
-    expect(on.log).not.toBe(canon.log);
-    expect(on.deepenings).toBeGreaterThan(0);
-    expect(on.log).toContain("    the field deepens");
-    expect(run(JSON.stringify({ exp_fields: true }), 42n).log).toBe(on.log);
-    expect(on.log).not.toMatch(/tile|visit|rung/i);
+    // the retired key selects nothing, either way round
+    for (const carried of [{ exp_fields: false }, { exp_fields: true }])
+      expect(run(JSON.stringify(carried), 42n).log).toBe(canon.log);
+    expect(canon.log).not.toMatch(/tile|visit|rung/i);
+  });
+
+  // The error paths (v0.8 rider). The web flavor is built with -fexceptions
+  // precisely so a bad document is REFUSED — a null handle the app can report —
+  // rather than aborting the engine and taking the page with it.
+  describe("refuses bad input instead of aborting", () => {
+    const cases: [string, string][] = [
+      // a world from another lineage: readable JSON, wrong rules
+      [
+        "a foreign lineage",
+        JSON.stringify({ schema: "jerrymap-state", version: 1, lineage: "v0.4" }),
+      ],
+      ["malformed state (not JSON at all)", "{ this is not json"],
+      // a real document cut in half: valid prefix, no closing structure
+      ["a truncated document", '{"schema":"jerrymap-state","version":1,"rng":{"sta'],
+      ["an empty document", ""],
+    ];
+    for (const [name, doc] of cases)
+      it(name, async () => {
+        const m = await loadEngine();
+        const p = cstr(m, doc);
+        const h = m._jm_load(p);
+        m._free(p);
+        expect(h).toBe(0); // refused, and the module is still alive:
+        const cfg = cstr(m, "{}");
+        const ok = m._jm_create(cfg, 42n, 1);
+        m._free(cfg);
+        expect(ok).toBeGreaterThan(0);
+        m._jm_run(ok);
+        expect(m.UTF8ToString(m._jm_log(ok))).toContain("JERRYMAPPING");
+        m._jm_free(ok);
+      });
+
+    it("survives an out-of-range config", async () => {
+      const m = await loadEngine();
+      // a deck of nothing, a negative die, absurd geometry: none of it may
+      // abort — the engine either refuses the handle or runs something sane
+      const p = cstr(
+        m,
+        JSON.stringify({
+          panel_w: -5,
+          panel_h: 0,
+          stroke_die: -1,
+          extend_cap: 2147483647,
+          deck: [],
+        }),
+      );
+      const h = m._jm_create(p, 42n, 1);
+      m._free(p);
+      if (h) {
+        m._jm_run(h);
+        expect(typeof m.UTF8ToString(m._jm_log(h))).toBe("string");
+        m._jm_free(h);
+      }
+      // alive either way
+      const cfg = cstr(m, "{}");
+      const ok = m._jm_create(cfg, 42n, 1);
+      m._free(cfg);
+      expect(ok).toBeGreaterThan(0);
+      m._jm_free(ok);
+    });
+
+    it("hands a foreign-lineage world to the patina map without abort", async () => {
+      const m = await loadEngine();
+      const p = cstr(m, '{"nonsense": true}');
+      const out = m.UTF8ToString(m._jm_patina(p));
+      m._free(p);
+      expect(out).toBe("[]");
+      expect(m.UTF8ToString(m._jm_lineage())).toMatch(/^v\d/);
+    });
   });
 
   // The visit anatomy of an Add Panel age (handbook ch. 6 note 3, CONTRACTS §5.3):
   // the new panel IS the working panel, so the age takes no Stack visit.
-  it("gives an Add Panel age the v0.7 anatomy", async () => {
+  it("gives an Add Panel age the working-panel anatomy (ch. 6 note 3)", async () => {
     const m = await loadEngine();
     const cfg = cstr(m, "{}");
     const h = m._jm_create(cfg, 42n, 20);
@@ -162,7 +236,7 @@ describe("web-flavored engine smoke", () => {
 
     const key = (p: [number, number]) => `${p[0]},${p[1]}`;
     let addpanelAges = 0;
-    for (let i = 0; i < 90; i++) {
+    for (let i = 0; i < 160; i++) {
       const before = state();
       const nextCard = before.deck.order[0].kind;
       const frontBefore = before.world.stack[0];

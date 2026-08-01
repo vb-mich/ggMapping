@@ -133,36 +133,51 @@ test("time travel shows the viewing chip away from the end", async ({ page }) =>
   await expect(page.getByTestId("viewing-chip")).toHaveCount(0);
 });
 
-test("the experimental badge and config marker appear only with the dial on", async ({
+test("a config carrying a retired dial loads, ignored, with one notice", async ({
   page,
 }) => {
+  // v0.8 promoted the fields rules into canon and deleted the switch. A config
+  // saved under the dial must still open: the key selects nothing, so refusing
+  // it would strand worlds over a switch that no longer exists (CONTRACTS §6.3).
   await page.goto("/");
+  await expect(page.getByTestId("retired-key-notice")).toHaveCount(0);
+
+  const old = JSON.stringify({
+    seed: 4242,
+    eras: 9,
+    experimental: true, // the marker the dial era wrote
+    config: { panel_w: 5, panel_h: 6, stroke_die: 4, extend_cap: 4, exp_fields: true },
+  });
+  await page.setInputFiles("[data-testid='input-load-config']", {
+    name: "dial-era.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(old),
+  });
+
+  const notice = page.getByTestId("retired-key-notice");
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText("exp_fields");
+  // the rest of the config went through untouched: a notice, never a block
+  await expect(page.getByTestId("input-seed")).toHaveValue("4242");
+  await expect(page.getByTestId("input-eras")).toHaveValue("9");
+  await notice.screenshot({ path: "e2e-artifacts/retired-key-notice.png" });
+  await page.getByTestId("btn-dismiss-retired").click();
+  await expect(notice).toHaveCount(0);
+
+  // and it does not come back out: the key is gone from what the app exports,
+  // and so is the experimental marker (no experiment is live)
   await setRun(page, 42, 3);
   await runToDone(page);
+  const cfg = JSON.parse(await downloadText(page, "btn-save-config"));
+  expect(cfg.config.exp_fields).toBeUndefined();
+  expect(cfg.experimental).toBeUndefined();
 
-  // canon: no badge anywhere, and the exported config says nothing
+  // the dial's group and badge are gone from the surface entirely
+  await expect(page.getByTestId("experimental-panel")).toHaveCount(0);
   await expect(page.getByTestId("experimental-badge")).toHaveCount(0);
-  const canonConfig = await downloadText(page, "btn-save-config");
-  expect(JSON.parse(canonConfig).experimental).toBeUndefined();
-  expect(JSON.parse(canonConfig).config.exp_fields).toBeUndefined();
-
-  // dial on: the badge marks the run and the export marks the file
-  await page.getByTestId("toggle-exp-fields").check();
-  await expect(page.getByTestId("experimental-badge")).toBeVisible();
-  const expConfig = JSON.parse(await downloadText(page, "btn-save-config"));
-  expect(expConfig.experimental).toBe(true);
-  expect(expConfig.config.exp_fields).toBe(true);
-
-  // and the dialed run really is a different world
-  const canonPeople = await page.getByTestId("people-breakdown").textContent();
-  await runToDone(page);
-  expect(await page.getByTestId("people-breakdown").textContent()).not.toBe(
-    canonPeople,
-  );
-
-  // back to canon clears the experiment
-  await page.getByTestId("btn-canon").click();
-  await expect(page.getByTestId("toggle-exp-fields")).not.toBeChecked();
+  await expect(page.getByTestId("toggle-exp-fields")).toHaveCount(0);
+  // and the people breakdown, which the dial era brought, stays
+  await expect(page.getByTestId("people-breakdown")).toBeVisible();
 });
 
 test("time travel to an Add Panel age shows the new panel's fills", async ({
@@ -171,7 +186,7 @@ test("time travel to an Add Panel age shows the new panel's fills", async ({
   // Find the first Add Panel age from the committed golden, so the target is
   // the lineage's own truth rather than something the test invents.
   const golden = readFileSync(
-    join(HERE, "..", "..", "..", "reference", "sample_log_seed42_v07.txt"),
+    join(HERE, "..", "..", "..", "reference", "sample_log_seed42_v08.txt"),
     "utf8",
   ).split("\n");
   let era = 0,
@@ -215,15 +230,20 @@ test("the lineage badge comes from the engine and rides exported configs", async
   await page.goto("/");
   const badge = page.getByTestId("lineage-badge");
   await expect(badge).toBeVisible();
+  // The DOM must carry the value, not merely fail to carry a forbidden one:
+  // an empty badge, a dash, or a spinner would pass an absence test forever.
   const shown = ((await badge.textContent()) ?? "").replace("rules", "").trim();
   expect(shown).toMatch(/^v\d+\.\d+$/);
+  expect(shown.length).toBeGreaterThan(2);
 
-  // it is the ENGINE's lineage, not a string the app keeps: a world the
-  // engine saves must name the same one
+  // and it is the ENGINE's value: the same C++ constant reaches the DOM by one
+  // path (jm_lineage) and the saved document by another (save_state). If the
+  // badge showed an app-side copy, a lineage break would split these two.
   await setRun(page, 42, 3);
   await runToDone(page);
   const world = JSON.parse(await downloadText(page, "btn-save"));
   expect(world.lineage).toBe(shown);
+  expect(await badge.textContent()).toContain(world.lineage);
 
   // and the exported config carries it, distinct from the package version
   const cfg = JSON.parse(await downloadText(page, "btn-save-config"));
@@ -397,17 +417,10 @@ test("screenshots at mobile and desktop widths", async ({ page }) => {
     },
   });
 
-  // the Experimental group, and the badge it puts on a dialed run
-  await page.getByTestId("toggle-exp-fields").check();
-  await runToDone(page);
-  await page
-    .getByTestId("experimental-panel")
-    .screenshot({ path: "e2e-artifacts/experimental-group.png" });
+  // the stats strip, with the people breakdown the dial era brought
   await page
     .getByTestId("stats-strip")
-    .screenshot({ path: "e2e-artifacts/experimental-badge.png" });
-  await page.getByTestId("btn-canon").click();
-  await runToDone(page);
+    .screenshot({ path: "e2e-artifacts/stats-strip.png" });
   await page.getByTestId("nav-prev-era").click();
   await expect(page.getByTestId("viewing-chip")).toBeVisible();
   await page

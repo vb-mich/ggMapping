@@ -1,6 +1,6 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **3.2.0** · State schema: **1** · Event schema: **2** · World lineage: **v0.7**
+Contract version: **4.0.0** · State schema: **1** · Event schema: **2** · World lineage: **v0.8**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
@@ -8,10 +8,10 @@ Nothing in `/engine`, `/apps`, or `/tools` may contradict it. Changes here bump 
 contract version and must state their migration story.
 
 Authority chain: `docs/0-Jerrymapping-the-game.md` (the handbook, beta 0.1, amended by
-the v0.5 depth erratum and the v0.7 amendments, plus chapter 11's rules under test) defines the game;
+the v0.5 depth erratum, the v0.7 amendments and the v0.8 fields promotion) defines the game;
 `docs/FORK_NOTES.md` defines this lineage's deltas and dials; the **C++ engine is the
 reference of record** (succession, §8.4), and
-`reference/sim_v07.py` is the **living twin** whose byte-identity the gate proves —
+`reference/sim_v08.py` is the **living twin** whose byte-identity the gate proves —
 every rules increment lands in both, and the matrix must be green three ways before
 the increment is law. `reference/sim.py` is the frozen v0.4 founding document,
 history. Where prose and implementations disagree, the twin-proven engine wins until
@@ -217,7 +217,7 @@ and are part of this contract: `row`, `column`, `first elevation`, `dominant tie
 `heading`, `heading (choice)`, `len`, `length`, `length (choice)`, `grow`,
 `foundation`, `farm intensity`, `anomaly`, `islets`, `nudge {what}`,
 `ridge seed (choice)`, `free class (choice)`, `free seed (choice)`, `basin start`,
-`deepen field` (experimental, §11),
+`deepen field` (ch. 9),
 `extend run`, `extend entry`, `place {kind}`, `people base`, `riser`, `living city`,
 `lead city`, `panel position`, `archive`, `deck` (shuffles).
 
@@ -287,12 +287,12 @@ Age notes (no step number):
 | `panel_archived` | panel | `    panel {panel} COMPLETE, to the Atlas` |
 | `panel_stays` | panel | `    panel {panel} full, stays in play` |
 | `panel_returns` | panel, filled, area | `    panel to back of stack ({filled}/{area})` |
-| `field_deepens` | — | `    the field deepens` (experimental only, §11) |
 
 Numbered actions (carry `payload.step`; template prefix `    {step}. `):
 
 | kind | payload | template body |
 |---|---|---|
+| `field_deepens` | unit | `the field deepens at r{r}c{c} {panel}` |
 | `paint` | unit, rung, why | `paint r{r}c{c} {panel} {rung} ({why})` |
 | `trace` | unit, label | `rework r{r}c{c} {panel} ({label})` |
 | `shore_heal` | unit | `the shore forgets its sea at r{r}c{c} {panel}: coastal -> plain` |
@@ -365,7 +365,7 @@ byte-identical to never having stopped (log continuation included). Save points 
 {
   "schema": "jerrymap-state",
   "version": 1,
-  "lineage": "v0.7",
+  "lineage": "v0.8",
 
   "config": {
     "panel_w": 5, "panel_h": 6,
@@ -377,8 +377,7 @@ byte-identical to never having stopped (log continuation included). Save points 
     "archive_permille": 0,
     "stroke_die": 4, "stroke_add": 1,
     "greatridge_die": 0, "greatridge_add": 0,
-    "extend_cap": 4,
-    "exp_fields": false
+    "extend_cap": 4
   },
 
   "rng": { "algo": "pcg32/stream54", "state": "18446744073709551615" },
@@ -447,6 +446,12 @@ dialect (§9). `archive_permille` is the integer per-mille (§3); the CLI's
 percent input is converted once at config time. `greatridge_die: 0` means "not set"
 (the handbook's chosen length applies).
 
+A **retired dial key** is not a foreign lineage: a config or state document that
+still carries a key this contract has dropped (today: `exp_fields`, canon since
+v0.8) loads normally with the key ignored, and the app says so once. Refusing it
+would strand worlds saved days earlier over a switch that no longer has anything
+to select.
+
 ### 6.4 Genesis
 A new world seeds 12 panels for 5×6 geometry (three per quadrant, the handbook's
 layout, in stack order): `(-1,2),(1,2),(-2,1),(-1,1),(1,1),(2,1),(-2,-1),(-1,-1),
@@ -485,7 +490,6 @@ reference's defaults:
 --greatridge-die N (unset)  --greatridge-add N (0)  --extend-cap N (4)
 --work k=v,…  --mood k=v,…
 --snapshots --alive --semi --no-patina --no-render --flat-work --fragile
---exp-fields (EXPERIMENTAL, §11)
 --living-deck --ld-start --ld-add --ld-retire --ld-shuffle --ld-floor --ld-ceiling
 ```
 
@@ -501,8 +505,8 @@ event-rendered lines, then the final report — **LF line endings always**; stdo
 ## 8. The gate
 
 ### 8.1 Oracle matrix
-Byte-identity of `seed{N}_log.txt`, the Python twin (`reference/sim_v07.py`) vs
-native C++ vs WASM, on the v0.7 lineage:
+Byte-identity of `seed{N}_log.txt`, the Python twin (`reference/sim_v08.py`) vs
+native C++ vs WASM, on the v0.8 lineage:
 
 | cell | seed | eras | dials |
 |---|---|---|---|
@@ -516,13 +520,10 @@ native C++ vs WASM, on the v0.7 lineage:
 | dial-extendcap | 42 | 20 | `--extend-cap 0` |
 | combined-dials | 42 | 20 | `--archive-chance 25 --stroke-die 6 --stroke-add 2 --greatridge-die 6 --greatridge-add 2 --extend-cap 0` |
 
-**Experimental cells** (§11) run beside the matrix and are reported separately;
-they are never mixed into the canon result, because a canon cell exercises none
-of an experimental dial's code paths:
-
-| cell | seed | eras | dials |
-|---|---|---|---|
-| exp-fields-42 | 42 | 20 | `--exp-fields` |
+**Experimental cells** (§11) run beside the matrix and are reported separately
+while an experiment is live. **None is**: v0.8 promoted the fields rules into
+canon, so their configuration is simply the default and every cell above
+exercises those paths.
 
 ### 8.2 CI
 Every commit: build native, run Python and native over the full matrix, byte-compare;
@@ -604,12 +605,26 @@ the twin — but anything readable from the log runs against both.
   break byte-identity with the oracle and require a lineage bump).
 * **State schema version**: integer; loaders reject unknown versions.
 * **Event schema version**: integer; additive payload fields are minor.
-* **World lineage**: `v0.5` — the PCG32 dialect with the depth erratum. A lineage
+* **World lineage**: `v0.8` — the PCG32 dialect with the depth erratum, the Add
+  Panel working-panel rule, and the fields as canon. A lineage
   bump means old seeds speak a different world; it never changes saved-state
   replayability within its lineage (loaders reject foreign lineages, §6.3).
 
 ### 9.1 Changelog
 
+* **4.0.0** — a rules increment, lineage `v0.7 → v0.8` (major: renderer text and
+  rules changed). **The fields are canon.** Handbook chapter 11 is gone and its
+  two rules are written into chapter 9: a farmed unit is off the density ladder
+  (it never blocks a step, never supports one, and is never subject to one), and
+  the farm growth step deepens a low field to high before it clears new ground.
+  The dial is **removed, not defaulted** — no `exp_fields` key, no `--exp-fields`
+  flag, no branch; a config still carrying the key loads with the key ignored and
+  a one-time notice (§6.3). `field_deepens` is promoted from a note to a
+  **numbered action** carrying its unit (§5) — no event-schema bump, the envelope
+  already carries `step`/`unit`. Fixtures regenerate; v0.7 fixtures retire to
+  `reference/history-v0.7/`; the twin becomes `reference/sim_v08.py`; the matrix
+  returns to nine cells as the experimental cell merges into canon (§8.1). §11
+  stands as policy for the next experiment (§11).
 * **3.2.0** — additive, log bytes unchanged: the patina rule becomes law (§2.5)
   and gains one implementation — the engine's `patina_map` / `jm_patina`, which
   every renderer consumes; the render-layer checks join CI (§8.6). Fixes the
@@ -631,7 +646,8 @@ the twin — but anything readable from the log runs against both.
   conformance suite joins CI (§8.5). Fixtures regenerate; v0.5 fixtures retire to
   `reference/history-v0.5/`; the twin becomes `reference/sim_v07.py`.
 * **2.1.0** — additive, **no lineage change**: the experimental fields dial
-  (§11, `exp_fields` / `--exp-fields`, default off), its `field_deepens` event
+  (§11, `exp_fields` / `--exp-fields`, default off — promoted to canon and
+  removed in 4.0.0), its `field_deepens` event
   and `deepen field` purpose, and the experimental gate cells (§8.1). Every
   canon fixture is byte-identical and the oracle matrix was not regenerated.
   The gate's twin becomes `reference/sim_v06.py`, superseding `sim_v05.py`.
@@ -669,14 +685,15 @@ The product name is a **placeholder pending approval**. Rules:
 
 ## 11. Experimental dials
 
-The handbook's chapter 11 holds rules under test — **not part of the game**. Each
-arrives here as one **dial, default OFF**, and lives under these rules:
+**No experiment is live.** The one this section was written for — the fields —
+was promoted into canon in 4.0.0 and its dial is gone (§9.1). The rules stay,
+because they are how the *next* experiment must arrive: as one **dial, default
+OFF**, under all four of these.
 
 * **Canon is untouchable.** With every experimental dial off, the engine is
   byte-identical to the lineage it ships in: the same fixtures, the same matrix,
   no regeneration. This is the headline test, not a footnote — the gate proves it
-  on every commit, and a dial-only event (`field_deepens`) must be unreachable
-  with the dial off.
+  on every commit, and any dial-only event must be unreachable with the dial off.
 * **No lineage bump.** An experimental dial is a config key like any other dial
   (§6), so state documents keep the lineage they had. If the experiment is
   promoted, the switch disappears, the rules move into the handbook proper, and
@@ -689,15 +706,7 @@ arrives here as one **dial, default OFF**, and lives under these rules:
   shared world can never be mistaken for a canon one. Apps must show the run is
   experimental while it is on.
 
-### 11.1 exp_fields — the fields dial (FORK_NOTES §v0.6)
-
-`exp_fields` / `--exp-fields`, default `false`. Two rules in one switch:
-
-1. **The density ladder ignores farmed units.** A field never blocks a step
-   (`constrains` is false for it), never supports one (it leaves the crowd count),
-   and is never itself subject to one (a farm placement skips the ladder check).
-   It still occupies its unit: no home on a field, no field on a home.
-2. **Fields deepen before they spread.** When the farm growth step fires and the
-   settlement holds a low field, one is chosen (`deepen field`, silent when
-   single) and becomes high, emitting `field_deepens`; only when every field is
-   high does the town clear new ground.
+And one more, learned from the promotion: **a promoted dial leaves no stump.**
+The key, the flag, the branch, the badge and the gate cell all go at once; a
+document still carrying the retired key loads with it ignored (§6.3), so the
+worlds people saved under the experiment still open.

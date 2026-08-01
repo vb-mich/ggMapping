@@ -158,9 +158,7 @@ void render_event(const Event& e, const Geo& geo, std::vector<std::string>& out)
             out.push_back("    panel to back of stack (" + std::to_string(e.a) + "/" +
                           std::to_string(e.b) + ")");
             break;
-        case Ev::FieldDeepens: // experimental dial only (CONTRACTS §11)
-            out.push_back("    the field deepens");
-            break;
+
         case Ev::Paint:
             num("paint " + rc_panel(geo, e.unit) + " " + RUNG_NAME[e.a] + " (" + e.s1 + ")");
             break;
@@ -202,6 +200,9 @@ void render_event(const Event& e, const Geo& geo, std::vector<std::string>& out)
             break;
         case Ev::VolcanoRing:
             num("the volcano raises its ring: the land around becomes hills");
+            break;
+        case Ev::FieldDeepens:
+            num("the field deepens at " + rc_panel(geo, e.unit));
             break;
         case Ev::NewPanel:
             // v0.6.1: the printed number is the squared distance score the

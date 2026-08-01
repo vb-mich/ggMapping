@@ -265,35 +265,6 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
 .nav-transport button { min-width: 2.2rem; }
 .timeline { width: 100%; accent-color: var(--accent); margin-top: 0.5rem; }
 
-/* the Experimental group: visually apart from the dials, never mistaken for
-   the game (CONTRACTS §11) */
-.card.experimental {
-  border: 1px dashed var(--off-canon);
-  background: linear-gradient(0deg, var(--warn-bg), var(--card) 70%);
-}
-.exp-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.exp-head h2 { margin: 0; color: var(--off-canon); }
-.chip.exp-chip {
-  background: var(--off-canon);
-  color: #17150f;
-  border-radius: 999px;
-  padding: 0.05rem 0.55rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: lowercase;
-  white-space: nowrap;
-}
-.exp-warning {
-  margin: 0.4rem 0 0.6rem;
-  font-size: 0.78rem;
-  color: var(--muted);
-  border-left: 3px solid var(--off-canon);
-  padding-left: 0.5rem;
-}
-.exp-switch { color: var(--ink); font-size: 0.86rem; }
-.exp-desc { margin-left: 1.5rem; }
-
 .stats-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .stats-head h2 { margin: 0; }
 .stats-rungs { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-bottom: 0.4rem; }

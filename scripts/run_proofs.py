@@ -91,19 +91,14 @@ def main():
         logs.append(data)
         check(f"dial live: {name} diverges from baseline", data != base)
 
-    # -- 4. the experimental fields dial (handbook ch. 11) -------------------
-    # Default byte-identity is the headline: the dial off changes nothing.
-    check("dial off: no 'the field deepens' line can appear",
-          not any(b"the field deepens" in l for l in logs))
-
-    run([exe, "--seed", "42", "--eras", "20", "--out", d("exp1"), "--exp-fields"])
-    run([exe, "--seed", "42", "--eras", "20", "--out", d("exp2"), "--exp-fields"])
-    exp1 = read(d("exp1", "seed42_log.txt"))
-    exp2 = read(d("exp2", "seed42_log.txt"))
-    logs += [exp1]
-    check("dial on: deterministic (same seed twice, byte-identical)", exp1 == exp2)
-    check("dial on: diverges from canon (the dial is live)", exp1 != base)
-    check("dial on: the field deepens", b"the field deepens" in exp1)
+    # -- 4. the fields, canon since v0.8 (handbook ch. 9) -------------------
+    # The rules cannot be turned off: a canon run deepens fields, and the flag
+    # that used to select them is gone from the surface entirely.
+    check("the dial is gone: --exp-fields is rejected",
+          subprocess.run([exe, "--seed", "42", "--eras", "2", "--out", d("nodial"),
+                          "--exp-fields"], capture_output=True).returncode != 0)
+    check("canon deepens fields (ch. 9 growth d6 1-2)",
+          b"the field deepens at " in base)
 
     # -- 5. vocabulary (canon and dialed logs alike) ------------------------
     check("vocabulary law: no 'tile', no 'visit', no 'rung', any case",

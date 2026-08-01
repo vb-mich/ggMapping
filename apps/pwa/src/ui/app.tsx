@@ -19,6 +19,7 @@ import {
   requestLineage,
   reroll,
   resumeWorld,
+  retiredKey,
   seed,
   startRun,
   status,
@@ -28,7 +29,6 @@ import {
 import { applyUpdate, updateAvailable } from "../updates";
 import { ConfigPanel } from "./ConfigPanel";
 import { DeckEditor } from "./DeckEditor";
-import { ExperimentalPanel } from "./ExperimentalPanel";
 import { FilesBar } from "./FilesBar";
 import { MapView } from "./MapView";
 import { NavPanel } from "./NavPanel";
@@ -127,6 +127,15 @@ export function App() {
           </button>
         </div>
       )}
+      {retiredKey.value && (
+        <div class="card notice" data-testid="retired-key-notice" role="status">
+          <span>{STRINGS.retiredKeyNotice.replace("{key}", retiredKey.value)}</span>
+          <button class="ghost" data-testid="btn-dismiss-retired"
+            onClick={() => (retiredKey.value = null)}>
+            {STRINGS.dismiss}
+          </button>
+        </div>
+      )}
       {updateAvailable.value && (
         <button class="primary update-toast" data-testid="btn-update" onClick={applyUpdate}>
           {STRINGS.updateNow}
@@ -137,7 +146,6 @@ export function App() {
         <div class="col-side">
           <ConfigPanel />
           <DeckEditor />
-          <ExperimentalPanel />
           <FilesBar />
         </div>
         <div class="col-main">

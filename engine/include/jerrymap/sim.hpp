@@ -21,7 +21,7 @@ namespace jerrymap {
 // The world lineage (CONTRACTS §9): ONE constant. The state document writes it,
 // the loader rejects anything else, and the jm_* API reports it — so nothing
 // downstream needs to hardcode a duplicate that can drift.
-inline constexpr const char* LINEAGE = "v0.7";
+inline constexpr const char* LINEAGE = "v0.8";
 
 struct Config {
     int panel_w = 5, panel_h = 6;
@@ -39,10 +39,6 @@ struct Config {
     int greatridge_die = 0;          // 0 = unset (the length stays chosen)
     int greatridge_add = 0;
     int extend_cap = 4;              // 0 = uncapped
-    // EXPERIMENTAL (handbook ch. 11, FORK_NOTES §v0.6), default OFF: the
-    // density ladder ignores fields, and fields deepen before they spread.
-    // Off, every canon surface is byte-identical — the gate proves it.
-    bool exp_fields = false;
 };
 
 struct Card {
@@ -96,7 +92,7 @@ struct StoredEvent {
 };
 
 // Test seam: the unit tests reach the private rule predicates to construct
-// the experimental dial's cases directly (engine/tests/test_engine.cpp).
+// conformance cases directly (engine/tests/test_engine.cpp).
 struct SimTestAccess;
 
 class Sim {
@@ -192,7 +188,7 @@ private:
     void rework_body(GPos g);
     void fill_one(Panel t);
     int dens(GPos u) const;
-    bool is_field(GPos u) const;     // a farmed unit (exp_fields only asks)
+    bool is_field(GPos u) const;     // a farmed unit — off the ladder (ch. 9)
     bool constrains(GPos u) const;
     bool dens_legal(GPos u, int d) const;
     bool neighbors_of_height(GPos u, int need) const;
@@ -249,7 +245,6 @@ struct CliOptions {
     int stroke_die = 4, stroke_add = 1;
     int greatridge_die = 0, greatridge_add = 0;
     int extend_cap = 4;
-    bool exp_fields = false;     // EXPERIMENTAL (handbook ch. 11)
     bool flat_work = false;
     std::string work, mood;      // k=v,... overrides
     std::string save_path, load_path, record_path, replay_path, patina_path;

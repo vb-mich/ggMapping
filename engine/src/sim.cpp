@@ -813,6 +813,7 @@ int Sim::dens(GPos u) const {
     return k ? dens_of_kind(*k) : 0;
 }
 
+// Fields are not people (handbook ch. 9): farmland is off the density ladder.
 bool Sim::is_field(GPos u) const {
     const std::string* k = people.get(u);
     return k && k->rfind("farm", 0) == 0;
@@ -822,8 +823,8 @@ bool Sim::constrains(GPos u) const {
     auto it = base.find(u);
     return it != base.end() && (it->second == PL || it->second == CO) &&
            !wild.count(u) &&
-           // exp_fields: a field never blocks a density step
-           !(cfg.exp_fields && is_field(u));
+           // ch. 9: a field never blocks a density step
+           !is_field(u);
 }
 
 bool Sim::dens_legal(GPos u, int d) const {
@@ -838,9 +839,8 @@ bool Sim::neighbors_of_height(GPos u, int need) const {
     for (int dx = -1; dx <= 1; ++dx)
         for (int dy = -1; dy <= 1; ++dy) {
             GPos v{u.x + dx, u.y + dy};
-            // exp_fields: a field never supports a step (out of the crowd count)
-            if ((dx || dy) && people.contains(v) &&
-                !(cfg.exp_fields && is_field(v)))
+            // ch. 9: a field never counts toward the support a tower needs
+            if ((dx || dy) && people.contains(v) && !is_field(v))
                 ++n;
         }
     return n >= need;
@@ -927,9 +927,8 @@ bool Sim::place_people(const std::vector<GPos>& cand_units, const std::string& k
     std::vector<PlaceCand> ok;
     for (GPos u : cand_units) {
         if (people.contains(u) || wild.count(u)) continue;
-        // exp_fields: a field is never itself subject to the step rule
-        if (!((cfg.exp_fields && kind.rfind("farm", 0) == 0) || dens_legal(u, d)))
-            continue;
+        // ch. 9: a field is never itself subject to the People Step Rule
+        if (!(kind.rfind("farm", 0) == 0 || dens_legal(u, d))) continue;
         auto it = base.find(u);
         if (it != base.end()) {
             if (std::find(bases.begin(), bases.end(), it->second) != bases.end())
@@ -1023,19 +1022,18 @@ bool Sim::try_upgrade(const std::vector<GPos>& comp) {
 void Sim::grow_once(const std::vector<GPos>& comp) {
     int g = roll_die(6, "grow");
     if (g <= 2) {
-        // exp_fields: deepen a low field of the settlement before clearing new
-        // ground; only when every field is high does the town clear more.
+        // ch. 9, growth d6 row 1-2: deepen a low field of the settlement before
+        // clearing new ground; only when none remains does the town clear more.
         std::vector<GPos> lows;
-        if (cfg.exp_fields) {
-            for (GPos u : comp) {
-                const std::string* k = people.get(u);
-                if (k && *k == "farm_lo") lows.push_back(u);
-            }
+        for (GPos u : comp) {
+            const std::string* k = people.get(u);
+            if (k && *k == "farm_lo") lows.push_back(u);
         }
         if (!lows.empty()) {
             GPos u = pick(lows, "deepen field"); // sorts; silent when single
             people.set(u, "farm_hi");
-            note(Ev::FieldDeepens);
+            Event e; e.kind = Ev::FieldDeepens; e.has_unit = true; e.unit = u;
+            ev_action(std::move(e));
         } else if (!place_people(touching(comp), "farm_lo", {PL})) {
             skip_card("settlement", "no room for farmland");
         }
@@ -1400,8 +1398,41 @@ void Sim::build_deck() {
         deck.push_back(cards[perm[k]]);
 }
 
+// A config the rules cannot be played on is refused here, once, for every
+// surface: the CLI prints it, the FFI turns it into a null handle. Nothing
+// below this point may assert on a value a caller could have supplied. Found
+// by the error-path suite (FORK_NOTES: the gate exercises happy paths only) —
+// a 0x0 panel reached pick() with no candidates and took the engine down.
+static void validate(const Config& c, int eras) {
+    auto bad = [](const std::string& why) {
+        throw std::invalid_argument("config: " + why);
+    };
+    if (c.panel_w < 2 || c.panel_w > 64 || c.panel_h < 2 || c.panel_h > 64)
+        bad("panel is " + std::to_string(c.panel_w) + "x" +
+            std::to_string(c.panel_h) + "; each side must be 2..64");
+    if (eras < 1 || eras > 100000) bad("eras must be 1..100000");
+    if (c.stroke_die < 1 || c.stroke_die > 100) bad("stroke die must be 1..100");
+    if (c.stroke_add < 0 || c.stroke_add > 100) bad("stroke bonus must be 0..100");
+    if (c.greatridge_die < 0 || c.greatridge_die > 100)
+        bad("great ridge die must be 0..100 (0 means the player chooses)");
+    if (c.greatridge_add < 0 || c.greatridge_add > 100)
+        bad("great ridge bonus must be 0..100");
+    if (c.extend_cap < 0 || c.extend_cap > 1000) bad("extend cap must be 0..1000");
+    if (c.archive_permille < 0 || c.archive_permille > 1000)
+        bad("archive chance must be 0..100 percent");
+    if (c.addpanel_copies > 1000) bad("too many Add Panel copies");
+    int cards = 0;
+    for (const auto& kv : c.deck) {
+        if (kv.second < 0 || kv.second > 1000)
+            bad("deck: " + kv.first + " has an impossible number of copies");
+        cards += kv.second;
+    }
+    if (cards < 1) bad("the deck is empty");
+}
+
 Sim::Sim(const Config& config, std::int64_t sd, int eras, Decider& dec)
     : cfg(config), seed(sd), eras_wanted(eras), dec_(&dec) {
+    validate(cfg, eras);
     geo.W = cfg.panel_w;
     geo.H = cfg.panel_h;
     if (cfg.addpanel_copies < 0) cfg.addpanel_copies = cfg.alive ? 1 : 4;

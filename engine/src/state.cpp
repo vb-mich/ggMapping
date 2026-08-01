@@ -74,7 +74,6 @@ Json Sim::save_state() const {
     jc.set("greatridge_die", Json::of(cfg.greatridge_die));
     jc.set("greatridge_add", Json::of(cfg.greatridge_add));
     jc.set("extend_cap", Json::of(cfg.extend_cap));
-    jc.set("exp_fields", Json::of(cfg.exp_fields));
     root.set("config", std::move(jc));
 
     {
@@ -266,9 +265,8 @@ Sim::Sim(const Json& st, Decider& dec) : dec_(&dec) {
     cfg.greatridge_die = static_cast<int>(jc.at("greatridge_die").as_int());
     cfg.greatridge_add = static_cast<int>(jc.at("greatridge_add").as_int());
     cfg.extend_cap = static_cast<int>(jc.at("extend_cap").as_int());
-    // Optional: worlds saved before the v0.6 dial existed carry no key and
-    // load as canon (the dial is off), which is exactly their behavior.
-    if (jc.has("exp_fields")) cfg.exp_fields = jc.at("exp_fields").as_bool();
+    // A document from the dial era may still carry "exp_fields"; it is simply
+    // ignored — the rules it selected are canon now and cannot be turned off.
     geo.W = cfg.panel_w;
     geo.H = cfg.panel_h;
 

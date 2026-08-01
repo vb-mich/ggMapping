@@ -166,9 +166,10 @@ static void test_decisions_roundtrip() {
     CHECK_EQ(perm[0], 2u);
 }
 
-// ---- the experimental fields dial (handbook ch. 11, FORK_NOTES §v0.6) ----
-// The dial's rules are reached through the test seam so each case can be
-// constructed exactly, rather than fished out of a whole run.
+// ---- chapter 9: fields are not people (canon since v0.8) -----------------
+// Conformance by construction (CONTRACTS §8.5): these cases cannot be fished
+// out of a log, so they are built here through the test seam. Each cites the
+// handbook passage it enforces.
 namespace jerrymap {
 struct SimTestAccess {
     static bool constrains(const Sim& s, GPos u) { return s.constrains(u); }
@@ -191,73 +192,65 @@ static void plain_ground(Sim& s, GPos from, int w, int h) {
         for (int dy = 0; dy < h; ++dy) s.base[{from.x + dx, from.y + dy}] = PL;
 }
 
-static void test_exp_fields_blocking_and_support() {
-    for (bool on : {false, true}) {
-        AutoDecider dec(1);
-        Config cfg;
-        cfg.exp_fields = on;
-        Sim s(cfg, 1, 1, dec);
-        const GPos origin{-5, -12};
-        plain_ground(s, origin, 5, 6);
-        const GPos field{origin.x, origin.y};
-        s.people.set(field, "farm_lo");
-
-        // (1) a field must not BLOCK a step: with the dial on it stops
-        // constraining, so an urban-medium home may sit beside it. The spot's
-        // other side neighbours are hills, which never constrain, so the
-        // field is the only thing that can refuse the step.
-        CHECK_EQ(SimTestAccess::constrains(s, field), !on);
-        const GPos beside{origin.x + 1, origin.y};
-        for (int i = 0; i < 4; ++i) {
-            GPos n{beside.x + SIDE_DX[i], beside.y + SIDE_DY[i]};
-            if (!(n == field)) s.base[n] = HI;
-        }
-        CHECK_EQ(SimTestAccess::dens_legal(s, beside, 3), on);
-
-        // (2) a field must not SUPPORT a step: it stays out of the crowd count.
-        // Three neighbours of `hub`, all fields: canon counts 3, the dial 0.
-        const GPos hub{origin.x + 2, origin.y + 2};
-        s.people.set({hub.x - 1, hub.y}, "farm_lo");
-        s.people.set({hub.x + 1, hub.y}, "farm_hi");
-        s.people.set({hub.x, hub.y - 1}, "farm_lo");
-        CHECK_EQ(SimTestAccess::crowd(s, hub, 3), !on);
-        // and a real home beside them still counts, dial or not
-        s.people.set({hub.x, hub.y + 1}, "urb_lo");
-        CHECK(SimTestAccess::crowd(s, hub, 1));
-    }
-}
-
-static void test_exp_fields_placement_beside_urban() {
-    // A field may be sown beside an urban unit: it is never itself subject to
-    // the step rule. Canon refuses (density 0 beside density 2).
-    for (bool on : {false, true}) {
-        AutoDecider dec(2);
-        Config cfg;
-        cfg.exp_fields = on;
-        Sim s(cfg, 1, 1, dec);
-        const GPos origin{-5, -12};
-        plain_ground(s, origin, 5, 6);
-        const GPos city{origin.x, origin.y};
-        s.people.set(city, "urb_lo");           // density 2
-        const GPos spot{origin.x + 1, origin.y}; // its side neighbour
-        CHECK_EQ(SimTestAccess::place(s, {spot}, "farm_lo", {PL}), on);
-        CHECK_EQ(s.people.contains(spot), on);
-    }
-}
-
-static void test_exp_fields_deepen_before_clearing() {
-    // The farm step deepens an existing low field before clearing new ground,
-    // and only clears once every field is high. The grow roll is scripted so
-    // the farm branch (1..2) is the one under test.
-    AutoDecider seedy(3); // builds and shuffles the deck at construction
-    Config cfg;
-    cfg.exp_fields = true;
-    Sim s(cfg, 1, 1, seedy);
+// ch. 9, the density ladder: "A farmed unit never blocks a density step."
+static void test_ch9_field_does_not_block() {
+    AutoDecider dec(1);
+    Sim s(Config{}, 1, 1, dec);
     const GPos origin{-5, -12};
     plain_ground(s, origin, 5, 6);
-    // An interior unit, so all eight neighbours are this panel's. Exactly one
-    // stays plain: the later clearing then has a single candidate, and a
-    // single-candidate pick consumes no randomness (CONTRACTS §4).
+    const GPos field{origin.x, origin.y};
+    s.people.set(field, "farm_lo");
+    CHECK(!SimTestAccess::constrains(s, field));
+
+    // the spot's other side neighbours are hills, which never constrain, so
+    // the field is the only thing that could refuse an urban-medium step
+    const GPos beside{origin.x + 1, origin.y};
+    for (int i = 0; i < 4; ++i) {
+        GPos n{beside.x + SIDE_DX[i], beside.y + SIDE_DY[i]};
+        if (!(n == field)) s.base[n] = HI;
+    }
+    CHECK(SimTestAccess::dens_legal(s, beside, 3));
+}
+
+// ch. 9, Support: "Urban medium needs at least two touching people units,
+// urban high at least three" — and a field is not one of them.
+static void test_ch9_field_does_not_support() {
+    AutoDecider dec(2);
+    Sim s(Config{}, 1, 1, dec);
+    const GPos origin{-5, -12};
+    plain_ground(s, origin, 5, 6);
+    const GPos hub{origin.x + 2, origin.y + 2};
+    s.people.set({hub.x - 1, hub.y}, "farm_lo");
+    s.people.set({hub.x + 1, hub.y}, "farm_hi");
+    s.people.set({hub.x, hub.y - 1}, "farm_lo");
+    CHECK(!SimTestAccess::crowd(s, hub, 2));   // urban medium's two
+    CHECK(!SimTestAccess::crowd(s, hub, 3));   // urban high's three
+    s.people.set({hub.x, hub.y + 1}, "urb_lo");
+    CHECK(SimTestAccess::crowd(s, hub, 1));    // a real home still counts
+}
+
+// ch. 9: a field "is never itself subject to the People Step Rule", so it may
+// be sown beside a town however dense.
+static void test_ch9_field_beside_urban() {
+    AutoDecider dec(3);
+    Sim s(Config{}, 1, 1, dec);
+    const GPos origin{-5, -12};
+    plain_ground(s, origin, 5, 6);
+    s.people.set({origin.x, origin.y}, "urb_lo");          // density 2
+    const GPos spot{origin.x + 1, origin.y};               // its side neighbour
+    CHECK(SimTestAccess::place(s, {spot}, "farm_lo", {PL}));
+    CHECK(s.people.contains(spot));
+}
+
+// ch. 9, growth d6 row 1-2: "If the town already has a low field, deepen it to
+// high. Otherwise place 1 farmland."
+static void test_ch9_deepen_before_clearing() {
+    AutoDecider seedy(4); // builds and shuffles the deck at construction
+    Sim s(Config{}, 1, 1, seedy);
+    const GPos origin{-5, -12};
+    plain_ground(s, origin, 5, 6);
+    // an interior unit, so all eight neighbours are this panel's; exactly one
+    // stays plain, so the later clearing has a single (silent) candidate
     const GPos low{origin.x + 2, origin.y + 2};
     const GPos only_spot{low.x + 1, low.y};
     for (int dx = -1; dx <= 1; ++dx)
@@ -281,10 +274,11 @@ static void test_exp_fields_deepen_before_clearing() {
     CHECK_EQ(s.people.size(), std::size_t{1});   // no new ground taken
     bool logged = false;
     for (std::size_t i = before; i < s.loglines().size(); ++i)
-        if (s.loglines()[i] == "    the field deepens") logged = true;
-    CHECK(logged);
+        if (s.loglines()[i].find("the field deepens at ") != std::string::npos)
+            logged = true;
+    CHECK(logged);                               // numbered, with its unit
 
-    // every field now high: the next farm step clears new ground instead
+    // no low field remains: the next farm step clears new ground instead
     SimTestAccess::grow(s, {low});
     CHECK_EQ(s.people.size(), std::size_t{2});
     CHECK(s.people.contains(only_spot));
@@ -303,9 +297,10 @@ int main(int argc, char** argv) {
     test_json();
     test_ordered_people();
     test_decisions_roundtrip();
-    test_exp_fields_blocking_and_support();
-    test_exp_fields_placement_beside_urban();
-    test_exp_fields_deepen_before_clearing();
+    test_ch9_field_does_not_block();
+    test_ch9_field_does_not_support();
+    test_ch9_field_beside_urban();
+    test_ch9_deepen_before_clearing();
     if (failures) {
         std::cerr << failures << " failure(s)\n";
         return 1;
