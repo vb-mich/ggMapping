@@ -17,8 +17,10 @@ import {
   switchMap,
 } from "../store";
 import { Atlas } from "./Atlas";
+import { MapFiles } from "./MapFiles";
 import { PanelDetail } from "./PanelDetail";
 import { ScanFlow } from "./ScanFlow";
+import { Timeline } from "./Timeline";
 
 export function MyMapScreen({ route }: { route: Route }) {
   useEffect(() => {
@@ -53,7 +55,9 @@ export function MyMapScreen({ route }: { route: Route }) {
             </button>
             <MapPicker />
           </div>
+          <Timeline />
           <Atlas />
+          <MapFiles />
         </>
       )}
 

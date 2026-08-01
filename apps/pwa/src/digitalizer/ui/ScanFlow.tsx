@@ -7,8 +7,8 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { STRINGS } from "../../strings";
 import { panelName } from "../../contracts/geometry";
 import { go } from "../../router";
-import { orderQuad, type Quad } from "../geometry";
-import { autoLevels, applyLut, buildLut, resize, type Raster } from "../raster";
+import { orderQuad, rotateQuadCW, type Quad } from "../geometry";
+import { autoLevels, applyLut, buildLut, resize, rotate90, type Raster } from "../raster";
 import {
   decodeToRaster,
   encodeScan,
@@ -66,6 +66,14 @@ export function ScanFlow() {
     } finally {
       setBusy(false);
     }
+  };
+
+  // repeatable quarter turn: the image rotates, the quad rides along
+  const onRotate = () => {
+    if (!src.current || !quad) return;
+    const oldH = src.current.height;
+    src.current = rotate90(src.current);
+    setQuad(rotateQuadCW(quad, oldH));
   };
 
   const onStraighten = async () => {
@@ -170,6 +178,9 @@ export function ScanFlow() {
           <div class="flow-buttons">
             <button data-testid="btn-crop-back" onClick={() => setStage("pick")}>
               {STRINGS.mmBack}
+            </button>
+            <button data-testid="btn-rotate" onClick={onRotate}>
+              ⟳ {STRINGS.mmRotate}
             </button>
             <button class="primary" data-testid="btn-straighten" onClick={onStraighten}>
               {STRINGS.mmStraighten}

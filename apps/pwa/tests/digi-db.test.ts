@@ -113,6 +113,150 @@ describe("scans", () => {
   });
 });
 
+describe("bookmarks: a name on a timestamp, nothing more", () => {
+  it("adds, lists by time, deletes — and never touches a scan", async () => {
+    const map = await db.currentMap("m");
+    await db.addScan(newScan(map.id, 1, 1));
+    const late = await db.addBookmark(map.id, "after the rework", 5000);
+    await db.addBookmark(map.id, "first evening", 2000);
+    const listed = await db.listBookmarks(map.id);
+    expect(listed.map((b) => b.name)).toEqual(["first evening", "after the rework"]);
+    await db.deleteBookmark(late.id);
+    expect((await db.listBookmarks(map.id)).map((b) => b.name)).toEqual(["first evening"]);
+    expect(await db.listScans(map.id)).toHaveLength(1); // the name went, the scan stayed
+  });
+  it("scopes to its map", async () => {
+    const a = await db.currentMap("a");
+    const b = await db.createMap("b");
+    await db.addBookmark(a.id, "ours", 1000);
+    expect(await db.listBookmarks(b.id)).toHaveLength(0);
+  });
+});
+
+describe("the note after save", () => {
+  it("updates in place and nowhere else", async () => {
+    const map = await db.currentMap("m");
+    const one = await db.addScan(newScan(map.id, 1, 1, "first"));
+    const two = await db.addScan(newScan(map.id, 1, 1, "second"));
+    await db.updateScanNote(one.id, "rewritten");
+    const versions = await db.listVersions(map.id, 1, 1);
+    expect(versions.find((v) => v.id === one.id)?.note).toBe("rewritten");
+    expect(versions.find((v) => v.id === two.id)?.note).toBe("second");
+    await expect(db.updateScanNote("no-such-id", "x")).rejects.toBeInstanceOf(db.StoreError);
+  });
+});
+
+describe("the archive: the storage interface serialized", () => {
+  const bytesOf = async (b: Blob) => new Uint8Array(await b.arrayBuffer());
+
+  it("round-trips blobs byte-identically into a NEW map", async () => {
+    const map = await db.currentMap("Original");
+    const s1 = await db.addScan({
+      ...newScan(map.id, 1, 1, "keep me"),
+      image: new Blob([new Uint8Array([1, 2, 3, 4, 5])], { type: "image/webp" }),
+    });
+    await db.addScan(newScan(map.id, 2, 1));
+    await db.addBookmark(map.id, "the early days", s1.created);
+
+    const { manifest, files } = await db.exportArchive([map.id]);
+    expect(manifest.archive).toBe("jm-digitalizer-archive");
+    expect(manifest.scans).toHaveLength(2);
+    expect(files).toHaveLength(4); // two scans, two thumbs
+
+    const entries = new Map(files.map((f) => [f.name, f.blob]));
+    const summary = await db.restoreArchive(manifest, entries);
+    expect(summary).toEqual({ maps: 1, scans: 2, bookmarks: 1 });
+
+    const allMaps = await db.listMaps();
+    expect(allMaps).toHaveLength(2);
+    const restored = allMaps.find((m) => m.name === "Original (restored)")!;
+    expect(restored).toBeTruthy();
+    expect(restored.id).not.toBe(map.id);
+    // the restored map is now current: restore never merges into the old one
+    expect((await db.currentMap("x")).id).toBe(restored.id);
+
+    const scans = await db.listScans(restored.id);
+    expect(scans).toHaveLength(2);
+    const r1 = scans.find((s) => s.tx === 1 && s.ty === 1)!;
+    expect(r1.note).toBe("keep me");
+    expect(r1.created).toBe(s1.created); // history keeps its timestamps
+    expect(r1.id).not.toBe(s1.id); // but identity is fresh
+    const full = await db.getScan(r1.id);
+    expect([...(await bytesOf(full!.image))]).toEqual([1, 2, 3, 4, 5]);
+
+    const bms = await db.listBookmarks(restored.id);
+    expect(bms.map((b) => b.name)).toEqual(["the early days"]);
+  });
+
+  it("keeps the original name when it is free", async () => {
+    const map = await db.currentMap("Traveler");
+    await db.addScan(newScan(map.id, 1, 1));
+    const { manifest, files } = await db.exportArchive([map.id]);
+    // wipe: a fresh device
+    globalThis.indexedDB = new IDBFactory();
+    vi.resetModules();
+    db = await import("../src/digitalizer/db");
+    await db.currentMap("My first map");
+    await db.restoreArchive(manifest, new Map(files.map((f) => [f.name, f.blob])));
+    expect((await db.listMaps()).map((m) => m.name)).toContain("Traveler");
+  });
+
+  it("refuses corrupt input and restores NOTHING", async () => {
+    const map = await db.currentMap("m");
+    await db.addScan(newScan(map.id, 1, 1));
+    const { manifest, files } = await db.exportArchive([map.id]);
+    const entries = new Map(files.map((f) => [f.name, f.blob]));
+    entries.delete(manifest.scans[0].imageEntry); // a hole in the archive
+    await expect(db.restoreArchive(manifest, entries)).rejects.toBeInstanceOf(db.StoreError);
+    expect(await db.listMaps()).toHaveLength(1);
+    await expect(
+      db.restoreArchive({ archive: "something-else" } as never, new Map()),
+    ).rejects.toBeInstanceOf(db.StoreError);
+  });
+});
+
+describe("the v1 → v2 upgrade", () => {
+  it("keeps a v1 device's scans and gains the bookmarks store", async () => {
+    // build a v1 database by hand, exactly as act one's code created it
+    globalThis.indexedDB = new IDBFactory();
+    const oldDb = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open("jm-digitalizer", 1);
+      req.onupgradeneeded = () => {
+        const d = req.result;
+        d.createObjectStore("maps", { keyPath: "id" });
+        const scans = d.createObjectStore("scans", { keyPath: "id" });
+        scans.createIndex("byMap", "mapId");
+        scans.createIndex("byPanel", ["mapId", "tx", "ty"]);
+        d.createObjectStore("outbox", { autoIncrement: true });
+        d.createObjectStore("settings", { keyPath: "key" });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const t = oldDb.transaction(["maps", "scans", "settings"], "readwrite");
+      t.objectStore("maps").add({ id: "m1", name: "From act one", created: 111 });
+      t.objectStore("scans").add({
+        id: "s1", mapId: "m1", tx: 1, ty: 1, created: 222, note: "", sync: "local",
+        mime: "image/webp", width: 10, height: 12, bytes: 5,
+        image: blob(5), thumb: blob(2),
+      });
+      t.objectStore("settings").put({ key: "currentMapId", value: "m1" });
+      t.oncomplete = () => resolve();
+      t.onerror = () => reject(t.error);
+    });
+    oldDb.close();
+
+    vi.resetModules();
+    db = await import("../src/digitalizer/db");
+    const current = await db.currentMap("x");
+    expect(current.id).toBe("m1"); // nothing lost, nothing renamed
+    expect(await db.listScans("m1")).toHaveLength(1);
+    await db.addBookmark("m1", "works now", 333); // the v2 store exists
+    expect(await db.listBookmarks("m1")).toHaveLength(1);
+  });
+});
+
 describe("the default coordinate rule (E, S, W, N)", () => {
   const meta = (tx: number, ty: number, created: number) =>
     ({ tx, ty, created }) as import("../src/digitalizer/db").ScanMeta;

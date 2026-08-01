@@ -230,7 +230,33 @@ export const STRINGS = {
   mmNoScansHere: "Nothing is filed at this coordinate yet.",
   mmDelete: "Delete",
   mmDeleteWarn: "This removes the scan from this device, forever. There is no copy anywhere else.",
+  mmDeleteTimelineWarn: "Deleting it also changes what the timeline shows at that time.",
   mmReallyDelete: "Delete forever",
+  mmRotate: "Rotate",
+  mmEditNote: "Edit note",
+  mmSaveNote: "Save note",
+
+  // the timeline
+  mmTimeline: "Timeline",
+  mmNow: "now",
+  mmViewing: "viewing",
+  mmMarkMoment: "Name this moment",
+  mmRemove: "Remove",
+
+  // map files: the whole-map PNG and the backup archive
+  mmFilesTitle: "Map files",
+  mmExportPng: "Export map PNG",
+  mmQuality: "Quality",
+  mmQualityHigh: "full",
+  mmQualityLow: "quick (small)",
+  mmTransparent: "Transparent gaps",
+  mmCapEngaged: "The export was scaled down to fit this device's image limits.",
+  mmNothingToExport: "There is nothing to export at this moment of the timeline.",
+  mmBackupCurrent: "Back up this map",
+  mmBackupAll: "Back up all maps",
+  mmRestore: "Restore a backup",
+  mmRestored: "Restored {maps} map(s) with {scans} scan(s), as a new map.",
+  mmArchiveBad: "That file is not a backup this app can read. ({message})",
   mmDecodeFailed: "That photo could not be read. Try another one.",
   mmEncodeFailed: "The scan could not be encoded on this device.",
   mmNoStore:

@@ -7,7 +7,7 @@ import { panelName } from "../../contracts/geometry";
 import { STRINGS } from "../../strings";
 import { go } from "../../router";
 import { getScan, type ScanMeta } from "../db";
-import { activeMap, presetCoord, removeScan, versionsOf } from "../store";
+import { activeMap, editNote, presetCoord, removeScan, versionsOf } from "../store";
 
 export function PanelDetail({ tx, ty }: { tx: number; ty: number }) {
   const versions = versionsOf(tx, ty);
@@ -79,6 +79,7 @@ export function PanelDetail({ tx, ty }: { tx: number; ty: number }) {
             {shown.note ? ` — ${shown.note}` : ""}
             {` · ${shown.width}×${shown.height}`}
           </p>
+          <NoteEditor key={shown.id} id={shown.id} note={shown.note} />
           <h3>
             {STRINGS.mmHistoryTitle} <small>({STRINGS.mmNewestFirst})</small>
           </h3>
@@ -100,6 +101,40 @@ export function PanelDetail({ tx, ty }: { tx: number; ty: number }) {
         </>
       )}
     </div>
+  );
+}
+
+// The one after-save edit a scan allows: its note, single-line.
+function NoteEditor({ id, note }: { id: string; note: string }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(note);
+
+  if (!editing) {
+    return (
+      <button class="ghost" data-testid="btn-edit-note" onClick={() => setEditing(true)}>
+        {STRINGS.mmEditNote}
+      </button>
+    );
+  }
+  const save = async () => {
+    if (await editNote(id, value)) setEditing(false);
+  };
+  return (
+    <span class="map-create note-edit">
+      <input
+        type="text"
+        value={value}
+        placeholder={STRINGS.mmNote}
+        data-testid="input-edit-note"
+        onInput={(e) => setValue((e.currentTarget as HTMLInputElement).value)}
+      />
+      <button data-testid="btn-save-note" onClick={save}>
+        {STRINGS.mmSaveNote}
+      </button>
+      <button class="ghost" onClick={() => setEditing(false)}>
+        {STRINGS.cancel}
+      </button>
+    </span>
   );
 }
 
@@ -136,7 +171,9 @@ function VersionRow(props: {
         </button>
       ) : (
         <span class="delete-confirm" data-testid="delete-confirm">
-          <small>{STRINGS.mmDeleteWarn}</small>
+          <small>
+            {STRINGS.mmDeleteWarn} {STRINGS.mmDeleteTimelineWarn}
+          </small>
           <button class="danger" data-testid="btn-delete-forever" onClick={props.onDelete}>
             {STRINGS.mmReallyDelete}
           </button>

@@ -6,16 +6,8 @@ import { panelName } from "../../contracts/geometry";
 import { STRINGS } from "../../strings";
 import { go, panelHash } from "../../router";
 import type { ScanMeta } from "../db";
+import { coordAxis } from "../stitch";
 import { atlas } from "../store";
-
-// Coordinate values min..max with the (nonexistent) zero skipped.
-function axis(values: number[]): number[] {
-  const lo = Math.min(...values);
-  const hi = Math.max(...values);
-  const out: number[] = [];
-  for (let v = lo; v <= hi; v++) if (v !== 0) out.push(v);
-  return out;
-}
 
 export function Atlas() {
   const a = atlas.value;
@@ -34,8 +26,8 @@ export function Atlas() {
   }
 
   const coords = [...a.keys()].map((k) => k.split(",").map(Number) as [number, number]);
-  const cols = axis(coords.map(([tx]) => tx));
-  const rows = axis(coords.map(([, ty]) => ty)).reverse(); // north on top
+  const cols = coordAxis(coords.map(([tx]) => tx));
+  const rows = coordAxis(coords.map(([, ty]) => ty)).reverse(); // north on top
 
   return (
     <div class="card atlas-card">

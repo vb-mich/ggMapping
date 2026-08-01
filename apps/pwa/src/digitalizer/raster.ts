@@ -122,6 +122,25 @@ export function applyLut(r: Raster, lut: Uint8ClampedArray): Raster {
   return out;
 }
 
+// Rotate a quarter turn clockwise: a sideways photo becomes an upright one.
+export function rotate90(r: Raster): Raster {
+  const { width: w, height: h, data } = r;
+  const out = makeRaster(h, w);
+  const od = out.data;
+  for (let y = 0; y < w; y++) {
+    // dst row y comes from src column y
+    for (let x = 0; x < h; x++) {
+      const src = ((h - 1 - x) * w + y) * 4;
+      const dst = (y * h + x) * 4;
+      od[dst] = data[src];
+      od[dst + 1] = data[src + 1];
+      od[dst + 2] = data[src + 2];
+      od[dst + 3] = data[src + 3];
+    }
+  }
+  return out;
+}
+
 // Downscale by iterative bilinear halving (avoids undersampling on the deep
 // reduction to a thumbnail), then one bilinear pass to the exact size.
 export function resize(r: Raster, w: number, h: number): Raster {

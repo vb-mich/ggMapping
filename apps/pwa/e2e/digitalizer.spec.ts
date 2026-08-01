@@ -1,4 +1,4 @@
-// The e2e law of My map: detection lands near the known corners of a
+﻿// The e2e law of My map: detection lands near the known corners of a
 // synthetic panel (and the manual quad path completes regardless), the
 // rectified output carries the fixture's true proportions (the scanner is
 // size-agnostic — it recovers them from the photo), a saved scan lands on the
@@ -6,119 +6,17 @@
 // panel becomes the newest while the first stays as history, deletion asks
 // first with wording that promises no recovery, and the detector chunk loads
 // lazily — never with the app shell.
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { STRINGS } from "../src/strings";
-
-// A 5:6 rectangle photographed by a synthetic pinhole camera: bright sheet,
-// dark table, grid lines inside. Returns the PNG and the projected corners.
-const FIXTURE = {
-  W: 500,
-  H: 600,
-  tiltX: 0.45,
-  tiltY: 0.2,
-  dist: 1000,
-  f: 800,
-  frameW: 1024,
-  frameH: 768,
-};
-
-interface Truth {
-  dataUrl: string;
-  corners: { x: number; y: number }[];
-}
-
-async function makeFixture(page: Page, seed = 0): Promise<Truth> {
-  return page.evaluate((fx) => {
-    const { W, H, tiltX, tiltY, dist, f, frameW, frameH } = fx;
-    const cx = frameW / 2, cy = frameH / 2;
-    const corners3 = [
-      [-W / 2, -H / 2, 0],
-      [W / 2, -H / 2, 0],
-      [W / 2, H / 2, 0],
-      [-W / 2, H / 2, 0],
-    ];
-    const sx = Math.sin(tiltX), cxr = Math.cos(tiltX);
-    const sy = Math.sin(tiltY), cyr = Math.cos(tiltY);
-    const proj = ([X, Y, Z]: number[]) => {
-      const y1 = cxr * Y - sx * Z, z1 = sx * Y + cxr * Z;
-      const x2 = cyr * X + sy * z1, z2 = -sy * X + cyr * z1 + dist;
-      return { x: (f * x2) / z2 + cx, y: (f * y1) / z2 + cy };
-    };
-    const quad = corners3.map(proj);
-    const cv = document.createElement("canvas");
-    cv.width = frameW;
-    cv.height = frameH;
-    const g = cv.getContext("2d")!;
-    // the HARD background: a light wooden table, barely darker than paper —
-    // brightness cannot separate this; the detector's color pass must
-    g.fillStyle = "#ba9469";
-    g.fillRect(0, 0, frameW, frameH);
-    g.fillStyle = "#efe8d8";
-    g.beginPath();
-    quad.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
-    g.closePath();
-    g.fill();
-    const lerp = (a: { x: number; y: number }, b: { x: number; y: number }, t: number) => ({
-      x: a.x + (b.x - a.x) * t,
-      y: a.y + (b.y - a.y) * t,
-    });
-    g.strokeStyle = "#7a6f5c";
-    g.lineWidth = 2;
-    for (let k = 1; k < 5; k++) {
-      const t = k / 5;
-      const a = lerp(quad[0], quad[3], t), b = lerp(quad[1], quad[2], t);
-      g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
-    }
-    for (let k = 1; k < 4; k++) {
-      const t = k / 4;
-      const a = lerp(quad[0], quad[1], t), b = lerp(quad[3], quad[2], t);
-      g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
-    }
-    // a soft diagonal shadow band over paper and table alike, like a phone
-    // held over a table always casts
-    const shade = g.createLinearGradient(0, 0, frameW, frameH);
-    shade.addColorStop(0, "rgba(0,0,0,0.30)");
-    shade.addColorStop(0.5, "rgba(0,0,0,0.10)");
-    shade.addColorStop(1, "rgba(0,0,0,0)");
-    g.fillStyle = shade;
-    g.fillRect(0, 0, frameW, frameH);
-    return { dataUrl: cv.toDataURL("image/png"), corners: quad };
-  }, { ...FIXTURE, seed });
-}
-
-async function feedFixture(page: Page, t: Truth, name = "fixture.png"): Promise<void> {
-  await page.setInputFiles('[data-testid="input-scan-gallery"]', {
-    name,
-    mimeType: "image/png",
-    buffer: Buffer.from(t.dataUrl.split(",")[1], "base64"),
-  });
-}
-
-const handlePos = async (page: Page, i: number) => {
-  const h = page.getByTestId(`quad-handle-${i}`);
-  return {
-    x: Number(await h.getAttribute("data-x")),
-    y: Number(await h.getAttribute("data-y")),
-  };
-};
-
-// Walk one scan to the filing stage (crop → straighten → adjust → continue).
-async function scanToFile(page: Page, t: Truth): Promise<void> {
-  await feedFixture(page, t);
-  await expect(page.getByTestId("scan-flow")).toHaveAttribute("data-stage", "crop");
-  await page.getByTestId("btn-straighten").click();
-  await expect(page.getByTestId("scan-flow")).toHaveAttribute("data-stage", "adjust", {
-    timeout: 20_000,
-  });
-  await page.getByTestId("btn-to-file").click();
-  await expect(page.getByTestId("scan-flow")).toHaveAttribute("data-stage", "file");
-}
-
-async function saveScan(page: Page): Promise<void> {
-  await page.getByTestId("btn-save-scan").click();
-  await expect(page.getByTestId("scan-flow")).toHaveCount(0, { timeout: 20_000 });
-}
+import {
+  FIXTURE,
+  feedFixture,
+  handlePos,
+  makeFixture,
+  saveScan,
+  scanToFile,
+} from "./mymap-helpers";
 
 test("the empty state explains the tool, and the shell never loads the detector", async ({
   page,
@@ -278,7 +176,7 @@ test("a second scan of the same panel becomes the newest; the first stays as his
 
   // the picker now offers the East neighbor (E, S, W, N rule)...
   await page.getByTestId("btn-scan").click();
-  const t2 = await makeFixture(page, 2);
+  const t2 = await makeFixture(page);
   await scanToFile(page, t2);
   await expect(page.getByTestId("coord-name")).toHaveText("N1/E2");
   // ...but this is a re-scan of N1/E1: one step West
@@ -318,7 +216,7 @@ test("the atlas keeps its gaps visible and its maps apart", async ({ page }) => 
 
   // a second panel two columns east leaves a visible gap at N1/E2
   await page.getByTestId("btn-scan").click();
-  const t2 = await makeFixture(page, 2);
+  const t2 = await makeFixture(page);
   await scanToFile(page, t2);
   await page.getByTestId("coord-e-up").click(); // N1/E2 -> N1/E3
   await expect(page.getByTestId("coord-name")).toHaveText("N1/E3");
@@ -363,7 +261,7 @@ test("screenshots of the scan flow and the atlas at phone width", async ({ page 
   // a few more panels so the atlas reads as a map
   for (const [dir, times] of [["coord-e-up", 0], ["coord-n-down", 1]] as const) {
     await page.getByTestId("btn-scan").click();
-    const tn = await makeFixture(page, times + 3);
+    const tn = await makeFixture(page);
     await scanToFile(page, tn);
     for (let i = 0; i < times; i++) await page.getByTestId(dir).click();
     await saveScan(page);

@@ -51,7 +51,9 @@ export class StoreError extends Error {
 }
 
 const DB_NAME = "jm-digitalizer";
-const DB_VERSION = 1;
+// v2: the bookmarks store — a bookmark is a NAME on a timestamp, nothing
+// more; deleting one deletes a name, never a scan.
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -70,13 +72,27 @@ function openDb(): Promise<IDBDatabase> {
       return;
     }
     req.onupgradeneeded = () => {
+      // guarded creates: this runs for fresh databases AND for v1 devices
+      // upgrading in place — their scans must come through untouched
       const db = req.result;
-      db.createObjectStore("maps", { keyPath: "id" });
-      const scans = db.createObjectStore("scans", { keyPath: "id" });
-      scans.createIndex("byMap", "mapId");
-      scans.createIndex("byPanel", ["mapId", "tx", "ty"]);
-      db.createObjectStore("outbox", { autoIncrement: true });
-      db.createObjectStore("settings", { keyPath: "key" });
+      if (!db.objectStoreNames.contains("maps")) {
+        db.createObjectStore("maps", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("scans")) {
+        const scans = db.createObjectStore("scans", { keyPath: "id" });
+        scans.createIndex("byMap", "mapId");
+        scans.createIndex("byPanel", ["mapId", "tx", "ty"]);
+      }
+      if (!db.objectStoreNames.contains("outbox")) {
+        db.createObjectStore("outbox", { autoIncrement: true });
+      }
+      if (!db.objectStoreNames.contains("settings")) {
+        db.createObjectStore("settings", { keyPath: "key" });
+      }
+      if (!db.objectStoreNames.contains("bookmarks")) {
+        const bm = db.createObjectStore("bookmarks", { keyPath: "id" });
+        bm.createIndex("byMap", "mapId");
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () =>
@@ -235,16 +251,33 @@ export function listVersions(mapId: string, ptx: number, pty: number): Promise<S
   });
 }
 
+// THE TIMELINE RULE — the map at time T is DERIVED, never stored: for each
+// panel, the newest scan with created <= at. `at: null` means now (no upper
+// bound). Pure over metadata, so the unit suite owns it.
+export function mapAt(scans: ScanMeta[], at: number | null): Map<string, ScanMeta> {
+  const out = new Map<string, ScanMeta>();
+  for (const s of scans) {
+    if (at !== null && s.created > at) continue;
+    const key = `${s.tx},${s.ty}`;
+    const seen = out.get(key);
+    if (!seen || s.created > seen.created) out.set(key, s);
+  }
+  return out;
+}
+
 // The atlas: each panel's newest scan.
 export function latestPerPanel(mapId: string): Promise<Map<string, ScanMeta>> {
-  return listScans(mapId).then((all) => {
-    const out = new Map<string, ScanMeta>();
-    for (const s of all) {
-      const key = `${s.tx},${s.ty}`;
-      const seen = out.get(key);
-      if (!seen || s.created > seen.created) out.set(key, s);
-    }
-    return out;
+  return listScans(mapId).then((all) => mapAt(all, null));
+}
+
+// The one after-save mutation a scan allows: its note.
+export function updateScanNote(id: string, note: string): Promise<void> {
+  return tx("scans", "readwrite", async (t) => {
+    const store = t.objectStore("scans");
+    const rec = (await reqAsPromise(store.get(id))) as ScanRecord | undefined;
+    if (!rec) throw new StoreError("failure", "no such scan");
+    rec.note = note;
+    store.put(rec);
   });
 }
 
@@ -314,6 +347,182 @@ export async function requestPersistence(): Promise<boolean | null> {
 export function stepCoord(v: number, d: number): number {
   const n = v + d;
   return n === 0 ? (d > 0 ? 1 : -1) : n;
+}
+
+// --- bookmarks ---------------------------------------------------------------
+// A bookmark is a name on a timestamp of the timeline — {id, mapId, name, at}
+// and nothing more. Seeking to one re-derives the map; deleting one deletes
+// a name, never a scan.
+
+export interface BookmarkRecord {
+  id: string;
+  mapId: string;
+  name: string;
+  at: number; // epoch ms on the timeline
+}
+
+export function listBookmarks(mapId: string): Promise<BookmarkRecord[]> {
+  return tx("bookmarks", "readonly", async (t) => {
+    const all = (await reqAsPromise(
+      t.objectStore("bookmarks").index("byMap").getAll(mapId),
+    )) as BookmarkRecord[];
+    return all.sort((a, b) => a.at - b.at);
+  });
+}
+
+export function addBookmark(mapId: string, name: string, at: number): Promise<BookmarkRecord> {
+  const rec: BookmarkRecord = { id: newId(), mapId, name: name.trim(), at };
+  return tx("bookmarks", "readwrite", (t) => {
+    t.objectStore("bookmarks").add(rec);
+    return rec;
+  });
+}
+
+export function deleteBookmark(id: string): Promise<void> {
+  return tx("bookmarks", "readwrite", (t) => {
+    t.objectStore("bookmarks").delete(id);
+  });
+}
+
+// --- the archive -------------------------------------------------------------
+// The backup: the storage interface serialized. The manifest carries every
+// record; the blobs ride beside it under entry names the manifest points to.
+// This is also act two's migration rehearsal: whatever can sync must first
+// survive this round trip.
+
+export const ARCHIVE_TAG = "jm-digitalizer-archive";
+export const ARCHIVE_VERSION = 1;
+
+export interface ArchiveScan extends Omit<ScanMeta, "thumb"> {
+  imageEntry: string;
+  thumbEntry: string;
+}
+
+export interface ArchiveManifest {
+  archive: typeof ARCHIVE_TAG;
+  version: number;
+  exported: number;
+  maps: MapRecord[];
+  scans: ArchiveScan[];
+  bookmarks: BookmarkRecord[];
+}
+
+const entryExt = (mime: string) =>
+  mime === "image/webp" ? "webp" : mime === "image/jpeg" ? "jpg" : "bin";
+
+export function exportArchive(
+  mapIds: string[],
+): Promise<{ manifest: ArchiveManifest; files: { name: string; blob: Blob }[] }> {
+  return tx(["maps", "scans", "bookmarks"], "readonly", async (t) => {
+    const wanted = new Set(mapIds);
+    const maps = ((await reqAsPromise(t.objectStore("maps").getAll())) as MapRecord[])
+      .filter((m) => wanted.has(m.id))
+      .sort((a, b) => a.created - b.created);
+    const scans = ((await reqAsPromise(t.objectStore("scans").getAll())) as ScanRecord[])
+      .filter((s) => wanted.has(s.mapId))
+      .sort((a, b) => a.created - b.created);
+    const bookmarks = (
+      (await reqAsPromise(t.objectStore("bookmarks").getAll())) as BookmarkRecord[]
+    )
+      .filter((b) => wanted.has(b.mapId))
+      .sort((a, b) => a.at - b.at);
+
+    const files: { name: string; blob: Blob }[] = [];
+    const archiveScans: ArchiveScan[] = scans.map((s) => {
+      const imageEntry = `scans/${s.id}.${entryExt(s.mime)}`;
+      const thumbEntry = `thumbs/${s.id}.${entryExt(s.thumb.type || s.mime)}`;
+      files.push({ name: imageEntry, blob: s.image });
+      files.push({ name: thumbEntry, blob: s.thumb });
+      const { image: _i, thumb: _t, ...meta } = s;
+      return { ...meta, imageEntry, thumbEntry };
+    });
+
+    return {
+      manifest: {
+        archive: ARCHIVE_TAG,
+        version: ARCHIVE_VERSION,
+        exported: Date.now(),
+        maps,
+        scans: archiveScans,
+        bookmarks,
+      },
+      files,
+    };
+  });
+}
+
+// Restore into NEW maps — never a silent merge. Fresh ids everywhere (the
+// originals may still live on this device), original timestamps and notes
+// kept, bookmarks remapped. One transaction: corrupt input restores nothing.
+export function restoreArchive(
+  manifest: ArchiveManifest,
+  entries: Map<string, Blob>,
+): Promise<{ maps: number; scans: number; bookmarks: number }> {
+  if (manifest?.archive !== ARCHIVE_TAG || manifest.version !== ARCHIVE_VERSION) {
+    return Promise.reject(new StoreError("failure", "not an archive this app understands"));
+  }
+  if (!Array.isArray(manifest.maps) || !Array.isArray(manifest.scans)) {
+    return Promise.reject(new StoreError("failure", "the manifest is incomplete"));
+  }
+  for (const s of manifest.scans) {
+    if (!entries.has(s.imageEntry) || !entries.has(s.thumbEntry)) {
+      return Promise.reject(
+        new StoreError("failure", `the archive is missing ${s.imageEntry}`),
+      );
+    }
+    if (!Number.isInteger(s.tx) || !Number.isInteger(s.ty) || s.tx === 0 || s.ty === 0) {
+      return Promise.reject(new StoreError("failure", "a scan carries a broken coordinate"));
+    }
+  }
+
+  return tx(["maps", "scans", "bookmarks", "settings"], "readwrite", async (t) => {
+    const mapsStore = t.objectStore("maps");
+    const existing = (await reqAsPromise(mapsStore.getAll())) as MapRecord[];
+    const taken = new Set(existing.map((m) => m.name));
+    const mapIdOf = new Map<string, string>();
+    let firstNewId = "";
+    for (const m of manifest.maps) {
+      const id = newId();
+      mapIdOf.set(m.id, id);
+      if (!firstNewId) firstNewId = id;
+      const name = taken.has(m.name) ? `${m.name} (restored)` : m.name;
+      mapsStore.add({ id, name, created: Date.now() });
+    }
+    const scansStore = t.objectStore("scans");
+    for (const s of manifest.scans) {
+      const mapId = mapIdOf.get(s.mapId);
+      if (!mapId) throw new StoreError("failure", "a scan points at a map the archive lacks");
+      const image = entries.get(s.imageEntry)!;
+      const thumb = entries.get(s.thumbEntry)!;
+      scansStore.add({
+        id: newId(),
+        mapId,
+        tx: s.tx,
+        ty: s.ty,
+        created: s.created,
+        note: s.note ?? "",
+        sync: "local",
+        mime: s.mime,
+        width: s.width,
+        height: s.height,
+        bytes: image.size,
+        image,
+        thumb,
+      });
+    }
+    const bmStore = t.objectStore("bookmarks");
+    let bookmarks = 0;
+    for (const b of manifest.bookmarks ?? []) {
+      const mapId = mapIdOf.get(b.mapId);
+      if (!mapId) continue; // a bookmark of a map outside this archive: drop
+      bmStore.add({ id: newId(), mapId, name: b.name, at: b.at });
+      bookmarks++;
+    }
+    if (firstNewId) {
+      t.objectStore("settings").put({ key: "currentMapId", value: firstNewId });
+    }
+    return { maps: manifest.maps.length, scans: manifest.scans.length, bookmarks };
+  });
 }
 
 export function defaultCoord(scans: ScanMeta[]): { tx: number; ty: number } {

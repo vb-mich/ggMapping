@@ -167,6 +167,13 @@ export function estimateAspect(
 
 const sane = (r: number) => Number.isFinite(r) && r > 0.1 && r < 10;
 
+// Rotate a quad a quarter turn clockwise with its image: a point (x, y) in a
+// w×h frame lands at (h − y, x) in the rotated h×w frame. Re-ordered so TL
+// leads again.
+export function rotateQuadCW(q: Quad, imageH: number): Quad {
+  return orderQuad(q.map((p) => ({ x: imageH - p.y, y: p.x })));
+}
+
 // The quad offered when detection fails (or its chunk cannot load): centered,
 // inset from the frame — a sensible start for dragging. Lives in the shell,
 // not the lazy detection chunk, so the manual path never depends on it.
