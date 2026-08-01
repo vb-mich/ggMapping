@@ -231,6 +231,8 @@ td.off-canon,
 .map-holder { border: 1px solid var(--card-edge); border-radius: 6px; overflow: hidden; }
 .map-holder canvas { display: block; width: 100%; touch-action: none; }
 .legend { display: flex; flex-wrap: wrap; gap: 0.5rem; font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; }
+.legend + .legend { margin-top: 0.2rem; }
+.legend-label { min-width: 4.2rem; } /* the two rows' swatches line up */
 .legend-item i {
   display: inline-block; width: 0.75rem; height: 0.75rem;
   border-radius: 2px; vertical-align: -2px; margin-right: 0.2rem;

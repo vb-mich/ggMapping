@@ -59,6 +59,17 @@ test("a run completes and paints", async ({ page }) => {
 
   await expect(page.getByTestId("final-report")).toContainText("FINAL METRICS");
   await expect(page.getByTestId("final-report")).toContainText("era 1:");
+
+  // the legend names both what the map paints and what it lays over the paint
+  const elevations = page.getByTestId("legend");
+  await expect(elevations).toContainText("verydeep");
+  await expect(elevations).toContainText("mountains");
+  const people = page.getByTestId("legend-people");
+  for (const label of ["fields low", "fields high", "rural", "urban low",
+                       "urban medium", "urban high"]) {
+    await expect(people).toContainText(label);
+  }
+  await expect(people.locator("i")).toHaveCount(6);
 });
 
 test("a deck edit changes the run", async ({ page }) => {
@@ -373,6 +384,17 @@ test("screenshots at mobile and desktop widths", async ({ page }) => {
   await page
     .getByTestId("stats-strip")
     .screenshot({ path: "e2e-artifacts/elevation-shares.png" });
+  const topRow = (await page.getByTestId("legend").boundingBox())!;
+  const bottomRow = (await page.getByTestId("legend-people").boundingBox())!;
+  await page.screenshot({
+    path: "e2e-artifacts/legend.png",
+    clip: {
+      x: topRow.x - 4,
+      y: topRow.y - 4,
+      width: Math.max(topRow.width, bottomRow.width) + 8,
+      height: bottomRow.y + bottomRow.height - topRow.y + 8,
+    },
+  });
 
   // the Experimental group, and the badge it puts on a dialed run
   await page.getByTestId("toggle-exp-fields").check();

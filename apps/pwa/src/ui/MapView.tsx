@@ -12,8 +12,19 @@ import {
   type View,
 } from "../map/render";
 import { mapCanvas } from "../map/canvasRef";
-import { RUNG_NAMES, RUNG_COLORS } from "../contracts/palette";
+import { PEOPLE_COLORS, RUNG_NAMES, RUNG_COLORS } from "../contracts/palette";
 import { STRINGS } from "../strings";
+
+// The overlays the map draws over the elevations, in ladder order (CONTRACTS
+// §2.3). Labels are the stats strip's, so the two never drift apart.
+const PEOPLE_LEGEND: readonly [string, string][] = [
+  ["farm_lo", STRINGS.peopleFieldsLow],
+  ["farm_hi", STRINGS.peopleFieldsHigh],
+  ["rural", STRINGS.peopleRural],
+  ["urb_lo", STRINGS.peopleUrbanLow],
+  ["urb_md", STRINGS.peopleUrbanMedium],
+  ["urb_hi", STRINGS.peopleUrbanHigh],
+];
 import {
   currentAgePanel,
   dimArchived,
@@ -175,11 +186,19 @@ export function MapView() {
           }) as never}
         />
       </div>
-      <div class="legend">
-        <span>{STRINGS.legendTitle}:</span>
+      <div class="legend" data-testid="legend">
+        <span class="legend-label">{STRINGS.legendTitle}:</span>
         {RUNG_NAMES.map((n, i) => (
           <span key={n} class="legend-item">
             <i style={`background:${RUNG_COLORS[i]}`} /> {n}
+          </span>
+        ))}
+      </div>
+      <div class="legend" data-testid="legend-people">
+        <span class="legend-label">{STRINGS.peopleHeading}:</span>
+        {PEOPLE_LEGEND.map(([kind, label]) => (
+          <span key={kind} class="legend-item">
+            <i style={`background:${PEOPLE_COLORS[kind]}`} /> {label}
           </span>
         ))}
       </div>
