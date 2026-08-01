@@ -193,6 +193,55 @@ export const STRINGS = {
   // updates
   updateNow: "Update to newer version",
 
+  // navigation between the app's screens
+  navSimulator: "Simulator",
+  navMyMap: "My map",
+
+  // My map — the digitalizer screen (act one: local only)
+  mmDefaultMapName: "My first map",
+  mmMapLabel: "Map",
+  mmNewMap: "New map",
+  mmMapName: "Name",
+  mmCreate: "Create",
+  mmScanButton: "Scan a panel",
+  mmEmptyState:
+    "Your paper map, panel by panel: photograph each worked panel and it is filed here at its coordinate, with every earlier scan kept as history. Tap Scan a panel to begin.",
+  mmPickHint: "Photograph the worked panel straight on, filling the frame.",
+  mmCamera: "Take a photo",
+  mmGallery: "From the gallery",
+  mmCropTitle: "Corners",
+  mmDetected: "Border found — adjust the corners if needed.",
+  mmNotDetected: "No border found — set the corners by hand.",
+  mmStraighten: "Straighten",
+  mmAdjustTitle: "Light",
+  mmExposure: "Exposure",
+  mmContrast: "Contrast",
+  mmContinue: "Continue",
+  mmFileTitle: "File the scan",
+  mmNote: "Note (optional)",
+  mmSaveScan: "Save to the map",
+  mmAlreadyScanned:
+    "This panel already holds {n} scan(s); this one becomes the newest and the others stay as history.",
+  mmBack: "Back",
+  mmWorking: "Working…",
+  mmHistoryTitle: "History",
+  mmNewestFirst: "newest first",
+  mmScanAgain: "Scan this panel again",
+  mmNoScansHere: "Nothing is filed at this coordinate yet.",
+  mmDelete: "Delete",
+  mmDeleteWarn: "This removes the scan from this device, forever. There is no copy anywhere else.",
+  mmReallyDelete: "Delete forever",
+  mmDecodeFailed: "That photo could not be read. Try another one.",
+  mmEncodeFailed: "The scan could not be encoded on this device.",
+  mmNoStore:
+    "This browser will not let the app keep files on the device (private mode can do this). Scanning works, saving does not.",
+  mmQuotaFull: "There is no room left on this device for the scan. Free some space and try again.",
+  mmStoreFailed: "Saving failed: {message}",
+  mmScanWord: "scan",
+  mmScansWord: "scans",
+  mmPersistent: "persistent",
+  mmBestEffort: "best effort",
+
   // misc
   offlineReady: "Ready to work offline.",
 } as const;

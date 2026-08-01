@@ -27,6 +27,8 @@ import {
   workOverrides,
 } from "../state";
 import { applyUpdate, updateAvailable } from "../updates";
+import { go, route } from "../router";
+import { MyMapScreen } from "../digitalizer/ui/MyMapScreen";
 import { ConfigPanel } from "./ConfigPanel";
 import { DeckEditor } from "./DeckEditor";
 import { FilesBar } from "./FilesBar";
@@ -98,8 +100,27 @@ export function App() {
     <>
       <header>
         <h1>
-          {DISPLAY_NAME} <small>{STRINGS.tagline}</small>
+          {DISPLAY_NAME}
+          {route.value.screen === "sim" && <small> {STRINGS.tagline}</small>}
         </h1>
+        <nav class="screen-tabs" data-testid="screen-tabs">
+          <button
+            class={route.value.screen === "sim" ? "tab active" : "tab"}
+            data-testid="tab-simulator"
+            aria-current={route.value.screen === "sim" ? "page" : undefined}
+            onClick={() => go("#/")}
+          >
+            {STRINGS.navSimulator}
+          </button>
+          <button
+            class={route.value.screen === "sim" ? "tab" : "tab active"}
+            data-testid="tab-mymap"
+            aria-current={route.value.screen !== "sim" ? "page" : undefined}
+            onClick={() => go("#/map")}
+          >
+            {STRINGS.navMyMap}
+          </button>
+        </nav>
         {engineLineage.value && (
           <span class="chip lineage-chip" data-testid="lineage-badge"
             title={STRINGS.lineageTitle}>
@@ -141,23 +162,29 @@ export function App() {
           {STRINGS.updateNow}
         </button>
       )}
-      <RunBar />
-      <main>
-        <div class="col-side">
-          <ConfigPanel />
-          <DeckEditor />
-          <FilesBar />
-        </div>
-        <div class="col-main">
-          <div class="now-nav">
-            <NavPanel />
-            <NowPanel />
-          </div>
-          <MapView />
-          <StatsStrip />
-          <ReportCard />
-        </div>
-      </main>
+      {route.value.screen === "sim" ? (
+        <>
+          <RunBar />
+          <main>
+            <div class="col-side">
+              <ConfigPanel />
+              <DeckEditor />
+              <FilesBar />
+            </div>
+            <div class="col-main">
+              <div class="now-nav">
+                <NavPanel />
+                <NowPanel />
+              </div>
+              <MapView />
+              <StatsStrip />
+              <ReportCard />
+            </div>
+          </main>
+        </>
+      ) : (
+        <MyMapScreen route={route.value} />
+      )}
       <footer>
         <small data-testid="app-version">v{__JM_VERSION__}</small>
       </footer>

@@ -291,3 +291,133 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
   padding: 0.35rem 0.8rem; cursor: pointer; background: var(--card);
 }
 .file-button input { display: none; }
+
+/* --- the screen tabs ------------------------------------------------------ */
+.screen-tabs { display: flex; gap: 0.25rem; }
+.screen-tabs .tab {
+  border: 1px solid var(--card-edge);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.2rem 0.8rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.screen-tabs .tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* --- My map --------------------------------------------------------------- */
+.mymap { --atlas-cell: 96px; }
+.mymap-bar { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.map-picker { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.map-label { display: inline-flex; align-items: center; gap: 0.35rem; }
+.map-label > span { font-size: 0.8rem; color: var(--muted); }
+.map-picker select, .map-create input {
+  font: inherit; padding: 0.3rem 0.4rem;
+  border: 1px solid var(--card-edge); border-radius: 6px;
+  background: var(--field-bg); color: var(--ink);
+  max-width: 11rem;
+}
+.map-create { display: inline-flex; gap: 0.35rem; }
+
+.mm-footer {
+  text-align: center; color: var(--muted); font-size: 0.78rem;
+  margin: 0.2rem 0 0.6rem; min-height: 1em;
+}
+
+/* the atlas */
+.atlas-card { padding: 0.4rem; }
+.atlas-viewport {
+  overflow: hidden; touch-action: none;
+  min-height: 40vh; max-height: 70vh;
+  border-radius: 6px; background: var(--bg);
+  cursor: grab;
+}
+.atlas-plane {
+  display: grid; gap: 6px; width: max-content;
+  padding: 1rem; transform-origin: 0 0;
+}
+.atlas-cell, .atlas-gap {
+  width: var(--atlas-cell);
+  aspect-ratio: 5 / 6;
+  border-radius: 4px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 2px; position: relative;
+  font-size: 0.68rem;
+}
+.atlas-cell {
+  border: 1px solid var(--border);
+  background: var(--card); color: var(--ink);
+  padding: 0; cursor: pointer; overflow: hidden;
+}
+.atlas-cell img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+}
+.atlas-cell span {
+  position: relative; z-index: 1;
+  background: rgba(0, 0, 0, 0.55); color: #fff;
+  border-radius: 3px; padding: 0 0.25rem;
+  margin-top: auto; margin-bottom: 3px;
+}
+.atlas-gap {
+  border: 1px dashed var(--card-edge);
+  color: var(--muted);
+}
+
+/* the scan flow */
+.scan-flow .flow-buttons { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
+.scan-flow .flow-buttons .primary { margin-left: auto; }
+.scan-flow .field input[type="range"] { max-width: none; width: 100%; }
+.crop-stage { position: relative; }
+.crop-canvas { display: block; width: 100%; border-radius: 6px; }
+.crop-overlay {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  touch-action: none;
+}
+.crop-outline {
+  fill: rgba(65, 147, 188, 0.16);
+  stroke: var(--accent); stroke-width: 3px;
+  vector-effect: non-scaling-stroke;
+}
+.crop-handle { fill: var(--accent); stroke: #fff; stroke-width: 2px; vector-effect: non-scaling-stroke; }
+.crop-hit { fill: transparent; cursor: grab; }
+.adjust-canvas {
+  display: block; max-width: 100%; max-height: 55vh;
+  margin: 0 auto; border-radius: 6px; border: 1px solid var(--card-edge);
+}
+.coord-picker { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; margin: 0.5rem 0; }
+.coord-name { font-size: 1.5rem; font-weight: 700; min-width: 5.5rem; }
+.coord-axes { display: flex; gap: 0.6rem; }
+.coord-axes .spin b { min-width: 2.2rem; text-align: center; }
+.coord-axes .spin-btn { font-size: 0.8rem; padding: 0.3rem 0.4rem; }
+
+/* the panel detail */
+.panel-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.panel-head h2 { margin: 0; flex: 1; }
+.panel-head small { color: var(--muted); font-weight: normal; }
+.panel-image {
+  display: block; max-width: 100%; max-height: 60vh;
+  margin: 0.5rem auto; border-radius: 6px; border: 1px solid var(--card-edge);
+}
+.version-list { list-style: none; margin: 0; padding: 0; }
+.version {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.4rem 0.2rem; border-top: 1px solid var(--card-edge);
+}
+.version.current { background: var(--field-bg); border-radius: 6px; }
+.version-pick {
+  padding: 0; border: 1px solid var(--card-edge); border-radius: 4px;
+  overflow: hidden; width: 52px; height: 62px; flex: none;
+  background: var(--bg);
+}
+.version-pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.version-meta { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.version-meta small { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.delete-confirm { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+.delete-confirm small { color: var(--error); max-width: 14rem; }
+button.danger { background: var(--error); border-color: var(--error); color: #fff; }
