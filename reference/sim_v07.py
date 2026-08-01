@@ -1272,7 +1272,12 @@ def render(sim, path, upx=16, patina=True):
         return (10 + (g[0] - x0) * upx, 10 + (g[1] - y0) * upx)
     combined = dict(getattr(sim, "embellish", {}))
     for tk, n in getattr(sim, "embellish_tile", {}).items():
-        us = sorted(tile_units(tk))
+        # a panel level flourish has no unit: the player chooses one. Place it on
+        # painted ground, richest first, so the mark shows where the map is worked.
+        us = [u for u in sorted(tile_units(tk)) if u in sim.base]
+        if not us:
+            continue
+        us.sort(key=lambda u: (-combined.get(u, 0), u))
         for i in range(n):
             g = us[i % len(us)]
             combined[g] = combined.get(g, 0) + 1
@@ -1343,6 +1348,8 @@ def main():
     ap.add_argument("--eras", type=int, default=8)
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--out", default="runs")
+    ap.add_argument("--no-render", action="store_true",
+                    help="skip PNG output (behavior neutral; log bytes unchanged)")
     ap.add_argument("--snapshots", action="store_true")
     ap.add_argument("--alive", action="store_true",
                     help="the Living Map: no Atlas, full panels rework, cities live")
@@ -1364,9 +1371,6 @@ def main():
                     help="the Semi-Living Map: the land rests, the people flow")
     ap.add_argument("--no-patina", action="store_true",
                     help="do not trace embellishments in rendered maps")
-    ap.add_argument("--no-render", action="store_true",
-                    help="skip all PNG rendering; log bytes are unaffected "
-                         "(gate tooling, CONTRACTS S8.4)")
     ap.add_argument("--flat-work", action="store_true",
                     help="disable the per-card work spread (canon: on)")
     ap.add_argument("--living-deck", action="store_true",
