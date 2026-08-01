@@ -252,10 +252,16 @@ struct CliOptions {
     bool exp_fields = false;     // EXPERIMENTAL (handbook ch. 11)
     bool flat_work = false;
     std::string work, mood;      // k=v,... overrides
-    std::string save_path, load_path, record_path, replay_path;
+    std::string save_path, load_path, record_path, replay_path, patina_path;
     std::int64_t save_at = -1;   // ages before saving (with --save)
 };
 
 int run_cli(int argc, char** argv);   // the reference-compatible CLI
+
+// The patina map (CONTRACTS §2.4), derived from a §6 state document: the
+// per-unit rework marks a renderer draws, panel-level flourishes placed on
+// painted ground. One rule, one implementation, shared by every renderer.
+std::map<GPos, int> patina_map(const Json& state);
+Json patina_json(const Json& state);  // [[gx, gy, marks], …], sorted by unit
 
 } // namespace jerrymap

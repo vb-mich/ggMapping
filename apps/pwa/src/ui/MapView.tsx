@@ -29,6 +29,7 @@ import {
   currentAgePanel,
   dimArchived,
   followPanel,
+  patinaMarks,
   showPanelNames,
   shownWorld,
   traceReworks,
@@ -61,7 +62,7 @@ export function MapView() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const view = useSignal<View | null>(null);
   const idx = useComputed(() =>
-    shownWorld.value ? indexWorld(shownWorld.value) : null,
+    shownWorld.value ? indexWorld(shownWorld.value, patinaMarks.value) : null,
   );
 
   const render = () => {

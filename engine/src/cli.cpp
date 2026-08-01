@@ -97,6 +97,7 @@ int run_cli(int argc, char** argv) {
         } else if (a == "--save") o.save_path = val();
         else if (a == "--save-at") o.save_at = std::atoll(val().c_str());
         else if (a == "--load") o.load_path = val();
+        else if (a == "--patina") o.patina_path = val();
         else if (a == "--record") o.record_path = val();
         else if (a == "--replay") o.replay_path = val();
         else throw std::runtime_error("unknown flag: " + a);
@@ -211,6 +212,8 @@ int run_cli(int argc, char** argv) {
         write_file(o.record_path, decisions_emit(recorder->tape()));
     if (!o.save_path.empty())
         write_file(o.save_path, json_emit(sim->save_state(), 2) + "\n");
+    if (!o.patina_path.empty()) // the render layer's map, for the render checks
+        write_file(o.patina_path, json_emit(patina_json(sim->save_state())) + "\n");
     std::cout << "seed " << sim->seed << "\n" << report << "\n";
     return 0;
 }

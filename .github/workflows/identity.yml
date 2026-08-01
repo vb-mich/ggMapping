@@ -21,6 +21,8 @@ jobs:
         run: python scripts/run_gate.py --native ./jerrymap
       - name: Book conformance (both implementations)
         run: python scripts/run_conformance.py --native ./jerrymap
+      - name: Render-layer checks (engine map vs the twin's own render)
+        run: python scripts/run_render_checks.py --native ./jerrymap
 
   wasm:
     runs-on: ubuntu-latest

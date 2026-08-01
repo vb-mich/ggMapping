@@ -49,29 +49,19 @@ const WORK_BADGE_MIN_PX = 13;
 
 const key = (x: number, y: number) => `${x},${y}`;
 
-export function indexWorld(w: WorldState): WorldIndex {
+// `patina` is the ENGINE's map (CONTRACTS §2.5): the app never decides where a
+// panel-level flourish goes. One rule, one implementation — the corner bias of
+// v0.7.1 existed because this file once had its own copy.
+export function indexWorld(
+  w: WorldState,
+  patina: Map<string, number> = new Map(),
+): WorldIndex {
   const geo: Geo = { w: w.config.panel_w, h: w.config.panel_h };
   const panels = w.world.panels.map(([tx, ty]) => [tx, ty] as [number, number]);
   const base = new Map(w.world.base.map(([x, y, r]) => [key(x, y), r]));
   const people = new Map(w.world.people.map(([x, y, k]) => [key(x, y), k]));
   const marks = new Map(w.world.marks.map(([x, y, m]) => [key(x, y), m]));
   const binder = new Set(w.world.binder.map(([tx, ty]) => key(tx, ty)));
-
-  // Patina density: per-unit embellish plus the panel-level count distributed
-  // round-robin over the panel's units sorted by (gx, gy) — CONTRACTS §2.4.
-  const patina = new Map<string, number>();
-  for (const [x, y, n] of w.world.embellish) patina.set(key(x, y), n);
-  for (const [tx, ty, n] of w.world.embellish_panel) {
-    const [ox, oy] = origin(geo, tx, ty);
-    const units: [number, number][] = [];
-    for (let dx = 0; dx < geo.w; dx++)
-      for (let dy = 0; dy < geo.h; dy++) units.push([ox + dx, oy + dy]);
-    units.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-    for (let i = 0; i < n; i++) {
-      const [ux, uy] = units[i % units.length];
-      patina.set(key(ux, uy), (patina.get(key(ux, uy)) ?? 0) + 1);
-    }
-  }
 
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (const [tx, ty] of panels) {

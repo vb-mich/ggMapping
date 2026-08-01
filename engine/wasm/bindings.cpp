@@ -81,6 +81,19 @@ const char* jm_version() { return "jerrymap-engine 3.1.0"; }
 // must read it from here rather than keep its own copy.
 const char* jm_lineage() { return LINEAGE; }
 
+// The patina map for a state document (CONTRACTS §2.4): [[gx, gy, marks], …].
+// Stateless on purpose — a renderer holds a world document, not always a
+// handle, and a world from another lineage is still viewable.
+const char* jm_patina(const char* state_json) {
+    static std::string out;
+    try {
+        out = json_emit(patina_json(json_parse(state_json)));
+    } catch (...) {
+        out = "[]";
+    }
+    return out.c_str();
+}
+
 // Fresh world from a config JSON (CONTRACTS §6 "config" keys, all optional).
 int jm_create(const char* config_json, std::int64_t seed, int eras) {
     try {

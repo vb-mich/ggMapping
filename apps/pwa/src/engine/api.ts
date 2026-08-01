@@ -8,6 +8,7 @@ import type { JmConfig, JmEvent, JmTime, WorldState } from "../contracts/schema"
 interface EmModule {
   _jm_version(): number;
   _jm_lineage(): number;
+  _jm_patina(state: number): number;
   _jm_create(cfg: number, seed: bigint, eras: number): number;
   _jm_load(state: number): number;
   _jm_step(h: number): number;
@@ -55,6 +56,15 @@ export class Engine {
   // carry it and testers compare against it.
   lineage(): string {
     return this.m.UTF8ToString(this.m._jm_lineage());
+  }
+
+  // Where the rework marks go (CONTRACTS §2.5). The engine decides, every
+  // renderer consumes: a second implementation is a second corner bias waiting
+  // to happen. Stateless, so a world merely being viewed still draws its patina.
+  patina(stateJson: string): [number, number, number][] {
+    return JSON.parse(
+      this.withCStr(stateJson, (p) => this.m.UTF8ToString(this.m._jm_patina(p))),
+    ) as [number, number, number][];
   }
 
   create(config: JmConfig, seed: number, eras: number): number {

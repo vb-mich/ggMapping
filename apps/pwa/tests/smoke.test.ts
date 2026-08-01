@@ -13,6 +13,7 @@ const ENGINE = join(ROOT, "engine", "wasm", "dist", "web", "jerrymap.mjs");
 
 interface RawModule {
   _jm_lineage(): number;
+  _jm_patina(state: number): number;
   _jm_create(cfg: number, seed: bigint, eras: number): number;
   _jm_run(h: number): void;
   _jm_step(h: number): number;
@@ -299,6 +300,40 @@ describe("web-flavored engine smoke", () => {
     const holds = numbered.filter((e) => e.kind === "hold");
     expect(holds.length).toBeGreaterThan(1000);
     expect(holds.every((e) => e.unit !== null)).toBe(true);
+    m._jm_free(h);
+  });
+
+  // The app draws the patina the ENGINE places (CONTRACTS §2.5). The web build
+  // must expose it, and it must obey the rule — this is the same map the render
+  // checks compare against the twin.
+  it("serves the patina map the canvas draws", async () => {
+    const m = await loadEngine();
+    const cfg = cstr(m, "{}");
+    const h = m._jm_create(cfg, 42n, 20);
+    m._free(cfg);
+    m._jm_run(h);
+    const state = m.UTF8ToString(m._jm_state(h));
+    const sp = cstr(m, state);
+    const marks = JSON.parse(m.UTF8ToString(m._jm_patina(sp))) as
+      [number, number, number][];
+    m._free(sp);
+    expect(marks.length).toBeGreaterThan(100);
+
+    const world = JSON.parse(state) as {
+      world: {
+        base: [number, number, number][];
+        embellish: [number, number, number][];
+        embellish_panel: [number, number, number][];
+      };
+    };
+    // never on blank ground
+    const painted = new Set(world.world.base.map(([x, y]) => `${x},${y}`));
+    expect(marks.filter(([x, y]) => !painted.has(`${x},${y}`))).toEqual([]);
+    // and nothing lost: every recorded mark is drawn somewhere
+    const recorded =
+      world.world.embellish.reduce((s, [, , n]) => s + n, 0) +
+      world.world.embellish_panel.reduce((s, [, , n]) => s + n, 0);
+    expect(marks.reduce((s, [, , n]) => s + n, 0)).toBe(recorded);
     m._jm_free(h);
   });
 

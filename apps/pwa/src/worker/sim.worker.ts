@@ -6,6 +6,7 @@
 //        { type: "cancel" }                   — stop at the next era boundary
 //        { type: "seek", era, age }           — world state at an age (time travel)
 //        { type: "lineage" }                  — ask the engine which rules it speaks
+//        { type: "patina", stateJson }        — the render marks for a world
 //   out: { type: "progress", era, erasWanted, agesTotal }
 //        { type: "done", finished, state, stateJson, events, log, report, eras }
 //        { type: "seeked", era, age, state }
@@ -51,11 +52,13 @@ async function runLoop(eng: Engine, h: number) {
     await yieldToInbox(); // let a cancel message land between eras
   }
   const report = eng.time(h).finished ? eng.report(h) : "";
+  const endState = eng.stateJson(h);
   postMessage({
     type: "done",
     finished: eng.time(h).finished,
-    stateJson: eng.stateJson(h),
-    state: eng.state(h),
+    stateJson: endState,
+    state: JSON.parse(endState),
+    patina: eng.patina(endState),
     events: eng.events(h),
     log: eng.log(h),
     report,
@@ -74,7 +77,9 @@ async function seek(eng: Engine, era: number, age: number) {
   }
   while (sc.age < age && eng.step(sc.h)) sc.age += 1;
   seekCache = sc;
-  postMessage({ type: "seeked", era, age, state: eng.state(sc.h) });
+  const doc = eng.stateJson(sc.h);
+  postMessage({ type: "seeked", era, age, state: JSON.parse(doc),
+                patina: eng.patina(doc) });
 }
 
 onmessage = async (msg: MessageEvent) => {
@@ -84,6 +89,7 @@ onmessage = async (msg: MessageEvent) => {
     | { type: "preview"; config: JmConfig }
     | { type: "seek"; era: number; age: number }
     | { type: "lineage" }
+    | { type: "patina"; stateJson: string }
     | { type: "cancel" };
   try {
     if (d.type === "cancel") {
@@ -106,6 +112,10 @@ onmessage = async (msg: MessageEvent) => {
     }
     if (d.type === "seek") {
       await seek(eng, d.era, d.age);
+      return;
+    }
+    if (d.type === "patina") {
+      postMessage({ type: "patina", patina: eng.patina(d.stateJson) });
       return;
     }
     cancelRequested = false;

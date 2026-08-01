@@ -1,6 +1,6 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **3.1.0** · State schema: **1** · Event schema: **2** · World lineage: **v0.7**
+Contract version: **3.2.0** · State schema: **1** · Event schema: **2** · World lineage: **v0.7**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
@@ -103,13 +103,46 @@ in place of its rung color (the mark tints the base; all other marks draw on top
 Chrome: map background `#F3EFE7`; unpainted unit `#FFFFFF` with outline `#D8D2C6`;
 painted unit outline `#00000022`; panel border `#4A4238`.
 
-**Patina** (the rework density marks): a unit's density is `embellish[u]` plus its
-share of the panel's `embellish_panel[t]`, distributed round-robin over the panel's
-units sorted by `(gx, gy)` (unit at sorted index `i mod area` receives one for each
-`i < n`). Up to `min(density, 3)` dots at relative offsets `(0.30, 0.34)`,
+### 2.5 The patina rule — law for every renderer
+
+The rework marks are the one thing a renderer must *decide* rather than read, so
+the decision is law here and not renderer taste. It binds the reference render,
+the app canvas, the PNG export, and any future one.
+
+**Placement.** A rework recorded against a **unit** (`embellish[u]`) is drawn on
+that unit. A flourish from an instruction that could not execute is recorded
+against the **panel** (`embellish_panel[t]`) with no unit — on a real map the
+player chooses where it goes — so the renderer chooses:
+
+1. the candidates are the panel's **painted** units only (`u ∈ base`), never
+   blank ground: a mark on blank ground is drawn over nothing and lost;
+2. ordered **richest first** — by existing unit-level mark count descending —
+   then by `(gx, gy)`;
+3. handed out **round-robin**: the unit at index `i mod count` takes the `i`-th
+   flourish, for `i` in `0 … n−1`.
+
+Panels are disjoint, so the order in which panels are processed cannot change
+the result. The engine only records a panel-level flourish while the panel has
+painted ground, so the candidate list is never empty and no mark is ever
+dropped.
+
+**One implementation.** The engine computes this map — `patina_map` /
+`jm_patina(state_json)`, a pure derivation over a §6 document — and renderers
+**consume** it rather than recompute it. The Python twin implements it
+independently, as the twin regime requires; `scripts/run_render_checks.py`
+proves the two maps agree unit for unit and that neither draws on blank ground
+or drops a mark (§8.6).
+
+**Drawing.** Up to `min(marks, 3)` dots at relative offsets `(0.30, 0.34)`,
 `(0.68, 0.52)`, `(0.44, 0.74)` of the unit square, radius `max(1, unit_px / 10)`,
 colored the unit's rendered base color darkened per-channel by
 `floor(channel × 0.55)`.
+
+*History: before v0.7.1 the panel-level flourishes were spread over **all** the
+panel's units from index zero, so every panel's first flourish landed on its
+top-left unit, painted or not — a corner bias, with the occasional mark drawn on
+blank ground and silently lost. Renders made before that fix differ from later
+ones in mark placement, and only in that.*
 
 ## 3. The portable RNG (PCG32, the v0.4 contract)
 
@@ -527,6 +560,23 @@ lineage's fixtures retire to `reference/history-<lineage>/`, named for the
 the superseded twin is deleted, since git holds it and two twins invite drift. The
 frozen v0.4 founding reference is the one permanent exception.
 
+### 8.6 The render-layer checks
+
+The gate compares logs; the conformance suite reads the book. **Neither looks at
+the picture**, so a rule that lives only in a renderer is unreviewed by
+construction — which is how the patina corner bias survived every green check
+for the repo's whole life.
+
+`scripts/run_render_checks.py` closes that hole and runs in CI. It compares
+**mark maps, never pixels**, over several seeds, and it takes the twin's map from
+the twin's *own* `render()` through a trace hook rather than reimplementing the
+rule, because a check that restates the rule proves nothing. Per seed it asserts:
+the engine's map equals the twin's unit for unit; every mark of **either** map
+sits on painted ground; the marks each panel draws equal the marks it recorded;
+placement depends only on the state; and no mark sits on an unpainted panel
+corner. Point it at a pre-fix renderer with `--twin` and it fails — which is how
+these checks were shown to have teeth rather than merely being green.
+
 ### 8.5 The conformance suite
 
 The gate proves the twin and the engine agree **with each other**. It is blind to a
@@ -560,6 +610,11 @@ the twin — but anything readable from the log runs against both.
 
 ### 9.1 Changelog
 
+* **3.2.0** — additive, log bytes unchanged: the patina rule becomes law (§2.5)
+  and gains one implementation — the engine's `patina_map` / `jm_patina`, which
+  every renderer consumes; the render-layer checks join CI (§8.6). Fixes the
+  corner bias: panel-level flourishes now land on painted ground, richest
+  first. Renders made before this differ in mark placement, and only in that.
 * **3.1.0** — additive, log bytes unchanged (gate green, byte counts identical):
   numbered events now populate the envelope's `unit`/`panel` so every step in an
   age has a place a renderer can draw (§5). The embellishments were the bulk of

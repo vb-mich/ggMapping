@@ -210,6 +210,12 @@ export const events = signal<JmEvent[]>([]);
 export const logText = signal("");
 export const report = signal("");
 export const deckPreview = signal<{ kind: string; work: number }[]>([]);
+// The rework marks, computed by the ENGINE (CONTRACTS §2.5). The app never
+// decides where a panel-level flourish goes — it only draws what it is given.
+export const patinaMarks = signal<Map<string, number>>(new Map());
+
+const toPatinaMap = (rows: [number, number, number][]) =>
+  new Map(rows.map(([x, y, n]) => [`${x},${y}`, n] as const));
 
 // --- navigation (time travel) -----------------------------------------------
 // position: the age the map shows — era E with A completed ages (A=0: era
@@ -351,12 +357,16 @@ function ensureWorker(): Worker {
       logText.value = d.log;
       report.value = d.report;
       snapshotEras.value = d.eras ?? [];
+      patinaMarks.value = toPatinaMap(d.patina);
       status.value = d.finished ? "done" : "paused";
       seekWorld.value = d.state;
       position.value = endPosition.value;
     } else if (d.type === "seeked") {
       seekWorld.value = d.state;
+      patinaMarks.value = toPatinaMap(d.patina);
       seeking.value = false;
+    } else if (d.type === "patina") {
+      patinaMarks.value = toPatinaMap(d.patina);
     } else if (d.type === "lineage") {
       engineLineage.value = d.lineage;
       engineVersion.value = d.version;
@@ -420,6 +430,9 @@ export function loadWorld(json: string): boolean {
   snapshotEras.value = [];
   seekWorld.value = parsed;
   position.value = endPosition.value;
+  // a loaded world has no engine handle: ask for its marks by document
+  patinaMarks.value = new Map();
+  ensureWorker().postMessage({ type: "patina", stateJson: json });
   seed.value = parsed.time.seed;
   eras.value = parsed.time.eras_wanted;
   // Paused even when the run looks complete: Continue re-enters the engine,
