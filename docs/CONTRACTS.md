@@ -1,6 +1,6 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **2.1.0** · State schema: **1** · Event schema: **1** · World lineage: **v0.5**
+Contract version: **3.0.0** · State schema: **1** · Event schema: **2** · World lineage: **v0.7**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
@@ -8,10 +8,10 @@ Nothing in `/engine`, `/apps`, or `/tools` may contradict it. Changes here bump 
 contract version and must state their migration story.
 
 Authority chain: `docs/0-Jerrymapping-the-game.md` (the handbook, beta 0.1, amended by
-the v0.5 depth erratum, plus chapter 11's rules under test) defines the game;
+the v0.5 depth erratum and the v0.7 amendments, plus chapter 11's rules under test) defines the game;
 `docs/FORK_NOTES.md` defines this lineage's deltas and dials; the **C++ engine is the
 reference of record** (succession, §8.4), and
-`reference/sim_v06.py` is the **living twin** whose byte-identity the gate proves —
+`reference/sim_v07.py` is the **living twin** whose byte-identity the gate proves —
 every rules increment lands in both, and the matrix must be green three ways before
 the increment is law. `reference/sim.py` is the frozen v0.4 founding document,
 history. Where prose and implementations disagree, the twin-proven engine wins until
@@ -211,7 +211,7 @@ Framing (no step number):
 |---|---|---|
 | `run_start` | seed, eras | `=== JERRYMAPPING, simulator run ===` ⏎ `seed: {seed}  eras: {eras}` |
 | `era_start` | era | `--- era {era} ---` |
-| `age_start` | era, age, panel, card | `[e{era} a{age:02d}] panel {panel} \| {CARD}` (card uppercased) |
+| `age_start` | era, age, panel, card | `[e{era} a{age:02d}] panel {panel} \| {CARD}` (card uppercased); on an **Add Panel age** `panel` is null and the subject reads `the new panel` (§5.3) |
 | `free_panel` | era | `[e{era}] stack empty: a panel is added for free` |
 | `addpanel_wake` | — | `    the Add Panel card joins the back of the deck` |
 | `era_summary` | era, ages, painted, rung_counts[8], done, panels, archived, cliffs, merges, archive_on | `=== era {era}: ages {ages} \| painted {n} \| water {w:.0f}% coastal {c:.0f}% plain {p:.0f}% hills {h:.0f}% mtn {m:.0f}% \| done {done}/{panels} panels \| `(`archived {a} \| ` when archive_on)`cliffs {cl} merges {mg}` |
@@ -234,7 +234,7 @@ Age notes (no step number):
 | `card_skip` | card, reason | `    {card}: {reason}` (empty current panel; else becomes numbered `skip_embellish`) |
 | `stroke_note` | label, cause, detail | `    {label}: first unit not legal, ends` · `    {label}: ends at map edge, heading {D}` · `    {label}: merges into {name}, ends` · `    {label}: blocked by {name}, ends` · `    {label}: no legal step ahead, ends` |
 | `extend_run` | length, cls, side | `    extend: run len {length} ({water\|heights}) on {D} border` |
-| `work_follows` | panel | `    the work follows the new panel {panel}` |
+| `work_follows` | panel | `    the current working panel is the new panel {panel}` |
 | `foundation` | which | `    found hamlet` · `    found village` · `    found town` |
 | `upgrade` | kind | `    upgrade to {kind}` |
 | `sprawl` | — | `    cannot climb, sprawls` |
@@ -263,7 +263,7 @@ Numbered actions (carry `payload.step`; template prefix `    {step}. `):
 | `people` | unit, kind, why? | `people {kind} at r{r}c{c} {panel}` (+ ` ({why})` when why present) |
 | `anomaly_strike` | — | `the anomaly strikes the homes` |
 | `volcano_ring` | — | `the volcano raises its ring: the land around becomes hills` |
-| `new_panel` | panel, sum | `new panel {panel} (sum {sum})` |
+| `new_panel` | panel, score | `new panel {panel} (score {score})` — `score = tx² + ty²`, the book's distance score (ch. 9). Event schema 2 renamed this payload from `sum`, which held a Manhattan total the placement never used (v0.6.1 erratum). |
 | `deck_shuffled` | — | `the deck is shuffled` |
 | `skip_embellish` | card, reason, spirit | `{card}: {reason}: embellish, {spirit}` |
 
@@ -285,6 +285,23 @@ field added after contract 1.0.0 must format its numbers with integer arithmetic
 only — no new float-formatted surfaces, ever.
 
 ### 5.3 Ordering quirks frozen by the oracle
+
+**The Add Panel age (v0.7, handbook ch. 6 note 3).** When an Add Panel card is
+drawn, step 2 is skipped: the panel this card places **is** the working panel.
+The age's anatomy, in order:
+
+1. `age_start` with **no panel** — the header reads `[eN aNN] the new panel | ADDPANEL`;
+2. `new_panel` (numbered action 1) with the placement score;
+3. `work` — the quota note;
+4. `work_follows` (`the current working panel is the new panel {panel}`), then the
+   fills, numbered from 2.
+
+What must **not** appear: no `city_lives` (a newborn panel has no settlement), no
+`panel_stays`, no `panel_archived`, no `panel_returns`. The front of the Stack is
+not popped, not cycled, and is visited next age; the new panel entered the back of
+the Stack once, at placement. If no open position exists the card skips, and the age
+carries the skip note and the quota note alone.
+
 * The free-panel event and its `new_panel` action fire **before** the age header of the
   age that triggered them, and `new_panel` continues the **previous** age's step
   counter.
@@ -306,7 +323,7 @@ byte-identical to never having stopped (log continuation included). Save points 
 {
   "schema": "jerrymap-state",
   "version": 1,
-  "lineage": "v0.5",
+  "lineage": "v0.7",
 
   "config": {
     "panel_w": 5, "panel_h": 6,
@@ -442,8 +459,8 @@ event-rendered lines, then the final report — **LF line endings always**; stdo
 ## 8. The gate
 
 ### 8.1 Oracle matrix
-Byte-identity of `seed{N}_log.txt`, the Python twin (`reference/sim_v06.py`) vs
-native C++ vs WASM, on the v0.5 lineage:
+Byte-identity of `seed{N}_log.txt`, the Python twin (`reference/sim_v07.py`) vs
+native C++ vs WASM, on the v0.7 lineage:
 
 | cell | seed | eras | dials |
 |---|---|---|---|
@@ -496,8 +513,23 @@ text, and formatting stay untouchable. The first such change is `--no-render` (�
 **The twin regime** (first exercised by v0.5): every rules increment updates the
 Python twin and the C++ engine together. The increment is law only when the full
 matrix is byte-identical three ways — twin, native, WASM — in CI. The outgoing
-lineage's fixtures retire to `reference/history-<lineage>/`; the outgoing twin stays
-in `/reference` as history under the behavioral freeze.
+lineage's fixtures retire to `reference/history-<lineage>/`, named for the
+**lineage** whose worlds they describe (not the twin revision that produced them);
+the superseded twin is deleted, since git holds it and two twins invite drift. The
+frozen v0.4 founding reference is the one permanent exception.
+
+### 8.5 The conformance suite
+
+The gate proves the twin and the engine agree **with each other**. It is blind to a
+rule both read the same wrong way — which is exactly how the v0.6.1 erratum survived
+(the placement line printed a Manhattan sum where the placement scored by squared
+distance; both implementations agreed, both were wrong about the book).
+
+`scripts/run_conformance.py` is the mitigation and runs in CI beside the gate. It
+asserts properties of the **game as the handbook describes it**, never byte equality,
+each check citing the passage it enforces, and it runs against **both**
+implementations so a shared misreading has somewhere to fail. A rules increment adds
+its checks here as well as its fixtures.
 
 ## 9. Versioning
 
@@ -511,6 +543,15 @@ in `/reference` as history under the behavioral freeze.
 
 ### 9.1 Changelog
 
+* **3.0.0** — a rules increment, lineage `v0.5 → v0.7` (major: renderer text and
+  rules changed), **event schema 1 → 2**. Add Panel is the working panel: an Add
+  Panel age skips step 2, takes no Stack visit, and fires no city-lives step
+  (§5.3, handbook ch. 6 note 3). The city-lives rule is now written in the
+  handbook; engine behavior is unchanged. The v0.6.1 erratum: the placement line
+  prints the squared **distance score** (book ch. 9), and its payload key is
+  renamed `sum → score` — the schema bump. `work_follows` text changed. The
+  conformance suite joins CI (§8.5). Fixtures regenerate; v0.5 fixtures retire to
+  `reference/history-v0.5/`; the twin becomes `reference/sim_v07.py`.
 * **2.1.0** — additive, **no lineage change**: the experimental fields dial
   (§11, `exp_fields` / `--exp-fields`, default off), its `field_deepens` event
   and `deepen field` purpose, and the experimental gate cells (§8.1). Every

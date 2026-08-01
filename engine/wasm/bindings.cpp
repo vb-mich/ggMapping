@@ -74,7 +74,7 @@ const char* stash(Bundle& b, std::string s) {
 
 extern "C" {
 
-const char* jm_version() { return "jerrymap-engine 2.1.0 (lineage v0.5)"; }
+const char* jm_version() { return "jerrymap-engine 3.0.0 (lineage v0.7)"; }
 
 // Fresh world from a config JSON (CONTRACTS §6 "config" keys, all optional).
 int jm_create(const char* config_json, std::int64_t seed, int eras) {

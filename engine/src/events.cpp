@@ -68,8 +68,12 @@ void render_event(const Event& e, const Geo& geo, std::vector<std::string>& out)
             out.push_back("--- era " + std::to_string(e.a) + " ---");
             break;
         case Ev::AgeStart:
-            out.push_back("[e" + std::to_string(e.a) + " a" + two_digits(e.b) + "] panel " +
-                          Geo::name(e.panel) + " | " + upper(e.s1));
+            // v0.7 (handbook ch. 6 note 3): an Add Panel age has no panel from
+            // the Stack — the panel it places is the working panel.
+            out.push_back("[e" + std::to_string(e.a) + " a" + two_digits(e.b) + "] " +
+                          (e.has_panel ? "panel " + Geo::name(e.panel)
+                                       : std::string("the new panel")) +
+                          " | " + upper(e.s1));
             break;
         case Ev::FreePanel:
             out.push_back("[e" + std::to_string(e.a) +
@@ -120,7 +124,8 @@ void render_event(const Event& e, const Geo& geo, std::vector<std::string>& out)
                           ") on " + e.s2 + " border");
             break;
         case Ev::WorkFollows:
-            out.push_back("    the work follows the new panel " + Geo::name(e.panel));
+            out.push_back("    the current working panel is the new panel " +
+                          Geo::name(e.panel));
             break;
         case Ev::Foundation:
             out.push_back("    found " + e.s1);
@@ -199,7 +204,9 @@ void render_event(const Event& e, const Geo& geo, std::vector<std::string>& out)
             num("the volcano raises its ring: the land around becomes hills");
             break;
         case Ev::NewPanel:
-            num("new panel " + Geo::name(e.panel) + " (sum " + std::to_string(e.a) + ")");
+            // v0.6.1: the printed number is the squared distance score the
+            // placement actually uses (book ch. 9), not a Manhattan sum.
+            num("new panel " + Geo::name(e.panel) + " (score " + std::to_string(e.a) + ")");
             break;
         case Ev::DeckShuffled:
             num("the deck is shuffled");
@@ -302,7 +309,7 @@ Json event_json(const Event& e) {
             S("kind", e.s1);
             if (!e.s2.empty()) S("why", e.s2);
             break;
-        case Ev::NewPanel: I("sum", e.a); break;
+        case Ev::NewPanel: I("score", e.a); break; // event schema 2 (was "sum")
         case Ev::SkipEmbellish:
             S("card", e.s1); S("reason", e.s2); S("spirit", e.s3);
             break;

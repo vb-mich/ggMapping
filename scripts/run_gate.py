@@ -12,7 +12,7 @@ Usage:
 import argparse, os, re, subprocess, sys, tempfile
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ORACLE = os.path.join(REPO, "reference", "sim_v06.py")
+ORACLE = os.path.join(REPO, "reference", "sim_v07.py")
 
 MATRIX = [
     ("base-11",         ["--seed", "11",  "--eras", "20"]),

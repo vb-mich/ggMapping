@@ -1372,7 +1372,8 @@ void Sim::card_addpanel() {
     has_work_panel_ = true;
     added_per_era[era] += 1;
     Event e; e.kind = Ev::NewPanel; e.has_panel = true; e.panel = np;
-    e.a = std::abs(np.tx) + std::abs(np.ty);
+    e.a = static_cast<std::int64_t>(np.tx) * np.tx +
+          static_cast<std::int64_t>(np.ty) * np.ty; // the distance score, book ch. 9
     ev_action(std::move(e));
 }
 
@@ -1436,55 +1437,90 @@ bool Sim::step() {
         emit(std::move(e));
         card_addpanel();
     }
-    Panel t = stack.front();
-    stack.pop_front();
-    ages_total += 1;
-    age_in_era += 1;
-    {
-        Event e; e.kind = Ev::AgeStart; e.a = era; e.b = age_in_era;
-        e.has_panel = true; e.panel = t; e.s1 = c.kind;
-        emit(std::move(e));
-    }
-    cur_panel_ = t;
-    have_cur_ = true;
-    step_no_ = 0;
-    auto mo = cfg.mood_overrides.find(c.kind);
-    mood_ = mo != cfg.mood_overrides.end() ? mo->second : mood_of(c.kind);
-    if (c.kind == "extend") card_extend(t);
-    else if (c.kind == "basin") card_basin(t);
-    else if (c.kind == "ridge") card_ridge(t, false);
-    else if (c.kind == "greatridge") card_ridge(t, true);
-    else if (c.kind == "settlement") card_settlement(t);
-    else if (c.kind == "calm") card_calm(t);
-    else if (c.kind == "anomaly") card_anomaly(t);
-    else if (c.kind == "freestroke") card_free(t);
-    else if (c.kind == "addpanel") card_addpanel();
-    else throw std::runtime_error("unknown card kind: " + c.kind);
-    int quota = c.work;
-    note(Ev::Work, mood_, "", "", quota);
-    fill_quota(t, quota);
-    if (cfg.alive && panels.at(t) >= geo.area()) city_lives(t);
-    if (panels.at(t) >= geo.area()) {
-        if (!atlas.count(t)) {
-            atlas.insert(t);
-            if (cfg.archive_permille &&
-                roll_chance(cfg.archive_permille, "archive")) {
-                binder.insert(t);
-                Event e; e.kind = Ev::PanelArchived; e.has_panel = true; e.panel = t;
-                emit(std::move(e));
-            }
-            completed_per_era[era] += 1;
-        }
-        if (!binder.count(t)) {
-            stack.push_back(t);
-            Event e; e.kind = Ev::PanelStays; e.has_panel = true; e.panel = t;
+    auto set_mood = [&] {
+        auto mo = cfg.mood_overrides.find(c.kind);
+        mood_ = mo != cfg.mood_overrides.end() ? mo->second : mood_of(c.kind);
+    };
+
+    if (c.kind == "addpanel") {
+        // v0.7, handbook ch. 6 note 3: step 2 is skipped — the panel this card
+        // places IS the working panel. The front of the Stack is not popped,
+        // not cycled, and is visited next age; the new panel entered the back
+        // of the Stack once, at placement. No city-lives step fires: a newborn
+        // panel has no settlement.
+        ages_total += 1;
+        age_in_era += 1;
+        {
+            Event e; e.kind = Ev::AgeStart; e.a = era; e.b = age_in_era;
+            e.s1 = c.kind; // no panel: the header reads "the new panel"
             emit(std::move(e));
         }
+        step_no_ = 0;
+        set_mood();
+        card_addpanel(); // may skip (no open positions), leaving no panel
+        const bool placed = has_work_panel_;
+        Panel t{};
+        if (placed) {
+            t = work_panel_;
+            cur_panel_ = t;
+            have_cur_ = true;
+        } else {
+            have_cur_ = false;
+        }
+        int quota = c.work;
+        note(Ev::Work, mood_, "", "", quota);
+        if (placed) fill_quota(t, quota); // consumes work_panel_, logs the line
     } else {
-        stack.push_back(t);
-        Event e; e.kind = Ev::PanelReturns; e.has_panel = true; e.panel = t;
-        e.a = panels.at(t); e.b = geo.area();
-        emit(std::move(e));
+        Panel t = stack.front();
+        stack.pop_front();
+        ages_total += 1;
+        age_in_era += 1;
+        {
+            Event e; e.kind = Ev::AgeStart; e.a = era; e.b = age_in_era;
+            e.has_panel = true; e.panel = t; e.s1 = c.kind;
+            emit(std::move(e));
+        }
+        cur_panel_ = t;
+        have_cur_ = true;
+        step_no_ = 0;
+        set_mood();
+        if (c.kind == "extend") card_extend(t);
+        else if (c.kind == "basin") card_basin(t);
+        else if (c.kind == "ridge") card_ridge(t, false);
+        else if (c.kind == "greatridge") card_ridge(t, true);
+        else if (c.kind == "settlement") card_settlement(t);
+        else if (c.kind == "calm") card_calm(t);
+        else if (c.kind == "anomaly") card_anomaly(t);
+        else if (c.kind == "freestroke") card_free(t);
+        else throw std::runtime_error("unknown card kind: " + c.kind);
+        int quota = c.work;
+        note(Ev::Work, mood_, "", "", quota);
+        fill_quota(t, quota);
+        // the city lives (handbook ch. 6): every visit to a full panel gives
+        // its tallest settlement one climb or sprawl step, whatever the card
+        if (cfg.alive && panels.at(t) >= geo.area()) city_lives(t);
+        if (panels.at(t) >= geo.area()) {
+            if (!atlas.count(t)) {
+                atlas.insert(t);
+                if (cfg.archive_permille &&
+                    roll_chance(cfg.archive_permille, "archive")) {
+                    binder.insert(t);
+                    Event e; e.kind = Ev::PanelArchived; e.has_panel = true; e.panel = t;
+                    emit(std::move(e));
+                }
+                completed_per_era[era] += 1;
+            }
+            if (!binder.count(t)) {
+                stack.push_back(t);
+                Event e; e.kind = Ev::PanelStays; e.has_panel = true; e.panel = t;
+                emit(std::move(e));
+            }
+        } else {
+            stack.push_back(t);
+            Event e; e.kind = Ev::PanelReturns; e.has_panel = true; e.panel = t;
+            e.a = panels.at(t); e.b = geo.area();
+            emit(std::move(e));
+        }
     }
     deck.push_back(c);
     // v0.5, the depth erratum: Add Panel carries no shuffle rider; the
