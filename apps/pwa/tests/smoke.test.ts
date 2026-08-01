@@ -14,6 +14,7 @@ const ENGINE = join(ROOT, "engine", "wasm", "dist", "web", "jerrymap.mjs");
 interface RawModule {
   _jm_create(cfg: number, seed: bigint, eras: number): number;
   _jm_run(h: number): void;
+  _jm_step(h: number): number;
   _jm_log(h: number): number;
   _jm_report(h: number): number;
   _jm_state(h: number): number;
@@ -49,7 +50,7 @@ describe("web-flavored engine smoke", () => {
     m._jm_run(h);
     const produced = m.UTF8ToString(m._jm_log(h)) + m.UTF8ToString(m._jm_report(h)) + "\n";
     const golden = readFileSync(
-      join(ROOT, "reference", "sample_log_seed42.txt"),
+      join(ROOT, "reference", "sample_log_seed42_v07.txt"),
       "latin1",
     );
     expect(produced.length).toBe(golden.length);
@@ -127,7 +128,7 @@ describe("web-flavored engine smoke", () => {
     const canon = run("{}", 42n);
     const explicitOff = run(JSON.stringify({ exp_fields: false }), 42n);
     const golden = readFileSync(
-      join(ROOT, "reference", "sample_log_seed42.txt"),
+      join(ROOT, "reference", "sample_log_seed42_v07.txt"),
       "latin1",
     );
     expect(canon.log).toBe(golden.slice(0, canon.log.length));
@@ -142,6 +143,106 @@ describe("web-flavored engine smoke", () => {
     expect(on.log).toContain("    the field deepens");
     expect(run(JSON.stringify({ exp_fields: true }), 42n).log).toBe(on.log);
     expect(on.log).not.toMatch(/tile|visit|rung/i);
+  });
+
+  // The visit anatomy of an Add Panel age (handbook ch. 6 note 3, CONTRACTS §5.3):
+  // the new panel IS the working panel, so the age takes no Stack visit.
+  it("gives an Add Panel age the v0.7 anatomy", async () => {
+    const m = await loadEngine();
+    const cfg = cstr(m, "{}");
+    const h = m._jm_create(cfg, 42n, 20);
+    m._free(cfg);
+    const state = () =>
+      JSON.parse(m.UTF8ToString(m._jm_state(h))) as {
+        world: { stack: [number, number][]; panels: [number, number, number][] };
+        deck: { order: { kind: string }[] };
+      };
+
+    const key = (p: [number, number]) => `${p[0]},${p[1]}`;
+    let addpanelAges = 0;
+    for (let i = 0; i < 90; i++) {
+      const before = state();
+      const nextCard = before.deck.order[0].kind;
+      const frontBefore = before.world.stack[0];
+      const panelsBefore = new Set(before.world.panels.map((p) => key([p[0], p[1]])));
+      if (!m._jm_step(h)) break;
+      if (nextCard !== "addpanel") continue;
+      addpanelAges += 1;
+      const after = state();
+
+      // the front of the Stack is not popped and not cycled: it waits
+      expect(after.world.stack[0]).toEqual(frontBefore);
+      // exactly one panel joined, and it joined the Stack exactly once
+      const born = after.world.panels
+        .map((p) => [p[0], p[1]] as [number, number])
+        .filter((p) => !panelsBefore.has(key(p)));
+      expect(born).toHaveLength(1);
+      expect(after.world.stack.length).toBe(before.world.stack.length + 1);
+      expect(after.world.stack.filter((p) => key(p) === key(born[0]))).toHaveLength(1);
+      expect(key(after.world.stack[after.world.stack.length - 1])).toBe(key(born[0]));
+    }
+    expect(addpanelAges).toBeGreaterThan(2);
+
+    // and over a whole run: the header names the new panel, and no Stack
+    // bookkeeping or city-lives step ever appears inside such an age
+    const cfg2 = cstr(m, "{}");
+    const h2 = m._jm_create(cfg2, 42n, 20);
+    m._free(cfg2);
+    m._jm_run(h2);
+    const events = JSON.parse(m.UTF8ToString(m._jm_events(h2))) as {
+      kind: string;
+      panel: [number, number] | null;
+      payload: Record<string, unknown>;
+      text: string[];
+    }[];
+    const FORBIDDEN = new Set([
+      "city_lives", "panel_stays", "panel_returns", "panel_archived",
+    ]);
+    let inAddpanel = false,
+      headers = 0,
+      leaks = 0,
+      claims = 0;
+    for (const e of events) {
+      if (e.kind === "age_start") {
+        inAddpanel = e.payload.card === "addpanel";
+        if (inAddpanel) {
+          headers += 1;
+          expect(e.panel).toBeNull(); // no Stack panel
+          expect(e.text[0]).toMatch(/^\[e\d+ a\d+\] the new panel \| ADDPANEL$/);
+        }
+      } else if (inAddpanel) {
+        if (FORBIDDEN.has(e.kind)) leaks += 1;
+        if (e.kind === "work_follows") claims += 1;
+      }
+    }
+    expect(headers).toBeGreaterThan(10);
+    expect(leaks).toBe(0);
+    expect(claims).toBeGreaterThan(0);
+    m._jm_free(h);
+    m._jm_free(h2);
+  });
+
+  it("prints the book's squared distance score on placement", async () => {
+    const m = await loadEngine();
+    const cfg = cstr(m, "{}");
+    const h = m._jm_create(cfg, 42n, 20);
+    m._free(cfg);
+    m._jm_run(h);
+    const events = JSON.parse(m.UTF8ToString(m._jm_events(h))) as {
+      kind: string;
+      panel: [number, number] | null;
+      payload: Record<string, number>;
+      text: string[];
+    }[];
+    const placements = events.filter((e) => e.kind === "new_panel");
+    expect(placements.length).toBeGreaterThan(10);
+    for (const p of placements) {
+      const [tx, ty] = p.panel!;
+      expect(p.payload.score).toBe(tx * tx + ty * ty); // book ch. 9
+      expect(p.text[0]).toContain(`(score ${tx * tx + ty * ty})`);
+      expect(p.payload.sum).toBeUndefined(); // event schema 2 renamed it
+    }
+    m._jm_free(h);
   });
 
   it("is deterministic: the same seed twice produces identical bytes", async () => {

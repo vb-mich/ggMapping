@@ -2,6 +2,10 @@
 // edit changes the run, save-load roundtrips a world byte-identically, and
 // the PNG export produces a nonempty image.
 import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
 
 import { expect, test, type Page } from "@playwright/test";
 
@@ -147,6 +151,50 @@ test("the experimental badge and config marker appear only with the dial on", as
   // back to canon clears the experiment
   await page.getByTestId("btn-canon").click();
   await expect(page.getByTestId("toggle-exp-fields")).not.toBeChecked();
+});
+
+test("time travel to an Add Panel age shows the new panel's fills", async ({
+  page,
+}) => {
+  // Find the first Add Panel age from the committed golden, so the target is
+  // the lineage's own truth rather than something the test invents.
+  const golden = readFileSync(
+    join(HERE, "..", "..", "..", "reference", "sample_log_seed42_v07.txt"),
+    "utf8",
+  ).split("\n");
+  let era = 0,
+    age = 0;
+  for (const line of golden) {
+    const m = /^\[e(\d+) a(\d+)\] the new panel \| ADDPANEL$/.exec(line);
+    if (m && Number(m[1]) <= 5) {
+      era = Number(m[1]);
+      age = Number(m[2]);
+      break;
+    }
+  }
+  expect(era).toBeGreaterThan(0);
+
+  await page.goto("/");
+  await setRun(page, 42, 5);
+  await runToDone(page);
+
+  await page.getByTestId("nav-era").fill(String(era));
+  await page.getByTestId("nav-age").fill(String(age));
+  await page.getByTestId("nav-go").click();
+
+  await expect(page.getByTestId("now-line")).toContainText(
+    `Era ${era} · Age ${age}/25`,
+  );
+  const excerpt = page.getByTestId("now-excerpt");
+  // the age names the new panel, claims it as the working panel, and fills it
+  await expect(excerpt).toContainText(`[e${era} a${String(age).padStart(2, "0")}] the new panel | ADDPANEL`);
+  await expect(excerpt).toContainText("new panel");
+  await expect(excerpt).toContainText("the current working panel is the new panel");
+  await expect(excerpt).toContainText("paint r");
+  // and none of the Stack bookkeeping a normal age would carry
+  await expect(excerpt).not.toContainText("the city lives");
+  await expect(excerpt).not.toContainText("back of stack");
+  await expect(excerpt).not.toContainText("stays in play");
 });
 
 test("the theme defaults to dark and switches", async ({ page }) => {
