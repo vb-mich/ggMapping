@@ -102,6 +102,38 @@ export function fitView(idx: WorldIndex, cw: number, ch: number): View {
   };
 }
 
+// How a people overlay looks: the colour from the canonical palette plus the
+// texture that tells the kinds apart — furrows across a field, a house block
+// on rural, nothing on the urban densities. The legend draws its swatches with
+// this same function, so a swatch cannot come to mean something the map does
+// not draw. `inset` leaves the unit's elevation showing as a border on the map;
+// the legend passes 0, having no ground beneath it.
+export function drawPeopleOverlay(
+  ctx: CanvasRenderingContext2D,
+  kind: string,
+  x: number,
+  y: number,
+  s: number,
+  inset = 1,
+): void {
+  ctx.fillStyle = PEOPLE_COLORS[kind];
+  ctx.fillRect(x + inset, y + inset, s - 2 * inset, s - 2 * inset);
+  if (s >= 8 && kind.startsWith("farm")) {
+    ctx.strokeStyle = FARM_FURROW;
+    ctx.lineWidth = 1;
+    for (const i of [1, 2]) {
+      ctx.beginPath();
+      ctx.moveTo(x + 2, y + (i * s) / 3);
+      ctx.lineTo(x + s - 2, y + (i * s) / 3);
+      ctx.stroke();
+    }
+  }
+  if (s >= 8 && kind === "rural") {
+    ctx.fillStyle = RURAL_HOUSE;
+    ctx.fillRect(x + s / 3, y + s / 2, s / 3, s / 2 - 3);
+  }
+}
+
 export function draw(
   ctx: CanvasRenderingContext2D,
   idx: WorldIndex,
@@ -158,24 +190,7 @@ export function draw(
           }
         }
         const person = idx.people.get(k);
-        if (person) {
-          ctx.fillStyle = PEOPLE_COLORS[person];
-          ctx.fillRect(x + 1, y + 1, s - 2, s - 2);
-          if (s >= 8 && person.startsWith("farm")) {
-            ctx.strokeStyle = FARM_FURROW;
-            ctx.lineWidth = 1;
-            for (const i of [1, 2]) {
-              ctx.beginPath();
-              ctx.moveTo(x + 2, y + (i * s) / 3);
-              ctx.lineTo(x + s - 2, y + (i * s) / 3);
-              ctx.stroke();
-            }
-          }
-          if (s >= 8 && person === "rural") {
-            ctx.fillStyle = RURAL_HOUSE;
-            ctx.fillRect(x + s / 3, y + s / 2, s / 3, s / 2 - 3);
-          }
-        }
+        if (person) drawPeopleOverlay(ctx, person, x, y, s);
         const mark = s >= 8 ? idx.marks.get(k) : undefined;
         if (mark && mark !== "sunken") drawMark(ctx, mark, x, y, s);
       }

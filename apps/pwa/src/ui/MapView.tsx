@@ -7,12 +7,13 @@ import { useComputed, useSignal } from "@preact/signals";
 import {
   centerOn,
   draw,
+  drawPeopleOverlay,
   fitView,
   indexWorld,
   type View,
 } from "../map/render";
 import { mapCanvas } from "../map/canvasRef";
-import { PEOPLE_COLORS, RUNG_NAMES, RUNG_COLORS } from "../contracts/palette";
+import { RUNG_NAMES, RUNG_COLORS } from "../contracts/palette";
 import { STRINGS } from "../strings";
 
 // The overlays the map draws over the elevations, in ladder order (CONTRACTS
@@ -37,6 +38,25 @@ import {
   workNumbers,
   world,
 } from "../state";
+
+// A legend swatch drawn by the map's own overlay painter, so a field in the
+// legend carries the same furrows the map draws on a field.
+const SWATCH_PX = 16;
+
+function PeopleSwatch({ kind }: { kind: string }) {
+  const paint = (cv: HTMLCanvasElement | null) => {
+    if (!cv) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(SWATCH_PX * dpr);
+    cv.height = Math.round(SWATCH_PX * dpr);
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, SWATCH_PX, SWATCH_PX);
+    drawPeopleOverlay(ctx, kind, 0, 0, SWATCH_PX, 0);
+  };
+  return <canvas class="legend-swatch" ref={paint} aria-hidden="true" />;
+}
 
 function Toggle(props: {
   label: string;
@@ -199,7 +219,7 @@ export function MapView() {
         <span class="legend-label">{STRINGS.peopleHeading}:</span>
         {PEOPLE_LEGEND.map(([kind, label]) => (
           <span key={kind} class="legend-item">
-            <i style={`background:${PEOPLE_COLORS[kind]}`} /> {label}
+            <PeopleSwatch kind={kind} /> {label}
           </span>
         ))}
       </div>

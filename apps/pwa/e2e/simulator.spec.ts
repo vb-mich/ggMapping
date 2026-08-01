@@ -69,7 +69,8 @@ test("a run completes and paints", async ({ page }) => {
                        "urban medium", "urban high"]) {
     await expect(people).toContainText(label);
   }
-  await expect(people.locator("i")).toHaveCount(6);
+  // the swatches are drawn by the map's own overlay painter, not CSS chips
+  await expect(people.locator("canvas.legend-swatch")).toHaveCount(6);
 });
 
 test("a deck edit changes the run", async ({ page }) => {
