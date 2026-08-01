@@ -17,9 +17,9 @@ if [[ "$what" == "node" || "$what" == "all" ]]; then
     ../cli/main.cpp ../src/cli.cpp $CORE bindings.cpp \
     -o dist/jerrymap.js \
     -sNODERAWFS=1 -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=1 \
-    -sSTACK_SIZE=2097152 \
+    -sSTACK_SIZE=2097152 -fexceptions \
     -sEXPORTED_RUNTIME_METHODS=ccall,cwrap \
-    "-sEXPORTED_FUNCTIONS=_main,_jm_version,_jm_create,_jm_load,_jm_step,_jm_run,_jm_log,_jm_report,_jm_state,_jm_events,_jm_time,_jm_free,_malloc,_free"
+    "-sEXPORTED_FUNCTIONS=_main,_jm_version,_jm_lineage,_jm_create,_jm_load,_jm_step,_jm_run,_jm_log,_jm_report,_jm_state,_jm_events,_jm_time,_jm_free,_malloc,_free"
 fi
 
 if [[ "$what" == "web" || "$what" == "all" ]]; then
@@ -29,10 +29,10 @@ if [[ "$what" == "web" || "$what" == "all" ]]; then
     -o dist/web/jerrymap.mjs \
     --no-entry \
     -sMODULARIZE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker,node \
-    -sFILESYSTEM=0 -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=2097152 \
+    -sFILESYSTEM=0 -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=2097152 -fexceptions \
     -sWASM_BIGINT=1 \
     -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,UTF8ToString,stringToUTF8,lengthBytesUTF8 \
-    "-sEXPORTED_FUNCTIONS=_jm_version,_jm_create,_jm_load,_jm_step,_jm_run,_jm_log,_jm_report,_jm_state,_jm_events,_jm_time,_jm_free,_malloc,_free"
+    "-sEXPORTED_FUNCTIONS=_jm_version,_jm_lineage,_jm_create,_jm_load,_jm_step,_jm_run,_jm_log,_jm_report,_jm_state,_jm_events,_jm_time,_jm_free,_malloc,_free"
 fi
 
 ls -la dist/ dist/web/ 2>/dev/null || ls -la dist/

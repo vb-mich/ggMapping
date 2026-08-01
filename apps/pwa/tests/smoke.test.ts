@@ -12,6 +12,7 @@ const ROOT = join(__dirname, "..", "..", "..");
 const ENGINE = join(ROOT, "engine", "wasm", "dist", "web", "jerrymap.mjs");
 
 interface RawModule {
+  _jm_lineage(): number;
   _jm_create(cfg: number, seed: bigint, eras: number): number;
   _jm_run(h: number): void;
   _jm_step(h: number): number;
@@ -242,6 +243,31 @@ describe("web-flavored engine smoke", () => {
       expect(p.text[0]).toContain(`(score ${tx * tx + ty * ty})`);
       expect(p.payload.sum).toBeUndefined(); // event schema 2 renamed it
     }
+    m._jm_free(h);
+  });
+
+  it("reports one rules lineage, and its worlds carry the same one", async () => {
+    const m = await loadEngine();
+    const lineage = m.UTF8ToString(m._jm_lineage());
+    expect(lineage).toMatch(/^v\d+\.\d+$/);
+    const cfg = cstr(m, "{}");
+    const h = m._jm_create(cfg, 42n, 1);
+    m._free(cfg);
+    const state = JSON.parse(m.UTF8ToString(m._jm_state(h))) as { lineage: string };
+    expect(state.lineage).toBe(lineage); // the badge and the file cannot disagree
+    m._jm_free(h);
+  });
+
+  it("refuses a world from another lineage rather than mis-stepping it", async () => {
+    const m = await loadEngine();
+    const cfg = cstr(m, "{}");
+    const h = m._jm_create(cfg, 42n, 1);
+    m._free(cfg);
+    const state = JSON.parse(m.UTF8ToString(m._jm_state(h))) as { lineage: string };
+    const foreign = JSON.stringify({ ...state, lineage: "v0.4" });
+    const fp = cstr(m, foreign);
+    expect(m._jm_load(fp)).toBe(0); // CONTRACTS §6.3
+    m._free(fp);
     m._jm_free(h);
   });
 

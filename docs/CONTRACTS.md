@@ -528,8 +528,16 @@ distance; both implementations agreed, both were wrong about the book).
 `scripts/run_conformance.py` is the mitigation and runs in CI beside the gate. It
 asserts properties of the **game as the handbook describes it**, never byte equality,
 each check citing the passage it enforces, and it runs against **both**
-implementations so a shared misreading has somewhere to fail. A rules increment adds
-its checks here as well as its fixtures.
+implementations so a shared misreading has somewhere to fail.
+
+**The norm.** Every future canon ruling ships with its conformance check **in the
+same increment**, citing the handbook passage it enforces. The suite is meant to
+grow with the book, not to be retrofitted after the next bug: a ruling that lands
+without its check is an incomplete increment, and the check is written from the
+book's words rather than from the implementation's behavior (otherwise it only
+restates what the code already does). Checks that need engine state rather than
+rendered text may run against the engine alone — byte-identity carries the result to
+the twin — but anything readable from the log runs against both.
 
 ## 9. Versioning
 

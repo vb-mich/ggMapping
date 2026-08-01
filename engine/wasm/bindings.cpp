@@ -74,7 +74,12 @@ const char* stash(Bundle& b, std::string s) {
 
 extern "C" {
 
-const char* jm_version() { return "jerrymap-engine 3.0.0 (lineage v0.7)"; }
+const char* jm_version() { return "jerrymap-engine 3.1.0"; }
+
+// The rules lineage this engine speaks (CONTRACTS §9). Seeds do not survive a
+// lineage break, so anything that shares or compares maps must report it — and
+// must read it from here rather than keep its own copy.
+const char* jm_lineage() { return LINEAGE; }
 
 // Fresh world from a config JSON (CONTRACTS §6 "config" keys, all optional).
 int jm_create(const char* config_json, std::int64_t seed, int eras) {

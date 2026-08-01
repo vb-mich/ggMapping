@@ -189,6 +189,14 @@ export const STRINGS = {
   tipDeckPrinted:
     "The printed work numbers, derived by the engine from copies and average.",
 
+  // the rules lineage
+  lineageLabel: "rules",
+  lineageTitle:
+    "The rules lineage this engine speaks. A seed only means the same map within one lineage.",
+  foreignLineageNotice:
+    "That file was made under rules {theirs}; this engine speaks {ours}. It is loaded as it is — but the same seed paints a different map under different rules, so do not compare them.",
+  dismiss: "Dismiss",
+
   // updates
   updateNow: "Update to newer version",
 

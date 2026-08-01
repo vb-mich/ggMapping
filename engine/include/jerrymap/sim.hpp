@@ -18,6 +18,11 @@
 
 namespace jerrymap {
 
+// The world lineage (CONTRACTS §9): ONE constant. The state document writes it,
+// the loader rejects anything else, and the jm_* API reports it — so nothing
+// downstream needs to hardcode a duplicate that can drift.
+inline constexpr const char* LINEAGE = "v0.7";
+
 struct Config {
     int panel_w = 5, panel_h = 6;
     std::vector<std::pair<std::string, int>> deck = {

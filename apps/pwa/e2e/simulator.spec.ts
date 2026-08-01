@@ -197,6 +197,63 @@ test("time travel to an Add Panel age shows the new panel's fills", async ({
   await expect(excerpt).not.toContainText("stays in play");
 });
 
+test("the lineage badge comes from the engine and rides exported configs", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const badge = page.getByTestId("lineage-badge");
+  await expect(badge).toBeVisible();
+  const shown = ((await badge.textContent()) ?? "").replace("rules", "").trim();
+  expect(shown).toMatch(/^v\d+\.\d+$/);
+
+  // it is the ENGINE's lineage, not a string the app keeps: a world the
+  // engine saves must name the same one
+  await setRun(page, 42, 3);
+  await runToDone(page);
+  const world = JSON.parse(await downloadText(page, "btn-save"));
+  expect(world.lineage).toBe(shown);
+
+  // and the exported config carries it, distinct from the package version
+  const cfg = JSON.parse(await downloadText(page, "btn-save-config"));
+  expect(cfg.lineage).toBe(shown);
+  const version = await page.getByTestId("app-version").textContent();
+  expect(version).not.toContain(shown); // the two are different facts
+});
+
+test("a foreign-lineage file loads, with a notice, and is not migrated", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("lineage-badge")).toBeVisible();
+  await expect(page.getByTestId("foreign-lineage-notice")).toHaveCount(0);
+
+  const foreign = JSON.stringify({
+    seed: 4242,
+    eras: 9,
+    lineage: "v0.4",
+    config: { panel_w: 5, panel_h: 6, stroke_die: 4, extend_cap: 4 },
+  });
+  await page.setInputFiles("[data-testid='input-load-config']", {
+    name: "old-lineage.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(foreign),
+  });
+
+  // the notice appears and names both lineages...
+  const notice = page.getByTestId("foreign-lineage-notice");
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText("v0.4");
+  // ...and the load went through untouched: no block, no migration
+  await expect(page.getByTestId("input-seed")).toHaveValue("4242");
+  await expect(page.getByTestId("input-eras")).toHaveValue("9");
+
+  await page.locator("header").screenshot({ path: "e2e-artifacts/lineage-badge.png" });
+  await notice.screenshot({ path: "e2e-artifacts/foreign-lineage-notice.png" });
+
+  await page.getByTestId("btn-dismiss-notice").click();
+  await expect(notice).toHaveCount(0);
+});
+
 test("the theme defaults to dark and switches", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");

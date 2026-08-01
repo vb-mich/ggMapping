@@ -7,13 +7,16 @@ import {
   backToCanon,
   cancelRun,
   deckCopies,
+  engineLineage,
   errorMessage,
   eras,
   flatWork,
+  foreignLineage,
   moodOverrides,
   panelSize,
   progressEra,
   requestDeckPreview,
+  requestLineage,
   reroll,
   resumeWorld,
   seed,
@@ -73,6 +76,11 @@ function RunBar() {
 }
 
 export function App() {
+  // Ask the engine which rules it speaks, once, at startup.
+  useEffect(() => {
+    requestLineage();
+  }, []);
+
   // Keep the deck preview fresh: the engine derives the printed work numbers.
   useEffect(() => {
     const t = setTimeout(requestDeckPreview, 250);
@@ -92,6 +100,12 @@ export function App() {
         <h1>
           {DISPLAY_NAME} <small>{STRINGS.tagline}</small>
         </h1>
+        {engineLineage.value && (
+          <span class="chip lineage-chip" data-testid="lineage-badge"
+            title={STRINGS.lineageTitle}>
+            {STRINGS.lineageLabel} {engineLineage.value}
+          </span>
+        )}
         <button
           class="ghost theme-toggle"
           data-testid="btn-theme"
@@ -100,6 +114,19 @@ export function App() {
           {theme.value === "dark" ? STRINGS.themeLight : STRINGS.themeDark}
         </button>
       </header>
+      {foreignLineage.value && (
+        <div class="card notice" data-testid="foreign-lineage-notice" role="status">
+          <span>
+            {STRINGS.foreignLineageNotice
+              .replace("{theirs}", foreignLineage.value)
+              .replace("{ours}", engineLineage.value)}
+          </span>
+          <button class="ghost" data-testid="btn-dismiss-notice"
+            onClick={() => (foreignLineage.value = null)}>
+            {STRINGS.dismiss}
+          </button>
+        </div>
+      )}
       {updateAvailable.value && (
         <button class="primary update-toast" data-testid="btn-update" onClick={applyUpdate}>
           {STRINGS.updateNow}

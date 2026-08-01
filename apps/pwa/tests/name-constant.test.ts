@@ -45,6 +45,21 @@ describe("naming policy", () => {
     expect(m.id).toBe("jm-pwa");
   });
 
+  // The lineage has ONE source: the engine. If the app kept its own copy the
+  // two would drift at the next lineage break, and a badge that lies about the
+  // lineage is worse than no badge (CONTRACTS §9).
+  it("never hardcodes the rules lineage app-side", () => {
+    const offenders: string[] = [];
+    for (const f of walk(join(APP, "src"))) {
+      if (!/\.(ts|tsx)$/.test(f)) continue;
+      for (const [i, line] of readFileSync(f, "utf8").split("\n").entries()) {
+        if (line.trimStart().startsWith("//")) continue; // prose may cite it
+        if (/["'`]v0\.\d+["'`]/.test(line)) offenders.push(`${f}:${i + 1}`);
+      }
+    }
+    expect(offenders, offenders.join("; ")).toHaveLength(0);
+  });
+
   it("injects the built page's static title from the constant (when a build exists)", () => {
     const idx = join(APP, "dist", "index.html");
     if (!existsSync(idx)) return; // the e2e suite asserts this unconditionally

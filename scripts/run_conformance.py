@@ -168,6 +168,107 @@ def conform(lines, label):
           non_settlement_witnessed > 0,
           f"only {non_settlement_witnessed} such visit(s)")
 
+    # ---- chapter 5: the starting deck ------------------------------------
+    # "Here below is the list of cards of your very first deck, a total of 20
+    #  cards to start." — 4 Extend 6,7,7,8 | 3 Basin 6,7,8 | 1 Ridge 7 |
+    #  1 Great Ridge 7 | 4 Calm 5,6,6,7 | 2 Free Stroke 6,8 | 3 Settlement
+    #  6,7,8 | 1 Anomaly 7 | 1 Add Panel 4 (from the end of era one).
+    # The genesis deck is shuffled once and the first card played becomes the
+    # marker, so the ages before the first cycle marker are exactly one full
+    # pass: the deck itself, printed works and all.
+    BOOK_DECK = {
+        "EXTEND": [6, 7, 7, 8], "BASIN": [6, 7, 8], "RIDGE": [7],
+        "GREATRIDGE": [7], "CALM": [5, 6, 6, 7], "FREESTROKE": [6, 8],
+        "SETTLEMENT": [6, 7, 8], "ANOMALY": [7],
+    }
+    first_cycle = next((i for i, a in enumerate(A)
+                        if any(l == "    the deck completed its cycle" for l in a["body"])),
+                       None)
+    genesis = {}
+    for a in A[:first_cycle or 0]:
+        work = next((int(m.group(1)) for l in a["body"]
+                     if (m := re.match(r"^    work (\d+), mood", l))), None)
+        genesis.setdefault(a["card"], []).append(work)
+    got = {k: sorted(v) for k, v in genesis.items()}
+    check("ch.5", f"{label}: the starting deck is the book's table",
+          got == BOOK_DECK, f"got {got}")
+
+    addp_work = next((int(m.group(1)) for a in A if a["card"] == "ADDPANEL"
+                      for l in a["body"]
+                      if (m := re.match(r"^    work (\d+), mood", l))), None)
+    check("ch.5", f"{label}: Add Panel joins at work 4",
+          addp_work == 4, f"got {addp_work}")
+
+    # ---- chapter 7, step 3: the First Elevation table --------------------
+    # "if the chosen unit has no countable side neighbors ... roll d6 on the
+    #  First Elevation table": 1 shallow, 2 coastal, 3-4 plain, 5 hills,
+    #  6 mountains. With no countable neighbour the Step Rule is wide open,
+    #  so the roll reaches the paint unmodified.
+    TABLE = {1: "shallow", 2: "coastal", 3: "plain", 4: "plain",
+             5: "hills", 6: "mountains"}
+    flat = [l for a in A for l in a["body"]]
+    bad_first = []
+    for i, l in enumerate(flat):
+        m = re.match(r"^    d6=(\d) \(first elevation\)$", l)
+        if not m:
+            continue
+        nxt = flat[i + 1] if i + 1 < len(flat) else ""
+        p = re.match(r"^    \d+\. paint r\d+c\d+ \S+ (\w+) \(fill\)$", nxt)
+        if not p or p.group(1) != TABLE[int(m.group(1))]:
+            bad_first.append((l.strip(), nxt.strip()))
+    check("ch.7 s.3", f"{label}: the First Elevation table is obeyed",
+          not bad_first,
+          f"{len(bad_first)} mismatch(es), e.g. {bad_first[0] if bad_first else ''}")
+
+    # ---- chapter 9: farmland intensity -----------------------------------
+    # "For the farmland intensity, roll 1d4: 1-2 is LOW, 3-4 HIGH."
+    bad_farm = []
+    for i, l in enumerate(flat):
+        m = re.match(r"^    d4=(\d) \(farm intensity\)$", l)
+        if not m:
+            continue
+        want = "farm_lo" if int(m.group(1)) <= 2 else "farm_hi"
+        for nxt in flat[i + 1:i + 6]:
+            got_kind = re.search(r"\((?:place )?(farm_lo|farm_hi)\)|people (farm_lo|farm_hi) at", nxt)
+            if got_kind:
+                kind = got_kind.group(1) or got_kind.group(2)
+                if kind != want:
+                    bad_farm.append((l.strip(), nxt.strip()))
+                break
+    check("ch.9", f"{label}: farmland intensity is d4, 1-2 low",
+          not bad_farm,
+          f"{len(bad_farm)} mismatch(es), e.g. {bad_farm[0] if bad_farm else ''}")
+
+    # ---- chapter 9: the growth d6 bands ----------------------------------
+    # "1-2 farmland | 3-4 rural | 5-6 raise the densest unit that can legally
+    #  rise ... If nothing can rise, place a rural beside the busiest part."
+    # Each band forbids the other bands' outcomes; the 5-6 fallback may place
+    # a rural, which is why rural is not forbidden there.
+    FORBIDDEN_BY_BAND = {
+        "farmland": ["upgrade to ", "cannot climb, sprawls", "nothing can grow",
+                     "no room for rural", "people rural at"],
+        "rural": ["upgrade to ", "the field deepens", "people farm_",
+                  "no room for farmland", "nothing can grow"],
+        "raise": ["the field deepens", "people farm_", "no room for farmland",
+                  "no room for rural"],
+    }
+    bad_grow = []
+    for i, l in enumerate(flat):
+        m = re.match(r"^    d6=(\d) \(grow\)$", l)
+        if not m:
+            continue
+        d = int(m.group(1))
+        band = "farmland" if d <= 2 else "rural" if d <= 4 else "raise"
+        for nxt in flat[i + 1:]:
+            if re.match(r"^    d6=\d \(grow\)$", nxt) or nxt.startswith("    work "):
+                break
+            for bad in FORBIDDEN_BY_BAND[band]:
+                if bad in nxt:
+                    bad_grow.append((d, band, nxt.strip()))
+    check("ch.9", f"{label}: the growth d6 bands are obeyed",
+          not bad_grow,
+          f"{len(bad_grow)} stray outcome(s), e.g. {bad_grow[0] if bad_grow else ''}")
+
     # ---- chapter 6, step 7: the calendar ---------------------------------
     # "Move the time dial by 1 age. Remember, every 25 ages, a new era begins."
     lengths = {}

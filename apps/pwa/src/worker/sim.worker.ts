@@ -5,6 +5,7 @@
 //        { type: "preview", config }          — genesis-only deck preview
 //        { type: "cancel" }                   — stop at the next era boundary
 //        { type: "seek", era, age }           — world state at an age (time travel)
+//        { type: "lineage" }                  — ask the engine which rules it speaks
 //   out: { type: "progress", era, erasWanted, agesTotal }
 //        { type: "done", finished, state, stateJson, events, log, report, eras }
 //        { type: "seeked", era, age, state }
@@ -82,6 +83,7 @@ onmessage = async (msg: MessageEvent) => {
     | { type: "resume"; stateJson: string }
     | { type: "preview"; config: JmConfig }
     | { type: "seek"; era: number; age: number }
+    | { type: "lineage" }
     | { type: "cancel" };
   try {
     if (d.type === "cancel") {
@@ -89,6 +91,10 @@ onmessage = async (msg: MessageEvent) => {
       return;
     }
     const eng = await engine();
+    if (d.type === "lineage") {
+      postMessage({ type: "lineage", lineage: eng.lineage(), version: eng.version() });
+      return;
+    }
     if (d.type === "preview") {
       // A fresh world's deck.order holds every card with its printed work
       // number (the engine's spread rule, not ours). Genesis paints nothing.

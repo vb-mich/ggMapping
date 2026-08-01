@@ -35,6 +35,14 @@ export const flatWork = signal(false);
 export const expFields = signal(false);
 export const experimental = computed(() => expFields.value);
 
+// --- the rules lineage ------------------------------------------------------
+// Read from the engine, never hardcoded here: seeds do not survive a lineage
+// break, so a world or config from another lineage repaints differently.
+export const engineLineage = signal("");
+export const engineVersion = signal("");
+// Set when a loaded file names a different lineage; a notice, never a block.
+export const foreignLineage = signal<string | null>(null);
+
 export const deckCopies = signal<Record<Kind, number>>({ ...DEFAULT_COPIES });
 export const addpanelCopies = signal(1);
 export const workOverrides = signal<Partial<Record<string, number>>>({});
@@ -95,6 +103,8 @@ export function shareableConfig(): string {
     {
       seed: seed.value,
       eras: eras.value,
+      // the rules that produced it: a seed means nothing without its lineage
+      lineage: engineLineage.value,
       ...(experimental.value ? { experimental: true } : {}),
       config: cfg,
     },
@@ -105,7 +115,7 @@ export function shareableConfig(): string {
 
 // Apply a saved config capsule back onto the controls.
 export function loadConfigJson(json: string): boolean {
-  let c: { seed?: number; eras?: number; config?: JmConfig };
+  let c: { seed?: number; eras?: number; lineage?: string; config?: JmConfig };
   try {
     c = JSON.parse(json);
   } catch {
@@ -113,6 +123,7 @@ export function loadConfigJson(json: string): boolean {
   }
   const cfg = c.config;
   if (!cfg || typeof c.seed !== "number" || typeof c.eras !== "number") return false;
+  noteLineage(c.lineage);
   seed.value = c.seed;
   eras.value = c.eras;
   panelSize.value = cfg.panel_w === 8 ? "8x10" : "5x6";
@@ -135,6 +146,14 @@ export function loadConfigJson(json: string): boolean {
   workOverrides.value = { ...(cfg.work_overrides ?? {}) };
   moodOverrides.value = { ...(cfg.mood_overrides ?? {}) };
   return true;
+}
+
+// A loaded file names the rules it was made under. A different lineage is not
+// an error and never blocks the load — the same seed simply paints a different
+// map, and the notice says so (CONTRACTS §9). No migration is attempted.
+function noteLineage(theirs: string | undefined): void {
+  foreignLineage.value =
+    theirs && engineLineage.value && theirs !== engineLineage.value ? theirs : null;
 }
 
 // The deck section alone, for the deck export file.
@@ -297,6 +316,9 @@ function ensureWorker(): Worker {
     } else if (d.type === "seeked") {
       seekWorld.value = d.state;
       seeking.value = false;
+    } else if (d.type === "lineage") {
+      engineLineage.value = d.lineage;
+      engineVersion.value = d.version;
     } else if (d.type === "preview-deck") {
       deckPreview.value = d.cards;
     } else if (d.type === "error") {
@@ -348,6 +370,7 @@ export function loadWorld(json: string): boolean {
     return false;
   }
   if (parsed?.schema !== "jerrymap-state") return false;
+  noteLineage(parsed.lineage);
   world.value = parsed;
   worldJson.value = json;
   events.value = [];
@@ -366,4 +389,8 @@ export function loadWorld(json: string): boolean {
 
 export function requestDeckPreview(): void {
   ensureWorker().postMessage({ type: "preview", config: buildConfig() });
+}
+
+export function requestLineage(): void {
+  ensureWorker().postMessage({ type: "lineage" });
 }
