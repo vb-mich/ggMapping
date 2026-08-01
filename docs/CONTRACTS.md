@@ -1,6 +1,6 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **3.0.0** · State schema: **1** · Event schema: **2** · World lineage: **v0.7**
+Contract version: **3.1.0** · State schema: **1** · Event schema: **2** · World lineage: **v0.7**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
@@ -199,7 +199,16 @@ and must stay byte-compatible with the oracle. Every event:
 ```
 
 `seq` is the global event sequence number. Events inside an age's action list also
-carry `payload.step` — the 1-based **step number** printed as `    {step}. …`. The
+carry `payload.step` — the 1-based **step number** printed as `    {step}. …`.
+
+**Every numbered event names a place.** The envelope's `unit` is set whenever the
+step happened to a unit — including the embellishments (`hold`), `anomaly_strike`
+and `volcano_ring`, whose *text* names no unit but whose engine effect is a unit's;
+`panel` is set for the steps that belong to a panel rather than a unit
+(`skip_embellish`, `full_embellish`, `new_panel`, and `deck_shuffled`, which
+belongs to the age and carries the age's panel). Renderers can therefore place
+every numbered step, one for one with the record. This populates fields the
+envelope always had; no log text changes, which the gate proves. The
 step counter resets to 0 at each age start; the free-panel event (§5.3) deliberately
 continues the previous age's counter, exactly as the oracle does.
 
@@ -551,6 +560,12 @@ the twin — but anything readable from the log runs against both.
 
 ### 9.1 Changelog
 
+* **3.1.0** — additive, log bytes unchanged (gate green, byte counts identical):
+  numbered events now populate the envelope's `unit`/`panel` so every step in an
+  age has a place a renderer can draw (§5). The embellishments were the bulk of
+  it — the engine incremented `embellish[g]` beside an event that never carried
+  `g`. Also: the conformance norm (§8.5), and the engine's single `LINEAGE`
+  constant behind `jm_lineage()`.
 * **3.0.0** — a rules increment, lineage `v0.5 → v0.7` (major: renderer text and
   rules changed), **event schema 1 → 2**. Add Panel is the working panel: an Add
   Panel age skips step 2, takes no Stack visit, and fires no city-lives step

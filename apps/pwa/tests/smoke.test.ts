@@ -271,6 +271,37 @@ describe("web-flavored engine smoke", () => {
     m._jm_free(h);
   });
 
+  // The map promises a 1:1 correspondence with the age's work log: every
+  // numbered step must have somewhere to be drawn — a unit, or failing that
+  // the panel it belongs to.
+  it("gives every numbered step a place on the map", async () => {
+    const m = await loadEngine();
+    const cfg = cstr(m, "{}");
+    const h = m._jm_create(cfg, 42n, 20);
+    m._free(cfg);
+    m._jm_run(h);
+    const events = JSON.parse(m.UTF8ToString(m._jm_events(h))) as {
+      kind: string;
+      panel: [number, number] | null;
+      unit: [number, number] | null;
+      payload: { step?: number };
+      text: string[];
+    }[];
+
+    const numbered = events.filter((e) => e.payload.step !== undefined);
+    expect(numbered.length).toBeGreaterThan(4000);
+    const placeless = numbered.filter((e) => !e.unit && !e.panel);
+    expect(
+      placeless.slice(0, 3).map((e) => `${e.kind}: ${e.text[0]?.trim()}`),
+    ).toEqual([]);
+
+    // and the embellishments specifically land on units, not just panels
+    const holds = numbered.filter((e) => e.kind === "hold");
+    expect(holds.length).toBeGreaterThan(1000);
+    expect(holds.every((e) => e.unit !== null)).toBe(true);
+    m._jm_free(h);
+  });
+
   it("is deterministic: the same seed twice produces identical bytes", async () => {
     const m = await loadEngine();
     const run = () => {

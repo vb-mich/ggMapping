@@ -38,8 +38,9 @@ export interface DrawOptions {
   patina: boolean;
   dimArchived: boolean;
   highlight: [number, number] | null; // the current panel, outlined
-  // unit key "x,y" -> the record's step numbers that landed on it this age
-  workMarks: Map<string, number[]> | null;
+  // the age's numbered steps, one for one with the record: keyed "x,y" for
+  // units and "tx,ty" for steps that name only a panel
+  workMarks: { units: Map<string, number[]>; panels: Map<string, number[]> } | null;
 }
 
 // Below this many pixels per unit a step badge cannot be read, so it is not
@@ -234,27 +235,44 @@ export function draw(
   // the age's numbered work, on the units that received it — the same numbers
   // the record prints, wherever they landed (a stroke may cross into another
   // panel, and the numbering keeps the record's gaps)
-  if (opts.workMarks && opts.workMarks.size && s >= WORK_BADGE_MIN_PX) {
+  if (opts.workMarks && s >= WORK_BADGE_MIN_PX) {
     const font = Math.max(8, Math.min(13, Math.round(s * 0.42)));
-    ctx.font = `600 ${font}px system-ui, sans-serif`;
     ctx.textBaseline = "top";
     const lw = Math.max(1.5, s / 12);
-    for (const [key, steps] of opts.workMarks) {
+
+    const badge = (label: string, right: number, top: number, size: number) => {
+      ctx.font = `600 ${size}px system-ui, sans-serif`;
+      const pad = Math.max(2, size * 0.3);
+      const bw = ctx.measureText(label).width + pad * 2;
+      const bh = size + pad;
+      ctx.fillStyle = MARK_COLORS.volcano;
+      ctx.fillRect(right - bw, top, bw, bh);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(label, right - bw + pad, top + pad / 2);
+    };
+    const label = (steps: number[]) =>
+      [...steps].sort((a, b) => a - b).join(",");
+
+    // steps that named a unit: outline it and badge its top-right corner
+    for (const [key, steps] of opts.workMarks.units) {
       const [gx, gy] = key.split(",").map(Number);
       const x = px(gx), y = py(gy);
       if (x + s < 0 || x > cw || y + s < 0 || y > ch) continue;
       ctx.strokeStyle = MARK_COLORS.volcano;
       ctx.lineWidth = lw;
       ctx.strokeRect(x + lw / 2, y + lw / 2, s - lw, s - lw);
+      badge(label(steps), x + s, y, font);
+    }
 
-      const label = [...steps].sort((a, b) => a - b).join(",");
-      const pad = Math.max(2, s * 0.08);
-      const bw = Math.min(s, ctx.measureText(label).width + pad * 2);
-      const bh = font + pad;
-      ctx.fillStyle = MARK_COLORS.volcano;
-      ctx.fillRect(x + s - bw, y, bw, bh);
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText(label, x + s - bw + pad, y + pad / 2);
+    // steps that named only a panel — a card that could not act, a panel
+    // placed, the deck shuffling — badge the panel's top-right corner, clear
+    // of the name label that sits top-left
+    for (const [key, steps] of opts.workMarks.panels) {
+      const [tx, ty] = key.split(",").map(Number);
+      const [ox, oy] = origin(geo, tx, ty);
+      const x = px(ox), y = py(oy);
+      if (x + geo.w * s < 0 || x > cw || y + geo.h * s < 0 || y > ch) continue;
+      badge(label(steps), x + geo.w * s - 2, y + 2, Math.min(15, font + 2));
     }
   }
 }

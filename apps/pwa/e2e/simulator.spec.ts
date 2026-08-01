@@ -292,6 +292,18 @@ test("work numbers mark the age's worked units on the map", async ({ page }) => 
   await toggle.check();
   await page.waitForTimeout(400);
   expect(await shot()).toBe(withNumbers); // and restored exactly
+
+  // an age whose steps include ones that name no unit — a deck shuffle — is
+  // still complete: those badge the panel instead (era 1 age 20 of this seed)
+  await page.getByTestId("nav-era").fill("1");
+  await page.getByTestId("nav-age").fill("20");
+  await page.getByTestId("nav-go").click();
+  await expect(page.getByTestId("now-excerpt")).toContainText("the deck is shuffled");
+  await page.locator(".map-buttons button").nth(0).click();
+  await page.waitForTimeout(500);
+  await page.getByTestId("map-canvas").screenshot({
+    path: "e2e-artifacts/work-numbers-panel.png",
+  });
 });
 
 test("the theme defaults to dark and switches", async ({ page }) => {

@@ -235,6 +235,7 @@ void Sim::skip_card(const std::string& card, const std::string& why,
     M.embellish += 1;
     embellish_panel[cur_panel_] += 1;
     Event e; e.kind = Ev::SkipEmbellish; e.s1 = card; e.s2 = why;
+    e.has_panel = true; e.panel = cur_panel_; // the panel that took the embellish
     e.s3 = spirit.empty() ? spirit_of(card) : spirit;
     ev_action(std::move(e));
 }
@@ -401,6 +402,7 @@ void Sim::fill_quota(Panel t, int quota) {
                 M.embellish += n;
                 embellish_panel[t] += n;
                 Event e; e.kind = Ev::FullEmbellish; e.a = n;
+                e.has_panel = true; e.panel = t; // the panel that took them
                 ev_action(std::move(e));
             }
             return;
@@ -425,14 +427,14 @@ void Sim::rework_body(GPos g) {
     if (wild.count(g) || marks.count(g)) {
         M.embellish += 1;
         embellish[g] += 1;
-        Event e; e.kind = Ev::Hold; e.s1 = "land";
+        Event e; e.kind = Ev::Hold; e.has_unit = true; e.unit = g; e.s1 = "land";
         ev_action(std::move(e));
         return;
     }
     if (people.contains(g) && !cfg.fragile) {
         M.embellish += 1;
         embellish[g] += 1;
-        Event e; e.kind = Ev::Hold; e.s1 = "town";
+        Event e; e.kind = Ev::Hold; e.has_unit = true; e.unit = g; e.s1 = "town";
         ev_action(std::move(e));
         return;
     }
@@ -469,7 +471,7 @@ void Sim::rework_body(GPos g) {
     if (lo > hi || want == cur) {
         M.embellish += 1;
         embellish[g] += 1;
-        Event e; e.kind = Ev::Hold; e.s1 = "settled";
+        Event e; e.kind = Ev::Hold; e.has_unit = true; e.unit = g; e.s1 = "settled";
         ev_action(std::move(e));
         return;
     }
@@ -491,7 +493,7 @@ void Sim::rework_body(GPos g) {
     if (newr == cur) {
         M.embellish += 1;
         embellish[g] += 1;
-        Event e; e.kind = Ev::Hold; e.s1 = "settled";
+        Event e; e.kind = Ev::Hold; e.has_unit = true; e.unit = g; e.s1 = "settled";
         ev_action(std::move(e));
         return;
     }
@@ -500,7 +502,7 @@ void Sim::rework_body(GPos g) {
             if (dens(n) >= 2) {
                 M.embellish += 1;
                 embellish[g] += 1;
-                Event e; e.kind = Ev::Hold; e.s1 = "city_shore";
+                Event e; e.kind = Ev::Hold; e.has_unit = true; e.unit = g; e.s1 = "city_shore";
                 ev_action(std::move(e));
                 return;
             }
@@ -1155,7 +1157,7 @@ void Sim::card_anomaly(Panel t) {
     auto strike = [&](GPos u) {
         if (frag && people.contains(u)) {
             people.erase(u);
-            Event e; e.kind = Ev::AnomalyStrike;
+            Event e; e.kind = Ev::AnomalyStrike; e.has_unit = true; e.unit = u;
             ev_action(std::move(e));
             hit_ = true;
         }
@@ -1292,7 +1294,7 @@ void Sim::card_anomaly(Panel t) {
                         base[nb] = HI;
                     }
                 }
-            Event e; e.kind = Ev::VolcanoRing;
+            Event e; e.kind = Ev::VolcanoRing; e.has_unit = true; e.unit = *g;
             ev_action(std::move(e));
         }
     } else if (a == 10) {
@@ -1537,7 +1539,10 @@ bool Sim::step() {
     if (do_shuffle) {
         shuffle_deck_now();
         marker_uid = -1;
+        // the shuffle belongs to the age, not to a place; it carries the age's
+        // panel so every numbered step can be found on the map
         Event e; e.kind = Ev::DeckShuffled;
+        if (have_cur_) { e.has_panel = true; e.panel = cur_panel_; }
         ev_action(std::move(e));
     }
     if (age_in_era == 25) {

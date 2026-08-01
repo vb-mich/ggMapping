@@ -250,6 +250,7 @@ export interface Annotated {
   era: number;
   age: number;
   panel: string | null;
+  rawPanel: [number, number] | null; // the event's own panel, for map marks
   unit: [number, number] | null;
   kind: string;
   payload: Record<string, unknown>;
@@ -278,32 +279,44 @@ export const annotatedEvents = computed<Annotated[]>(() => {
         ? panelName(...panelOf(geo, e.unit[0], e.unit[1]))
         : agePanel;
     return {
-      era, age, panel, unit: e.unit, kind: e.kind, payload: e.payload, text: e.text,
+      era, age, panel, rawPanel: e.panel, unit: e.unit,
+      kind: e.kind, payload: e.payload, text: e.text,
     };
   });
 });
 
-// The age on show, as the map draws it: unit -> the record's step numbers that
-// landed on it. A unit worked twice in one age carries both. Numbered steps
-// with no unit (panel embellishments, the deck shuffling, a panel placed) are
-// simply not drawn, so the numbering keeps the record's gaps.
-export const workMarks = computed<Map<string, number[]>>(() => {
-  const marks = new Map<string, number[]>();
+// The age on show, as the map draws it: every numbered step of that age finds
+// a place, one for one with the record. A step that names a unit badges that
+// unit (a unit worked twice carries both numbers); a step that names only a
+// panel — a card that could not act, a panel placed, the deck shuffling —
+// badges the panel's corner.
+export interface WorkMarks {
+  units: Map<string, number[]>;
+  panels: Map<string, number[]>;
+}
+
+const addMark = (m: Map<string, number[]>, key: string, step: number) => {
+  const at = m.get(key);
+  if (at) {
+    if (!at.includes(step)) at.push(step);
+  } else {
+    m.set(key, [step]);
+  }
+};
+
+export const workMarks = computed<WorkMarks>(() => {
+  const units = new Map<string, number[]>();
+  const panels = new Map<string, number[]>();
   const p = position.value;
-  if (!p) return marks;
+  if (!p) return { units, panels };
   for (const a of annotatedEvents.value) {
     if (a.era !== p.era || a.age !== p.age) continue;
     const step = a.payload.step as number | undefined;
-    if (!step || !a.unit) continue;
-    const key = `${a.unit[0]},${a.unit[1]}`;
-    const at = marks.get(key);
-    if (at) {
-      if (!at.includes(step)) at.push(step);
-    } else {
-      marks.set(key, [step]);
-    }
+    if (!step) continue;
+    if (a.unit) addMark(units, `${a.unit[0]},${a.unit[1]}`, step);
+    else if (a.rawPanel) addMark(panels, `${a.rawPanel[0]},${a.rawPanel[1]}`, step);
   }
-  return marks;
+  return { units, panels };
 });
 
 // The panel the shown age works on (its age_start event's coordinates).
