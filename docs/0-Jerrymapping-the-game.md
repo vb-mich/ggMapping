@@ -212,6 +212,8 @@ The whole game is this loop:
 3. **Make the Spread.** Find the panels that sit beside the current panel on the map (up to four) and lay them in their correct places around the current panel. Leave a marker in each one's place in the Stack so it can go back to the same position.
 4. **Do the instructions.** This is the big move: a ridge, a basin, a town. If it cannot happen, use the Rework.
 5. **Do the card's fill part.** Fill or rework as many units as the card's printed **work number** says how many.
+**The city lives.** Every visit to a panel that is already full gives that panel's tallest settlement one climb or sprawl step, whatever the card was. Cities keep growing as long as the map keeps visiting them.
+
 6. **Put things back.** The played card goes to the **front of the deck**. The Spread panels go back where they came from. The current panel goes to the **back of the Stack**. If it is completely full, you can decide to put the panel in an archive instead. If the card you just played was the marked first card of the deck, then shuffle the deck and mark the new first card on the bottom. The deck shuffles once per cycle, for the whole game. 
 7. **Advance the calendar.** Move the time dial by 1 age. Remember, every **25 ages**, a new **era** begins. 
 
@@ -221,6 +223,7 @@ Draw card, spread panels, do instructions, fill units, repeat.
 NOTE:
 1. When your map reaches an impressive dimension, let's 100+ panels, you might find sequential work kinda boring and you want to move though panels faster. In that case, you're allowed to pass over an amount of panels equal to the card's work number + 1d20. Mind that passed panels keep their places at the front.
 2. If you chose to archive panes, and you find yourself with no panels left on the working stack, you automatically add one panel as executing an "Add panel" card
+3. If you pick an "Add Panel" card, skip step 2: the new panel you place is your current working panel for this turn. You work on one panel and one Spread, always.
 
 # 7. Filling units
 

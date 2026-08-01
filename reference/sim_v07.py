@@ -374,7 +374,7 @@ class Sim:
         if wt is not None:
             t = wt
             self._work_tile = None
-            self.log(f"    the work follows the new panel {tname(t)}")
+            self.log(f"    the current working panel is the new panel {tname(t)}")
         done = 0
         while done < quota:
             if self.tiles[t] >= AREA:
@@ -1011,7 +1011,7 @@ class Sim:
         self.stack.append(new)
         self._work_tile = new
         self.added_per_era[self.era] = self.added_per_era.get(self.era, 0) + 1
-        self.ev(f"new panel {tname(new)} (sum {abs(new[0])+abs(new[1])})")
+        self.ev(f"new panel {tname(new)} (score {new[0]*new[0]+new[1]*new[1]})")
         return None
 
     def tile_touches(self, tk):
@@ -1091,7 +1091,21 @@ class Sim:
                 self.M["free_tiles"] += 1
                 self.log(f"[e{self.era}] stack empty: a panel is added for free")
                 self.card_addpanel(None)
-            if True:
+            if card == "addpanel":
+                self.visit_no += 1
+                era_visits += 1
+                self.log(f"[e{self.era} a{era_visits:02d}] the new panel | ADDPANEL")
+                self._step = 0
+                self._mood = (self.cfg.get("mood") or {}).get(card, MOOD[card])
+                quota = self.card_addpanel(None)
+                t = self._work_tile
+                self._cur_tile = t
+                if quota is None:
+                    quota = cwork
+                    self.log(f"    work {quota}, mood {self._mood}")
+                if t is not None:
+                    self.fill_quota(t, quota)
+            else:
                 t = self.stack.popleft()
                 self.visit_no += 1
                 era_visits += 1
