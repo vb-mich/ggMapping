@@ -195,6 +195,8 @@ export const followPanel = signal(false);
 export const showPanelNames = signal(false);
 export const traceReworks = signal(false);
 export const dimArchived = signal(false);
+// The worked units of the age on show, numbered as the record numbers them.
+export const workNumbers = signal(true);
 
 // --- run state --------------------------------------------------------------
 export type Status = "idle" | "running" | "done" | "paused" | "error";
@@ -248,6 +250,7 @@ export interface Annotated {
   era: number;
   age: number;
   panel: string | null;
+  unit: [number, number] | null;
   kind: string;
   payload: Record<string, unknown>;
   text: string[];
@@ -274,8 +277,33 @@ export const annotatedEvents = computed<Annotated[]>(() => {
       : e.unit
         ? panelName(...panelOf(geo, e.unit[0], e.unit[1]))
         : agePanel;
-    return { era, age, panel, kind: e.kind, payload: e.payload, text: e.text };
+    return {
+      era, age, panel, unit: e.unit, kind: e.kind, payload: e.payload, text: e.text,
+    };
   });
+});
+
+// The age on show, as the map draws it: unit -> the record's step numbers that
+// landed on it. A unit worked twice in one age carries both. Numbered steps
+// with no unit (panel embellishments, the deck shuffling, a panel placed) are
+// simply not drawn, so the numbering keeps the record's gaps.
+export const workMarks = computed<Map<string, number[]>>(() => {
+  const marks = new Map<string, number[]>();
+  const p = position.value;
+  if (!p) return marks;
+  for (const a of annotatedEvents.value) {
+    if (a.era !== p.era || a.age !== p.age) continue;
+    const step = a.payload.step as number | undefined;
+    if (!step || !a.unit) continue;
+    const key = `${a.unit[0]},${a.unit[1]}`;
+    const at = marks.get(key);
+    if (at) {
+      if (!at.includes(step)) at.push(step);
+    } else {
+      marks.set(key, [step]);
+    }
+  }
+  return marks;
 });
 
 // The panel the shown age works on (its age_start event's coordinates).

@@ -86,6 +86,7 @@ export const STRINGS = {
   panelNames: "Panel names",
   traceReworks: "Trace reworks",
   dimArchived: "Dim archived panels",
+  workNumbers: "Work numbers",
 
   // now panel
   nowTitle: "Now",

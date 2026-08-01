@@ -21,6 +21,8 @@ import {
   showPanelNames,
   shownWorld,
   traceReworks,
+  workMarks,
+  workNumbers,
   world,
 } from "../state";
 
@@ -72,6 +74,7 @@ export function MapView() {
       patina: traceReworks.value,
       dimArchived: dimArchived.value,
       highlight: currentAgePanel.value,
+      workMarks: workNumbers.value ? workMarks.value : null,
     });
   };
 
@@ -94,6 +97,8 @@ export function MapView() {
     dimArchived.value,
     followPanel.value,
     currentAgePanel.value,
+    workNumbers.value,
+    workMarks.value,
   ]);
 
   const zoom = (factor: number, cx?: number, cy?: number) => {
@@ -146,6 +151,8 @@ export function MapView() {
           value={traceReworks.value} onChange={(v) => (traceReworks.value = v)} />
         <Toggle label={STRINGS.dimArchived} testid="toggle-dim"
           value={dimArchived.value} onChange={(v) => (dimArchived.value = v)} />
+        <Toggle label={STRINGS.workNumbers} testid="toggle-work-numbers"
+          value={workNumbers.value} onChange={(v) => (workNumbers.value = v)} />
         <span class="map-buttons">
           <button class="ghost" aria-label={STRINGS.zoomOut} onClick={() => zoom(1 / 1.3)}>−</button>
           <button class="ghost" aria-label={STRINGS.zoomIn} onClick={() => zoom(1.3)}>+</button>

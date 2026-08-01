@@ -38,7 +38,13 @@ export interface DrawOptions {
   patina: boolean;
   dimArchived: boolean;
   highlight: [number, number] | null; // the current panel, outlined
+  // unit key "x,y" -> the record's step numbers that landed on it this age
+  workMarks: Map<string, number[]> | null;
 }
+
+// Below this many pixels per unit a step badge cannot be read, so it is not
+// drawn — the same courtesy the panel names get.
+const WORK_BADGE_MIN_PX = 13;
 
 const key = (x: number, y: number) => `${x},${y}`;
 
@@ -223,6 +229,33 @@ export function draw(
     ctx.strokeStyle = MARK_COLORS.volcano;
     ctx.lineWidth = Math.max(2, s / 5);
     ctx.strokeRect(px(ox), py(oy), geo.w * s, geo.h * s);
+  }
+
+  // the age's numbered work, on the units that received it — the same numbers
+  // the record prints, wherever they landed (a stroke may cross into another
+  // panel, and the numbering keeps the record's gaps)
+  if (opts.workMarks && opts.workMarks.size && s >= WORK_BADGE_MIN_PX) {
+    const font = Math.max(8, Math.min(13, Math.round(s * 0.42)));
+    ctx.font = `600 ${font}px system-ui, sans-serif`;
+    ctx.textBaseline = "top";
+    const lw = Math.max(1.5, s / 12);
+    for (const [key, steps] of opts.workMarks) {
+      const [gx, gy] = key.split(",").map(Number);
+      const x = px(gx), y = py(gy);
+      if (x + s < 0 || x > cw || y + s < 0 || y > ch) continue;
+      ctx.strokeStyle = MARK_COLORS.volcano;
+      ctx.lineWidth = lw;
+      ctx.strokeRect(x + lw / 2, y + lw / 2, s - lw, s - lw);
+
+      const label = [...steps].sort((a, b) => a - b).join(",");
+      const pad = Math.max(2, s * 0.08);
+      const bw = Math.min(s, ctx.measureText(label).width + pad * 2);
+      const bh = font + pad;
+      ctx.fillStyle = MARK_COLORS.volcano;
+      ctx.fillRect(x + s - bw, y, bw, bh);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(label, x + s - bw + pad, y + pad / 2);
+    }
   }
 }
 

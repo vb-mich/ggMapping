@@ -254,6 +254,43 @@ test("a foreign-lineage file loads, with a notice, and is not migrated", async (
   await expect(notice).toHaveCount(0);
 });
 
+test("work numbers mark the age's worked units on the map", async ({ page }) => {
+  await page.goto("/");
+  await setRun(page, 42, 4);
+  await runToDone(page);
+
+  // Navigation and Now sit together above the map
+  const pair = page.locator(".now-nav");
+  await expect(pair.getByTestId("nav-panel")).toBeVisible();
+  await expect(pair.getByTestId("now-panel")).toBeVisible();
+  const mapTop = (await page.getByTestId("map-canvas").boundingBox())!.y;
+  const nowTop = (await page.getByTestId("now-panel").boundingBox())!.y;
+  expect(nowTop).toBeLessThan(mapTop); // above the map, not below it
+
+  const toggle = page.getByTestId("toggle-work-numbers");
+  await expect(toggle).toBeChecked(); // on by default
+
+  // zoom in on the worked panel so the badges are legible
+  await page.getByTestId("toggle-follow").check();
+  for (let i = 0; i < 10; i++) await page.locator(".map-buttons button").nth(1).click();
+  await page.waitForTimeout(400);
+
+  const shot = () =>
+    page.getByTestId("map-canvas").evaluate((c) => (c as HTMLCanvasElement).toDataURL());
+  const withNumbers = await shot();
+  await page.getByTestId("map-canvas").screenshot({
+    path: "e2e-artifacts/work-numbers.png",
+  });
+
+  await toggle.uncheck();
+  await page.waitForTimeout(400);
+  expect(await shot()).not.toBe(withNumbers); // the marks really are drawn
+
+  await toggle.check();
+  await page.waitForTimeout(400);
+  expect(await shot()).toBe(withNumbers); // and restored exactly
+});
+
 test("the theme defaults to dark and switches", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");

@@ -141,9 +141,11 @@ export function App() {
           <FilesBar />
         </div>
         <div class="col-main">
-          <NavPanel />
+          <div class="now-nav">
+            <NavPanel />
+            <NowPanel />
+          </div>
           <MapView />
-          <NowPanel />
           <StatsStrip />
           <ReportCard />
         </div>
