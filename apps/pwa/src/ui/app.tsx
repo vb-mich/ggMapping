@@ -27,7 +27,7 @@ import {
   workOverrides,
 } from "../state";
 import { applyUpdate, updateAvailable } from "../updates";
-import { go, route } from "../router";
+import { beforeProfile, go, route } from "../router";
 import { MyMapScreen } from "../digitalizer/ui/MyMapScreen";
 import { ProfileScreen } from "../digitalizer/ui/ProfileScreen";
 import { ConfigPanel } from "./ConfigPanel";
@@ -136,12 +136,22 @@ export function App() {
           {theme.value === "dark" ? STRINGS.themeLight : STRINGS.themeDark}
         </button>
         <button
-          class="ghost profile-btn"
+          class={
+            route.value.screen.startsWith("profile")
+              ? "ghost profile-btn active"
+              : "ghost profile-btn"
+          }
           data-testid="btn-profile"
           aria-label={STRINGS.pfTitle}
-          onClick={() => go("#/profile")}
+          title={STRINGS.pfTitle}
+          onClick={() =>
+            // the gear is a toggle: tap again to step back out
+            route.value.screen.startsWith("profile")
+              ? go(beforeProfile.value)
+              : go("#/profile")
+          }
         >
-          ≡
+          ⚙
         </button>
       </header>
       {foreignLineage.value && (

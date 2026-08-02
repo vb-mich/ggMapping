@@ -246,7 +246,7 @@ export const STRINGS = {
   mmPause: "Pause",
 
   // the profile
-  pfTitle: "Profile",
+  pfTitle: "Profile settings",
   pfPlayback: "Playback",
   pfPlaybackHint: "How fast the timeline's play button walks the map's updates.",
   pfPerUpdate: "per update",

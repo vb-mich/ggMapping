@@ -424,6 +424,7 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
 
 /* the profile */
 .profile-btn { font-size: 1.1rem; padding: 0.2rem 0.6rem; }
+.profile-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .profile-list { list-style: none; margin: 0.5rem 0; padding: 0; }
 .profile-entry {
   display: flex; justify-content: space-between; align-items: center;

@@ -405,6 +405,11 @@ test("playback walks the updates at the profile's speed", async ({ page }) => {
   // back arrows walk out the way they came
   await page.getByTestId("btn-profile").click();
   await expect(page.getByTestId("profile-menu")).toBeVisible();
+  // the gear is a toggle: tapping it again steps back out, and in again
+  await page.getByTestId("btn-profile").click();
+  await expect(page.getByTestId("timeline")).toBeVisible();
+  await page.getByTestId("btn-profile").click();
+  await expect(page.getByTestId("profile-menu")).toBeVisible();
   await page.getByTestId("btn-pf-playback").click();
   await expect(page.getByTestId("playback-page")).toBeVisible();
   await expect(page.getByTestId("speed-500")).toBeChecked(); // the default
