@@ -3,7 +3,7 @@
 import { deflateRawSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 
-import { mapAt, type ScanMeta } from "../src/digitalizer/db";
+import { mapAt, stopIndexAt, timelineStops, type ScanMeta } from "../src/digitalizer/db";
 import { orderQuad, rotateQuadCW, type Quad } from "../src/digitalizer/geometry";
 import { makeRaster, rotate90 } from "../src/digitalizer/raster";
 import {
@@ -45,6 +45,28 @@ describe("the derived timeline rule (mapAt)", () => {
   it("is pure derivation: input order does not matter", () => {
     const shuffled = [scans[2], scans[0], scans[1]];
     expect(mapAt(shuffled, t3).get("1,1")?.id).toBe("c");
+  });
+});
+
+describe("the timeline's stops: one per update, equally spaced", () => {
+  const scans = [
+    meta(1, 1, 3000, "c"),
+    meta(1, 1, 1000, "a"),
+    meta(2, 1, 2000, "b"),
+    meta(3, 1, 2000, "b2"), // two scans in one save burst share a moment
+  ];
+  it("collects distinct update moments, sorted", () => {
+    expect(timelineStops(scans)).toEqual([1000, 2000, 3000]);
+    expect(timelineStops([])).toEqual([]);
+  });
+  it("maps a moment to its stop index; null means the last stop (now)", () => {
+    const stops = [1000, 2000, 3000];
+    expect(stopIndexAt(stops, null)).toBe(2);
+    expect(stopIndexAt(stops, 1000)).toBe(0);
+    expect(stopIndexAt(stops, 2500)).toBe(1); // between stops: the one shown
+    expect(stopIndexAt(stops, 3000)).toBe(2);
+    expect(stopIndexAt(stops, 500)).toBe(0); // before the first: clamps
+    expect(stopIndexAt([], null)).toBe(0);
   });
 });
 

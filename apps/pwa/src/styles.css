@@ -47,8 +47,11 @@ body {
 
 #app { max-width: 1280px; margin: 0 auto; padding: 0.5rem; }
 
-header { display: flex; align-items: baseline; gap: 0.6rem; }
+/* wraps on narrow screens: chips and buttons must never stack ON TOP of
+   each other and swallow taps */
+header { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
 header .theme-toggle { margin-left: auto; }
+header .profile-btn, header .theme-toggle { flex: none; }
 .chip.lineage-chip {
   background: var(--chip-bg);
   border: 1px solid var(--accent);
@@ -335,7 +338,11 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
   min-height: 40vh; max-height: 70vh;
   border-radius: 6px; background: var(--bg);
   cursor: grab;
+  /* dragging the map must never start a text selection */
+  user-select: none;
+  -webkit-user-select: none;
 }
+.atlas-cell img { -webkit-user-drag: none; }
 .atlas-plane {
   display: grid; gap: 6px; width: max-content;
   padding: 1rem; transform-origin: 0 0;
@@ -373,7 +380,12 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
 .scan-flow .flow-buttons { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
 .scan-flow .flow-buttons .primary { margin-left: auto; }
 .scan-flow .field input[type="range"] { max-width: none; width: 100%; }
-.crop-stage { position: relative; }
+.crop-stage {
+  position: relative;
+  /* dragging a vertex must never highlight the page's text */
+  user-select: none;
+  -webkit-user-select: none;
+}
 .crop-canvas { display: block; width: 100%; border-radius: 6px; }
 .crop-overlay {
   position: absolute; inset: 0; width: 100%; height: 100%;
@@ -410,6 +422,25 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
 .coord-axes .spin b { min-width: 2.2rem; text-align: center; }
 .coord-axes .spin-btn { font-size: 0.8rem; padding: 0.3rem 0.4rem; }
 
+/* the profile */
+.profile-btn { font-size: 1.1rem; padding: 0.2rem 0.6rem; }
+.profile-list { list-style: none; margin: 0.5rem 0; padding: 0; }
+.profile-entry {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; text-align: left;
+  border: none; border-top: 1px solid var(--card-edge); border-radius: 0;
+  background: transparent; padding: 0.7rem 0.2rem; font-size: 1rem;
+}
+.profile-entry span { color: var(--muted); }
+.speed-choice { font-size: 0.95rem; padding: 0.3rem 0; }
+.map-list .map-row {
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  border-top: 1px solid var(--card-edge); padding: 0.5rem 0.2rem;
+}
+.map-row-name { display: inline-flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; }
+.map-row-name small { color: var(--muted); white-space: nowrap; }
+.map-row-actions { display: inline-flex; gap: 0.3rem; }
+
 /* the timeline */
 .timeline-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .timeline-head h2 { margin: 0; }
@@ -422,7 +453,13 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
   color: var(--muted);
   white-space: nowrap;
 }
-.timeline-bar { position: relative; margin: 0.6rem 0 0.2rem; }
+.timeline-row { display: flex; align-items: center; gap: 0.5rem; }
+.play-btn {
+  min-width: 2.3rem; font-size: 1rem; padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+}
+.play-btn.playing { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.timeline-bar { position: relative; margin: 0.6rem 0 0.2rem; flex: 1; }
 .timeline-slider { width: 100%; accent-color: var(--accent); margin: 0; }
 .timeline-slider.past { accent-color: var(--warn-edge); }
 .timeline-ticks { position: absolute; left: 0; right: 0; top: -7px; height: 0; pointer-events: none; }

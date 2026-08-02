@@ -202,6 +202,61 @@ export function setCurrentMap(id: string): Promise<void> {
   });
 }
 
+export function renameMap(id: string, name: string): Promise<void> {
+  return tx("maps", "readwrite", async (t) => {
+    const store = t.objectStore("maps");
+    const rec = (await reqAsPromise(store.get(id))) as MapRecord | undefined;
+    if (!rec) throw new StoreError("failure", "no such map");
+    rec.name = name.trim();
+    store.put(rec);
+  });
+}
+
+// Delete a map WITH everything it holds — scans and bookmarks — in one
+// transaction. Local and final, like every deletion in act one.
+export function deleteMap(id: string): Promise<void> {
+  return tx(["maps", "scans", "bookmarks", "settings"], "readwrite", async (t) => {
+    t.objectStore("maps").delete(id);
+    const scanKeys = (await reqAsPromise(
+      t.objectStore("scans").index("byMap").getAllKeys(id),
+    )) as IDBValidKey[];
+    for (const k of scanKeys) t.objectStore("scans").delete(k);
+    const bmKeys = (await reqAsPromise(
+      t.objectStore("bookmarks").index("byMap").getAllKeys(id),
+    )) as IDBValidKey[];
+    for (const k of bmKeys) t.objectStore("bookmarks").delete(k);
+    const cur = (await reqAsPromise(t.objectStore("settings").get("currentMapId"))) as
+      | { key: string; value: string }
+      | undefined;
+    if (cur?.value === id) t.objectStore("settings").delete("currentMapId");
+  });
+}
+
+// Scan counts per map, for the management page.
+export function scanCounts(): Promise<Map<string, number>> {
+  return tx("scans", "readonly", async (t) => {
+    const all = (await reqAsPromise(t.objectStore("scans").getAll())) as ScanRecord[];
+    const out = new Map<string, number>();
+    for (const s of all) out.set(s.mapId, (out.get(s.mapId) ?? 0) + 1);
+    return out;
+  });
+}
+
+// --- app settings (the profile's knobs) --------------------------------------
+
+export async function getSetting<T>(key: string, fallback: T): Promise<T> {
+  const rec = await tx("settings", "readonly", (t) =>
+    reqAsPromise(t.objectStore("settings").get(key)),
+  );
+  return rec ? ((rec as { value: T }).value ?? fallback) : fallback;
+}
+
+export function putSetting<T>(key: string, value: T): Promise<void> {
+  return tx("settings", "readwrite", (t) => {
+    t.objectStore("settings").put({ key, value });
+  });
+}
+
 // --- scans ------------------------------------------------------------------
 
 export interface NewScan {
@@ -268,6 +323,26 @@ export function mapAt(scans: ScanMeta[], at: number | null): Map<string, ScanMet
 // The atlas: each panel's newest scan.
 export function latestPerPanel(mapId: string): Promise<Map<string, ScanMeta>> {
   return listScans(mapId).then((all) => mapAt(all, null));
+}
+
+// THE TIMELINE'S STOPS: one per update, equally spaced on the bar — the bar
+// walks the map's history by its actual updates, never by wall-clock
+// distance. Pure, like the rule they serve.
+export function timelineStops(scans: ScanMeta[]): number[] {
+  return [...new Set(scans.map((s) => s.created))].sort((a, b) => a - b);
+}
+
+// The stop index a moment falls on: the last stop not younger than T
+// (T null = now = the final stop). A T before the first stop clamps to 0.
+export function stopIndexAt(stops: number[], at: number | null): number {
+  if (!stops.length) return 0;
+  if (at === null) return stops.length - 1;
+  let idx = 0;
+  for (let i = 0; i < stops.length; i++) {
+    if (stops[i] <= at) idx = i;
+    else break;
+  }
+  return idx;
 }
 
 // The one after-save mutation a scan allows: its note.

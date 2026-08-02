@@ -29,6 +29,7 @@ import {
 import { applyUpdate, updateAvailable } from "../updates";
 import { go, route } from "../router";
 import { MyMapScreen } from "../digitalizer/ui/MyMapScreen";
+import { ProfileScreen } from "../digitalizer/ui/ProfileScreen";
 import { ConfigPanel } from "./ConfigPanel";
 import { DeckEditor } from "./DeckEditor";
 import { FilesBar } from "./FilesBar";
@@ -134,6 +135,14 @@ export function App() {
         >
           {theme.value === "dark" ? STRINGS.themeLight : STRINGS.themeDark}
         </button>
+        <button
+          class="ghost profile-btn"
+          data-testid="btn-profile"
+          aria-label={STRINGS.pfTitle}
+          onClick={() => go("#/profile")}
+        >
+          ≡
+        </button>
       </header>
       {foreignLineage.value && (
         <div class="card notice" data-testid="foreign-lineage-notice" role="status">
@@ -182,6 +191,8 @@ export function App() {
             </div>
           </main>
         </>
+      ) : route.value.screen.startsWith("profile") ? (
+        <ProfileScreen route={route.value} />
       ) : (
         <MyMapScreen route={route.value} />
       )}

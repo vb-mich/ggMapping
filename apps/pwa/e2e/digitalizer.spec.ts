@@ -257,6 +257,19 @@ test("the atlas keeps its gaps visible and its maps apart", async ({ page }) => 
   await expect(page.getByTestId("atlas-cell-3,1")).toBeVisible();
   await expect(page.getByTestId("atlas-gap-2,1")).toBeVisible();
 
+  // an empty panel invites its first scan: tapping the gap opens the flow
+  // with the gap's coordinate preset — and the flow's back arrow walks out
+  await page.getByTestId("atlas-gap-2,1").click();
+  await expect(page.getByTestId("scan-flow")).toBeVisible();
+  await page.getByTestId("btn-scan-close").click();
+  await expect(page.getByTestId("atlas")).toBeVisible();
+  await page.getByTestId("atlas-gap-2,1").click();
+  const t3 = await makeFixture(page);
+  await scanToFile(page, t3);
+  await expect(page.getByTestId("coord-name")).toHaveText("N1/E2");
+  await page.getByTestId("btn-scan-close").click(); // abandon, save nothing
+  await expect(page.getByTestId("atlas-gap-2,1")).toBeVisible();
+
   // a new map starts empty; the first map's scans stay its own
   await page.getByTestId("btn-new-map").click();
   await page.getByTestId("input-map-name").fill("The second table");

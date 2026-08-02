@@ -118,13 +118,27 @@ a full disk, and an unreadable photo are notices, never aborts.
 
 The map at time T is **derived, never stored**: for each panel, the newest
 scan with `created <= T` (`db.mapAt`, pure, unit-tested). The atlas carries a
-timeline bar from the first scan to now; scrubbing repaints the derivation,
-and the past wears the Simulator's viewing-the-past colors. A **bookmark is a
-name on a timestamp** — `{id, mapId, name, at}`, nothing more: ticks on the
-bar, chips beneath it, tap to seek; deleting one deletes a name, never a
-scan. Notes stay editable after save (the one after-save mutation a scan
-allows). Rotate joined the Corners stage: a repeatable quarter turn of the
-working image, the quad riding along.
+timeline bar whose stops are the map's **actual updates, equally spaced** —
+one stop per scan moment (`db.timelineStops`), never wall-clock distance —
+with the last stop being now; scrubbing repaints the derivation, and the
+past wears the Simulator's viewing-the-past colors. A play button walks the
+stops automatically (0.5 s per update by default; 0.05–2 s presets on the
+profile's Playback page, persisted). A **bookmark is a name on a
+timestamp** — `{id, mapId, name, at}`, nothing more: ticks on the bar at
+their stop, chips beneath it, tap to seek; deleting one deletes a name,
+never a scan. Notes stay editable after save (the one after-save mutation a
+scan allows). Rotate joined the Corners stage: a repeatable quarter turn of
+the working image, the quad riding along. Tapping an empty panel on the
+atlas opens the scan flow with that coordinate preset.
+
+### The profile
+
+The header's `≡` opens the profile — the app's general menu and the future
+home of act two's account. Two pages today: **Playback** (the timeline
+speed) and **Maps** — create, rename, and delete maps (a two-step
+confirmation naming the map and its scan count; deletion takes the map's
+scans and bookmarks with it, in one transaction), plus the backup archive
+(export current map or all, restore) which lives here and nowhere else.
 
 ### The whole-map PNG
 

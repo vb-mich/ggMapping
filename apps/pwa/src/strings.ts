@@ -226,7 +226,7 @@ export const STRINGS = {
   mmWorking: "Working…",
   mmHistoryTitle: "History",
   mmNewestFirst: "newest first",
-  mmScanAgain: "Scan this panel again",
+  mmScanAgain: "Scan a new version",
   mmNoScansHere: "Nothing is filed at this coordinate yet.",
   mmDelete: "Delete",
   mmDeleteWarn: "This removes the scan from this device, forever. There is no copy anywhere else.",
@@ -242,6 +242,21 @@ export const STRINGS = {
   mmViewing: "viewing",
   mmMarkMoment: "Name this moment",
   mmRemove: "Remove",
+  mmPlay: "Play the timeline",
+  mmPause: "Pause",
+
+  // the profile
+  pfTitle: "Profile",
+  pfPlayback: "Playback",
+  pfPlaybackHint: "How fast the timeline's play button walks the map's updates.",
+  pfPerUpdate: "per update",
+  pfMaps: "Maps",
+  pfRename: "Rename",
+  pfOpen: "Open",
+  pfCurrent: "current",
+  pfDeleteMapWarn:
+    "This removes the map {name} with its {n} scan(s) from this device, forever. There is no copy anywhere else.",
+  pfBackupTitle: "Backups",
 
   // map files: the whole-map PNG and the backup archive
   mmFilesTitle: "Map files",

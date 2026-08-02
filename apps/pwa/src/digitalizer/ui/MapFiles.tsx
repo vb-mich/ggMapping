@@ -5,15 +5,7 @@ import { useState } from "preact/hooks";
 
 import { STRINGS } from "../../strings";
 import { exportMapPng } from "../exportPng";
-import {
-  activeMap,
-  atlas,
-  backupArchive,
-  restoreArchiveFile,
-  safeFileName,
-  standingBookmark,
-  storeDead,
-} from "../store";
+import { activeMap, atlas, safeFileName, standingBookmark } from "../store";
 
 export function MapFiles() {
   const [busy, setBusy] = useState(false);
@@ -38,19 +30,6 @@ export function MapFiles() {
       setNote(r.capped ? STRINGS.mmCapEngaged : "");
     } catch (e) {
       setNote(String((e as Error)?.message ?? e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const onRestore = async (e: Event) => {
-    const input = e.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = "";
-    if (!file) return;
-    setBusy(true);
-    try {
-      await restoreArchiveFile(file);
     } finally {
       setBusy(false);
     }
@@ -96,25 +75,6 @@ export function MapFiles() {
           {note}
         </p>
       )}
-      <div class="files-row backup-row">
-        <button data-testid="btn-backup-current" disabled={busy || storeDead.value}
-          onClick={() => backupArchive("current")}>
-          {STRINGS.mmBackupCurrent}
-        </button>
-        <button data-testid="btn-backup-all" disabled={busy || storeDead.value}
-          onClick={() => backupArchive("all")}>
-          {STRINGS.mmBackupAll}
-        </button>
-        <label class="file-button">
-          {STRINGS.mmRestore}
-          <input
-            type="file"
-            accept=".zip,application/zip"
-            data-testid="input-restore"
-            onChange={onRestore}
-          />
-        </label>
-      </div>
       {busy && (
         <p class="note" data-testid="files-busy" role="status">
           {STRINGS.mmWorking}

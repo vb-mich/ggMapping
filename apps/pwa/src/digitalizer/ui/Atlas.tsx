@@ -7,7 +7,7 @@ import { STRINGS } from "../../strings";
 import { go, panelHash } from "../../router";
 import type { ScanMeta } from "../db";
 import { coordAxis } from "../stitch";
-import { atlas } from "../store";
+import { atlas, presetCoord } from "../store";
 
 export function Atlas() {
   const a = atlas.value;
@@ -46,9 +46,18 @@ export function Atlas() {
               return meta ? (
                 <AtlasCell key={`${tx},${ty}`} tx={tx} ty={ty} meta={meta} />
               ) : (
-                <div key={`${tx},${ty}`} class="atlas-gap" data-testid={`atlas-gap-${tx},${ty}`}>
+                <button
+                  key={`${tx},${ty}`}
+                  class="atlas-gap"
+                  data-testid={`atlas-gap-${tx},${ty}`}
+                  onClick={() => {
+                    // an empty panel invites its first scan
+                    presetCoord.value = { tx, ty };
+                    go("#/map/scan");
+                  }}
+                >
                   <span>{panelName(tx, ty)}</span>
-                </div>
+                </button>
               );
             }),
           )}
@@ -72,7 +81,7 @@ function AtlasCell({ tx, ty, meta }: { tx: number; ty: number; meta: ScanMeta })
       data-scan={meta.id}
       onClick={() => go(panelHash(tx, ty))}
     >
-      {url && <img src={url} alt={panelName(tx, ty)} />}
+      {url && <img src={url} alt={panelName(tx, ty)} draggable={false} />}
       <span>{panelName(tx, ty)}</span>
     </button>
   );

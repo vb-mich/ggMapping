@@ -139,6 +139,11 @@ export function ScanFlow() {
 
   return (
     <div class="card scan-flow" data-testid="scan-flow" data-stage={stage}>
+      <div class="panel-head">
+        <button class="ghost" data-testid="btn-scan-close" onClick={() => go("#/map")}>
+          ← {STRINGS.navMyMap}
+        </button>
+      </div>
       {stage === "pick" && (
         <>
           <h2>{STRINGS.mmScanButton}</h2>

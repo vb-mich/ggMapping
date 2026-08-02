@@ -346,6 +346,11 @@ test("the archive round-trips byte-identical blobs into a new map", async ({ pag
   const original = await hashesOf();
   expect(original).toHaveLength(2);
 
+  // backups live on the profile's maps page now
+  await page.getByTestId("btn-profile").click();
+  await page.getByTestId("btn-pf-maps").click();
+  await expect(page.getByTestId("maps-page")).toBeVisible();
+
   const dl = page.waitForEvent("download");
   await page.getByTestId("btn-backup-current").click();
   const download = await dl;
@@ -356,7 +361,11 @@ test("the archive round-trips byte-identical blobs into a new map", async ({ pag
   const notice = page.getByTestId("mm-notice");
   await expect(notice).toContainText("Restored 1 map", { timeout: 20_000 });
   // the restore landed in a NEW, now-current map — never a merge
-  await expect(page.getByTestId("map-select")).toHaveCount(1);
+  await expect(page.getByTestId("map-list").locator("li")).toHaveCount(2);
+  await expect(page.getByTestId("map-row-1")).toContainText("My first map (restored)");
+  await expect(page.getByTestId("map-row-1")).toContainText("current");
+
+  await page.goto("/#/map");
   const names = await page
     .getByTestId("map-select")
     .locator("option")
@@ -372,13 +381,103 @@ test("the archive round-trips byte-identical blobs into a new map", async ({ pag
   await page.getByTestId("btn-back-atlas").click();
 
   // corrupt input: a sentence, and nothing changes
+  await page.goto("/#/profile/maps");
   await page.setInputFiles('[data-testid="input-restore"]', {
     name: "bad.zip",
     mimeType: "application/zip",
     buffer: Buffer.from(new Uint8Array(500).map((_, i) => (i * 89) % 256)),
   });
   await expect(page.getByTestId("mm-notice")).toContainText("not a backup");
-  expect(
-    await page.getByTestId("map-select").locator("option").count(),
-  ).toBe(2);
+  await expect(page.getByTestId("map-list").locator("li")).toHaveCount(2);
+});
+
+test("playback walks the updates at the profile's speed", async ({ page }) => {
+  await page.goto("/#/map");
+  await page.getByTestId("btn-scan").click();
+  await scanToFile(page, await makeFixture(page));
+  await saveScan(page);
+  await page.getByTestId("btn-scan").click();
+  await scanToFile(page, await makeFixture(page, { paper: "#b8c8ee" }));
+  await page.getByTestId("coord-e-down").click();
+  await saveScan(page);
+
+  // set a faster speed on the profile's playback page — and check the
+  // back arrows walk out the way they came
+  await page.getByTestId("btn-profile").click();
+  await expect(page.getByTestId("profile-menu")).toBeVisible();
+  await page.getByTestId("btn-pf-playback").click();
+  await expect(page.getByTestId("playback-page")).toBeVisible();
+  await expect(page.getByTestId("speed-500")).toBeChecked(); // the default
+  await page.getByTestId("speed-250").check();
+  await page.getByTestId("btn-playback-back").click();
+  await expect(page.getByTestId("profile-menu")).toBeVisible();
+  await page.getByTestId("btn-profile-back").click();
+  await expect(page.getByTestId("timeline")).toBeVisible();
+
+  // the speed survives a reload (it is a stored setting)
+  await page.reload();
+  await page.goto("/#/profile/playback");
+  await expect(page.getByTestId("speed-250")).toBeChecked();
+  await page.goto("/#/map");
+  const chip = page.getByTestId("timeline-chip");
+  await expect(chip).toHaveAttribute("data-past", "false");
+
+  // play: from now it replays from the first update and returns to now
+  await page.getByTestId("btn-play").click();
+  await expect(chip).toHaveAttribute("data-past", "true");
+  await expect(chip).toHaveAttribute("data-past", "false", { timeout: 5_000 });
+});
+
+test("the maps page creates, renames, and deletes maps with everything they hold", async ({
+  page,
+}) => {
+  await page.goto("/#/map");
+  await page.getByTestId("btn-scan").click();
+  await scanToFile(page, await makeFixture(page));
+  await saveScan(page);
+  await expect(page.getByTestId("mm-footer")).toContainText("1 scan ·");
+
+  await page.getByTestId("btn-profile").click();
+  await page.getByTestId("btn-pf-maps").click();
+  const rows = page.getByTestId("map-list").locator("li");
+  await expect(rows).toHaveCount(1);
+  await expect(page.getByTestId("map-row-0")).toContainText("My first map");
+  await expect(page.getByTestId("map-row-0")).toContainText("1 scan");
+  await expect(page.getByTestId("map-row-0")).toContainText("current");
+
+  // create: the new map becomes current
+  await page.getByTestId("btn-pf-new-map").click();
+  await page.getByTestId("input-pf-map-name").fill("Second table");
+  await page.getByTestId("btn-pf-map-create").click();
+  await expect(rows).toHaveCount(2);
+  await expect(page.getByTestId("map-row-1")).toContainText("Second table");
+  await expect(page.getByTestId("map-row-1")).toContainText("current");
+
+  // rename
+  await page.getByTestId("btn-rename-map-1").click();
+  await page.getByTestId("input-rename-1").fill("The second table");
+  await page.getByTestId("btn-rename-save-1").click();
+  await expect(page.getByTestId("map-row-1")).toContainText("The second table");
+
+  // delete the first map: the confirmation names it and its scans, and the
+  // deletion takes the scans with it
+  await page.getByTestId("btn-delete-map-0").click();
+  const confirm = page.getByTestId("map-delete-confirm");
+  await expect(confirm).toContainText("My first map");
+  await expect(confirm).toContainText("1 scan");
+  await expect(confirm).toContainText("forever");
+  await page.getByTestId("btn-delete-map-cancel-0").click();
+  await expect(confirm).toHaveCount(0);
+  await page.getByTestId("btn-delete-map-0").click();
+  await page.getByTestId("btn-delete-map-forever-0").click();
+  await expect(rows).toHaveCount(1);
+  await expect(page.getByTestId("map-row-0")).toContainText("The second table");
+
+  // back on the atlas: only the survivor, and the device holds no scans
+  await page.getByTestId("btn-maps-back").click();
+  await page.getByTestId("btn-profile-back").click();
+  await expect(page.getByTestId("mm-footer")).toContainText("0 scans");
+  await expect(page.getByTestId("atlas-empty")).toBeVisible();
+  const names = await page.getByTestId("map-select").locator("option").allTextContents();
+  expect(names).toEqual(["The second table"]);
 });

@@ -215,6 +215,55 @@ describe("the archive: the storage interface serialized", () => {
   });
 });
 
+describe("map management", () => {
+  it("renames in place", async () => {
+    const m = await db.currentMap("Old name");
+    await db.renameMap(m.id, "New name");
+    expect((await db.listMaps())[0].name).toBe("New name");
+    await expect(db.renameMap("nope", "x")).rejects.toBeInstanceOf(db.StoreError);
+  });
+
+  it("deletes a map with every scan and bookmark it holds — and nothing else", async () => {
+    const a = await db.currentMap("doomed");
+    const b = await db.createMap("survivor");
+    await db.addScan(newScan(a.id, 1, 1));
+    await db.addScan(newScan(a.id, 2, 1));
+    await db.addScan(newScan(b.id, 5, 5));
+    await db.addBookmark(a.id, "gone with it", 1000);
+    await db.addBookmark(b.id, "stays", 2000);
+    await db.setCurrentMap(a.id);
+
+    await db.deleteMap(a.id);
+    expect((await db.listMaps()).map((m) => m.name)).toEqual(["survivor"]);
+    expect(await db.listScans(a.id)).toHaveLength(0);
+    expect(await db.listBookmarks(a.id)).toHaveLength(0);
+    expect(await db.listScans(b.id)).toHaveLength(1); // untouched
+    expect((await db.listBookmarks(b.id)).map((x) => x.name)).toEqual(["stays"]);
+    // the deleted map was current: the pointer clears, the next call recovers
+    expect((await db.currentMap("fallback")).name).toBe("survivor");
+    expect((await db.storageFacts()).scans).toBe(1);
+  });
+
+  it("counts scans per map", async () => {
+    const a = await db.currentMap("a");
+    const b = await db.createMap("b");
+    await db.addScan(newScan(a.id, 1, 1));
+    await db.addScan(newScan(a.id, 2, 1));
+    await db.addScan(newScan(b.id, 1, 1));
+    const counts = await db.scanCounts();
+    expect(counts.get(a.id)).toBe(2);
+    expect(counts.get(b.id)).toBe(1);
+  });
+});
+
+describe("app settings", () => {
+  it("falls back, persists, returns", async () => {
+    expect(await db.getSetting("playbackMs", 500)).toBe(500);
+    await db.putSetting("playbackMs", 250);
+    expect(await db.getSetting("playbackMs", 500)).toBe(250);
+  });
+});
+
 describe("the v1 → v2 upgrade", () => {
   it("keeps a v1 device's scans and gains the bookmarks store", async () => {
     // build a v1 database by hand, exactly as act one's code created it

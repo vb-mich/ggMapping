@@ -7,10 +7,18 @@ export type Route =
   | { screen: "sim" }
   | { screen: "atlas" }
   | { screen: "scan" }
-  | { screen: "panel"; tx: number; ty: number };
+  | { screen: "panel"; tx: number; ty: number }
+  | { screen: "profile" }
+  | { screen: "profile-playback" }
+  | { screen: "profile-maps" };
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  if (parts[0] === "profile") {
+    if (parts[1] === "playback") return { screen: "profile-playback" };
+    if (parts[1] === "maps") return { screen: "profile-maps" };
+    return { screen: "profile" };
+  }
   if (parts[0] !== "map") return { screen: "sim" };
   if (parts[1] === "scan") return { screen: "scan" };
   if (parts[1] === "panel" && parts.length === 4) {
@@ -27,9 +35,19 @@ export const route = signal<Route>(
   typeof location !== "undefined" ? parseRoute(location.hash) : { screen: "sim" },
 );
 
+// Where the profile's back arrow returns to: the last screen outside it.
+export const beforeProfile = signal("#/map");
+
 if (typeof window !== "undefined") {
   window.addEventListener("hashchange", () => {
+    const prev = route.value;
     route.value = parseRoute(location.hash);
+    if (
+      route.value.screen.startsWith("profile") &&
+      !prev.screen.startsWith("profile")
+    ) {
+      beforeProfile.value = prev.screen === "sim" ? "#/" : "#/map";
+    }
   });
 }
 

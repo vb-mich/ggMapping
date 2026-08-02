@@ -24,6 +24,29 @@ export const atlas = computed<Map<string, db.ScanMeta>>(() =>
 export const standingBookmark = computed<db.BookmarkRecord | null>(
   () => bookmarks.value.find((b) => timelineT.value !== null && b.at === timelineT.value) ?? null,
 );
+// The timeline's stops: one per update, equally spaced on the bar.
+export const timelineStops = computed<number[]>(() => db.timelineStops(scans.value));
+export const timelineIndex = computed<number>(() =>
+  db.stopIndexAt(timelineStops.value, timelineT.value),
+);
+// Seek by stop index; the final stop is now.
+export function seekIndex(idx: number): void {
+  const stops = timelineStops.value;
+  if (!stops.length) return;
+  const i = Math.max(0, Math.min(idx, stops.length - 1));
+  timelineT.value = i === stops.length - 1 ? null : stops[i];
+}
+// Playback: milliseconds per update, a profile setting (persisted).
+export const PLAYBACK_SPEEDS = [50, 100, 250, 500, 750, 1000, 2000] as const;
+export const playbackMs = signal(500);
+export async function setPlaybackMs(ms: number): Promise<void> {
+  playbackMs.value = ms;
+  try {
+    await db.putSetting("playbackMs", ms);
+  } catch {
+    // a setting that cannot persist still applies for the session
+  }
+}
 export const facts = signal<db.StorageFacts | null>(null);
 // One graceful notice at a time; null when all is well.
 export const notice = signal<string | null>(null);
@@ -46,6 +69,9 @@ function fail(e: unknown): void {
   }
 }
 
+// Scan counts per map, for the management page.
+export const mapCounts = signal<Map<string, number>>(new Map());
+
 export async function refresh(): Promise<void> {
   try {
     const m = await db.currentMap(STRINGS.mmDefaultMapName);
@@ -54,6 +80,8 @@ export async function refresh(): Promise<void> {
     scans.value = await db.listScans(m.id);
     bookmarks.value = await db.listBookmarks(m.id);
     facts.value = await db.storageFacts();
+    mapCounts.value = await db.scanCounts();
+    playbackMs.value = await db.getSetting("playbackMs", 500);
     storeDead.value = false;
   } catch (e) {
     fail(e);
@@ -78,6 +106,30 @@ export async function newMap(name: string): Promise<void> {
   }
   timelineT.value = null;
   await refresh();
+}
+
+export async function renameMap(id: string, name: string): Promise<boolean> {
+  try {
+    await db.renameMap(id, name);
+  } catch (e) {
+    fail(e);
+    return false;
+  }
+  await refresh();
+  return true;
+}
+
+// Deletes the map with every scan and bookmark it holds. The UI asks first.
+export async function removeMap(id: string): Promise<boolean> {
+  try {
+    await db.deleteMap(id);
+  } catch (e) {
+    fail(e);
+    return false;
+  }
+  timelineT.value = null;
+  await refresh(); // picks another map, or recreates the default
+  return true;
 }
 
 export interface SaveArgs {
@@ -144,7 +196,9 @@ export async function editNote(id: string, note: string): Promise<boolean> {
 export async function markMoment(name: string): Promise<void> {
   const m = activeMap.value;
   if (!m) return;
-  const at = timelineT.value ?? Date.now();
+  // a moment is a stop on the bar: "now" records the newest update's time
+  const stops = timelineStops.value;
+  const at = timelineT.value ?? stops[stops.length - 1] ?? Date.now();
   try {
     await db.addBookmark(m.id, name || new Date(at).toLocaleString(), at);
     bookmarks.value = await db.listBookmarks(m.id);
