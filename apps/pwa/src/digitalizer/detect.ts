@@ -40,8 +40,8 @@ function chromaMask(img: Raster): Uint8Array {
     gn[i] = data[j + 1] / sum;
   }
 
-  // the background: median chromaticity of the border ring (robust as long
-  // as the sheet covers less than half of the frame's edge)
+  // the background: the border ring's chromaticity (robust as long as the
+  // sheet covers less than half of the frame's edge)
   const ring = Math.max(2, Math.round(Math.min(w, h) * 0.05));
   const ringR: number[] = [];
   const ringG: number[] = [];
@@ -53,13 +53,21 @@ function chromaMask(img: Raster): Uint8Array {
       ringG.push(gn[i]);
     }
   }
-  const bgR = median(ringR);
-  const bgG = median(ringG);
+  // A table often wears TWO lights — shade and a sunlit band. One median
+  // pretends they are one color; the washed-out band then reads as "not
+  // table" and bleeds into the sheet's component (the lost-corner bug). So
+  // the background is up to two chroma clusters, and a pixel scores by its
+  // distance to the NEAREST one.
+  const centers = backgroundCenters(ringR, ringG);
 
-  // score: chromatic distance, scaled into byte range for Otsu
   const score = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
-    const d = Math.hypot(rn[i] - bgR, gn[i] - bgG) * 2000;
+    let d = Infinity;
+    for (const c of centers) {
+      const dc = Math.hypot(rn[i] - c.r, gn[i] - c.g);
+      if (dc < d) d = dc;
+    }
+    d *= 2000; // into byte range for Otsu
     score[i] = d > 255 ? 255 : d;
   }
   // a floor keeps sensor noise from becoming "foreground" on a bare table
@@ -68,6 +76,41 @@ function chromaMask(img: Raster): Uint8Array {
   for (let i = 0; i < n; i++) mask[i] = score[i] > threshold ? 1 : 0;
   // open (specks off), then close (pinholes from print and text filled)
   return morphClose(morphOpen(mask, w, h), w, h);
+}
+
+// Two-means over the ring's chromaticity. Seeds: the median point, and the
+// ring point at the 95th percentile of distance from it. Guards: a second
+// cluster must earn at least 10% of the ring (a sheet corner grazing the
+// border may not hijack the background), and must sit measurably apart —
+// otherwise the ring is one color and one center serves, exactly as before.
+function backgroundCenters(
+  ringR: number[],
+  ringG: number[],
+): { r: number; g: number }[] {
+  const m = ringR.length;
+  const c1 = { r: median(ringR), g: median(ringG) };
+  const dist = ringR.map((r, i) => Math.hypot(r - c1.r, ringG[i] - c1.g));
+  const order = [...dist].sort((a, b) => a - b);
+  const far = order[Math.min(m - 1, Math.floor(m * 0.95))];
+  const seedIdx = dist.findIndex((d) => d >= far);
+  const c2 = { r: ringR[seedIdx], g: ringG[seedIdx] };
+
+  let share2 = 0;
+  for (let iter = 0; iter < 8; iter++) {
+    let r1 = 0, g1 = 0, n1 = 0, r2 = 0, g2 = 0, n2 = 0;
+    for (let i = 0; i < m; i++) {
+      const d1 = Math.hypot(ringR[i] - c1.r, ringG[i] - c1.g);
+      const d2 = Math.hypot(ringR[i] - c2.r, ringG[i] - c2.g);
+      if (d1 <= d2) { r1 += ringR[i]; g1 += ringG[i]; n1++; }
+      else { r2 += ringR[i]; g2 += ringG[i]; n2++; }
+    }
+    if (!n1 || !n2) { share2 = 0; break; }
+    c1.r = r1 / n1; c1.g = g1 / n1;
+    c2.r = r2 / n2; c2.g = g2 / n2;
+    share2 = n2 / m;
+  }
+  const apart = Math.hypot(c1.r - c2.r, c1.g - c2.g) > 0.015;
+  return share2 >= 0.1 && apart ? [c1, c2] : [c1];
 }
 
 function median(a: number[]): number {

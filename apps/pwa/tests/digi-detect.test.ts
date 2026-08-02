@@ -20,7 +20,7 @@ function frame(
   w: number,
   h: number,
   quad: Quad,
-  opts: { bg: Rgb; paper: Rgb; grain?: number; shadow?: boolean } = {
+  opts: { bg: Rgb; paper: Rgb; grain?: number; shadow?: boolean; sunBand?: boolean } = {
     bg: [40, 40, 40],
     paper: [220, 220, 220],
   },
@@ -49,9 +49,16 @@ function frame(
           : 0;
       // a soft diagonal shadow over EVERYTHING, darkest at the top-left
       const shade = opts.shadow ? 0.72 + (0.28 * (x + y)) / (w + h) : 1;
-      r.data[i] = Math.max(0, Math.min(255, (src[0] + grain) * shade));
-      r.data[i + 1] = Math.max(0, Math.min(255, (src[1] + grain) * shade));
-      r.data[i + 2] = Math.max(0, Math.min(255, (src[2] + grain) * shade));
+      // a sunlit band washing out the top-left — wood and paper alike, the
+      // table wearing two lights (the lost-corner failure of the field)
+      const wash = opts.sunBand && x + y < (w + h) * 0.3 ? 0.5 : 0;
+      const px = (v: number) => {
+        const shaded = (v + grain) * shade;
+        return Math.max(0, Math.min(255, shaded + (255 - shaded) * wash));
+      };
+      r.data[i] = px(src[0]);
+      r.data[i + 1] = px(src[1]);
+      r.data[i + 2] = px(src[2]);
       r.data[i + 3] = 255;
     }
   // grid strokes: darker lines across the quad's interior
@@ -101,6 +108,28 @@ describe("detectQuad", () => {
     const found = detectQuad(img);
     expect(found).not.toBeNull();
     const tol = Math.hypot(320, 240) * 0.03; // 3% of the diagonal
+    for (let i = 0; i < 4; i++) expect(near(found![i], truth[i], tol)).toBe(true);
+  });
+
+  it("keeps the corner under a sunlit band: the table wears two lights", () => {
+    // the field failure: a sun-washed streak across the top-left, over wood
+    // and sheet alike; the washed wood must stay background, not bleed into
+    // the sheet's component and drag its corner to the frame edge
+    const truth: Quad = [
+      { x: 55, y: 35 },
+      { x: 275, y: 50 },
+      { x: 260, y: 215 },
+      { x: 70, y: 200 },
+    ];
+    const img = frame(320, 240, truth, {
+      bg: WOOD,
+      paper: PAPER,
+      grain: 18,
+      sunBand: true,
+    });
+    const found = detectQuad(img);
+    expect(found).not.toBeNull();
+    const tol = Math.hypot(320, 240) * 0.03;
     for (let i = 0; i < 4; i++) expect(near(found![i], truth[i], tol)).toBe(true);
   });
 

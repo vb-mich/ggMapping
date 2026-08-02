@@ -58,10 +58,15 @@ gone.
 ### Border detection — the choice and its size
 
 Hand-rolled, dependency-free, two passes. First, COLOR: the table's
-chromaticity is estimated from the frame's border ring (median), every pixel
-is scored by its chromatic distance from that background, and Otsu splits the
-scores — chromaticity survives what brightness does not: white paper on a
+chromaticity is learned from the frame's border ring as **up to two clusters**
+(two-means; a table often wears two lights — shade and a sun-washed band —
+and a single median lets the washed band bleed into the sheet and drag a
+corner to the frame edge, a failure found in the field). Every pixel scores
+by its chromatic distance to the nearest background cluster and Otsu splits
+the scores — chromaticity survives what brightness does not: white paper on a
 light wooden table, and the soft shadow band a phone at a table always casts.
+A second cluster must own ≥10% of the ring and sit measurably apart, so a
+sheet corner grazing the border cannot hijack the background model.
 Second, when color finds nothing (a neutral-colored dark table): the plain
 brightness threshold. Both passes end the same way: morphological cleanup →
 largest connected component → convex hull → maximum-area quad, validated
