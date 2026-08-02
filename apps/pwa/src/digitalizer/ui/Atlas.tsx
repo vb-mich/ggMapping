@@ -7,7 +7,7 @@ import { STRINGS } from "../../strings";
 import { go, panelHash } from "../../router";
 import type { ScanMeta } from "../db";
 import { coordAxis } from "../stitch";
-import { atlas, presetCoord } from "../store";
+import { activeMap, atlas, presetCoord } from "../store";
 
 export function Atlas() {
   const a = atlas.value;
@@ -15,8 +15,9 @@ export function Atlas() {
   const plane = useRef<HTMLDivElement>(null);
   // keyed on content, not on the refs: the first render is the empty state
   // (scans still loading), and refs are only set after commit — an effect
-  // depending on ref.current would never re-fire when the grid appears
-  usePinchPan(viewport, plane, a.size > 0);
+  // depending on ref.current would never re-fire when the grid appears.
+  // The map key recenters the view when another map takes the stage.
+  usePinchPan(viewport, plane, a.size > 0, activeMap.value?.id ?? "");
 
   if (!a.size) {
     return (
@@ -94,6 +95,7 @@ function usePinchPan(
   viewport: { current: HTMLDivElement | null },
   plane: { current: HTMLDivElement | null },
   enabled: boolean,
+  contentKey: string,
 ) {
   const state = useRef({
     x: 0,
@@ -117,6 +119,13 @@ function usePinchPan(
       s.scale = Math.max(0.4, Math.min(4, s.scale));
       pl.style.transform = `translate(${s.x}px, ${s.y}px) scale(${s.scale})`;
     };
+
+    // the default view holds the map in the middle of the viewport — a map
+    // larger than the frame centers its overflow the same way
+    s.scale = 1;
+    s.x = (vp.clientWidth - pl.offsetWidth) / 2;
+    s.y = (vp.clientHeight - pl.offsetHeight) / 2;
+    apply();
 
     const down = (e: PointerEvent) => {
       s.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -200,5 +209,5 @@ function usePinchPan(
       vp.removeEventListener("wheel", wheel);
       vp.removeEventListener("click", clickCapture, true);
     };
-  }, [enabled]);
+  }, [enabled, contentKey]);
 }

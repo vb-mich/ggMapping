@@ -167,6 +167,12 @@ test("the atlas pans and zooms on its very first open", async ({ page }) => {
     page.locator(".atlas-plane").evaluate((el) => (el as HTMLElement).style.transform || "");
   const before = await transform();
 
+  // the default view holds the map in the middle of the viewport
+  const vpBox = (await page.getByTestId("atlas").boundingBox())!;
+  const plBox = (await page.locator(".atlas-plane").boundingBox())!;
+  expect(Math.abs(plBox.x + plBox.width / 2 - (vpBox.x + vpBox.width / 2))).toBeLessThan(2);
+  expect(Math.abs(plBox.y + plBox.height / 2 - (vpBox.y + vpBox.height / 2))).toBeLessThan(2);
+
   const box = (await page.getByTestId("atlas").boundingBox())!;
   const cx = box.x + box.width / 2;
   const cy = box.y + box.height / 2;
