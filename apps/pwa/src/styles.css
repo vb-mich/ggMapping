@@ -378,6 +378,9 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
 
 /* the scan flow */
 .scan-flow .flow-buttons { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
+.adj-label { display: flex; justify-content: space-between; align-items: baseline; }
+.adj-value { font-variant-numeric: tabular-nums; min-width: 2.6rem; text-align: right; }
+.adj-value.off { color: var(--accent); }
 .scan-flow .flow-buttons .primary { margin-left: auto; }
 .scan-flow .field input[type="range"] { max-width: none; width: 100%; }
 .crop-stage {

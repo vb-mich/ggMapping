@@ -68,13 +68,21 @@ test("detection lands near the known corners; the rectified output has the true 
   const trueRatio = FIXTURE.W / FIXTURE.H; // 5:6 — but only the photo knows it
   expect(Math.abs(w / h - trueRatio)).toBeLessThan(trueRatio * 0.05);
 
-  // the adjustment pair changes the preview
+  // the adjustment pair changes the preview, and each bar wears its number:
+  // 0 at the neutral center, signed once moved
+  await expect(page.getByTestId("exposure-value")).toHaveText("0");
+  await expect(page.getByTestId("contrast-value")).toHaveText("0");
   const shot = () =>
     page
       .getByTestId("adjust-canvas")
       .evaluate((c) => (c as HTMLCanvasElement).toDataURL());
   const before = await shot();
   await page.getByTestId("slider-exposure").fill("60");
+  await expect(page.getByTestId("exposure-value")).toHaveText("+60");
+  await page.getByTestId("slider-contrast").fill("-25");
+  await expect(page.getByTestId("contrast-value")).toHaveText("-25");
+  await page.getByTestId("slider-contrast").fill("0");
+  await expect(page.getByTestId("contrast-value")).toHaveText("0");
   await expect.poll(shot).not.toBe(before);
 
   // filing offers N1/E1 for the first scan of a map

@@ -206,7 +206,15 @@ export function ScanFlow() {
             hidden
           />
           <div class="field">
-            <span>{STRINGS.mmExposure}</span>
+            <span class="adj-label">
+              {STRINGS.mmExposure}
+              <b
+                class={exposure !== 0 ? "adj-value off" : "adj-value"}
+                data-testid="exposure-value"
+              >
+                {exposure > 0 ? `+${exposure}` : exposure}
+              </b>
+            </span>
             <input
               type="range"
               min={-100}
@@ -217,7 +225,15 @@ export function ScanFlow() {
             />
           </div>
           <div class="field">
-            <span>{STRINGS.mmContrast}</span>
+            <span class="adj-label">
+              {STRINGS.mmContrast}
+              <b
+                class={contrast !== 0 ? "adj-value off" : "adj-value"}
+                data-testid="contrast-value"
+              >
+                {contrast > 0 ? `+${contrast}` : contrast}
+              </b>
+            </span>
             <input
               type="range"
               min={-100}
