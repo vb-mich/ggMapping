@@ -13,7 +13,10 @@ export function Atlas() {
   const a = atlas.value;
   const viewport = useRef<HTMLDivElement>(null);
   const plane = useRef<HTMLDivElement>(null);
-  usePinchPan(viewport, plane);
+  // keyed on content, not on the refs: the first render is the empty state
+  // (scans still loading), and refs are only set after commit — an effect
+  // depending on ref.current would never re-fire when the grid appears
+  usePinchPan(viewport, plane, a.size > 0);
 
   if (!a.size) {
     return (
@@ -81,6 +84,7 @@ function AtlasCell({ tx, ty, meta }: { tx: number; ty: number; meta: ScanMeta })
 function usePinchPan(
   viewport: { current: HTMLDivElement | null },
   plane: { current: HTMLDivElement | null },
+  enabled: boolean,
 ) {
   const state = useRef({
     x: 0,
@@ -97,7 +101,7 @@ function usePinchPan(
   useEffect(() => {
     const vp = viewport.current;
     const pl = plane.current;
-    if (!vp || !pl) return;
+    if (!enabled || !vp || !pl) return;
     const s = state.current;
 
     const apply = () => {
@@ -187,5 +191,5 @@ function usePinchPan(
       vp.removeEventListener("wheel", wheel);
       vp.removeEventListener("click", clickCapture, true);
     };
-  }, [viewport.current, plane.current]);
+  }, [enabled]);
 }

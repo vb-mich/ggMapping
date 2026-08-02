@@ -152,6 +152,38 @@ test("the manual quad path completes: corners drag, the scan still files", async
   await expect(page.getByTestId("atlas-cell-1,1")).toBeVisible();
 });
 
+test("the atlas pans and zooms on its very first open", async ({ page }) => {
+  await page.goto("/#/map");
+  await page.getByTestId("btn-scan").click();
+  await scanToFile(page, await makeFixture(page));
+  await saveScan(page);
+
+  // a fresh open: the atlas paints its empty state first, then the grid
+  // arrives when the scans load — pan and zoom must work RIGHT THEN, with
+  // no detour through a panel (the ref-timing regression of act 1.5)
+  await page.reload();
+  await expect(page.getByTestId("atlas-cell-1,1")).toBeVisible();
+  const transform = () =>
+    page.locator(".atlas-plane").evaluate((el) => (el as HTMLElement).style.transform || "");
+  const before = await transform();
+
+  const box = (await page.getByTestId("atlas").boundingBox())!;
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  await page.mouse.move(cx, cy);
+  await page.mouse.down();
+  await page.mouse.move(cx + 80, cy + 50, { steps: 6 });
+  await page.mouse.up();
+  await expect.poll(transform).not.toBe(before);
+  expect(await transform()).toContain("translate");
+  // and the drag was not mistaken for a tap: still on the atlas
+  await expect(page.getByTestId("atlas")).toBeVisible();
+
+  await page.mouse.move(cx, cy);
+  await page.mouse.wheel(0, -200);
+  await expect.poll(transform).toMatch(/scale\(1\.\d/);
+});
+
 test("a saved scan survives a reload: persistence across sessions", async ({ page }) => {
   await page.goto("/#/map");
   await page.getByTestId("btn-scan").click();
