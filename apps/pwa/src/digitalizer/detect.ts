@@ -21,17 +21,94 @@ import type { Raster } from "./raster";
 export function detectQuad(img: Raster): Quad | null {
   const { width: w, height: h } = img;
   if (w < 16 || h < 16) return null;
-  // Pass one — EDGES, the way document scanners see: a sheet's boundary is
-  // a long straight luminance edge whatever surrounds it (a table, a hand,
-  // a floor full of glare). Color cannot tell white paper from white shoes;
-  // an edge can.
-  const edgeQuad = houghQuad(img);
-  if (edgeQuad) return edgeQuad;
-  // Pass two — color segmentation (edges too faint, hue still separates).
-  // Pass three — plain brightness (a bright sheet on a dark neutral table).
-  return (
-    maskToQuad(chromaMask(img), w, h) ?? maskToQuad(brightnessMask(img), w, h)
-  );
+  // Candidate FAMILIES, fused — the architecture of the scanners we
+  // benchmark against. Edges (Canny → Hough → scored quads) see what color
+  // cannot: a sheet's boundary is a long straight edge whatever surrounds
+  // it. Color segmentation (chroma clusters) sees what edges cannot: a
+  // faint boundary with a distinct hue. Brightness is the last resort. All
+  // candidates compete under ONE scoring, and families that agree (IOU)
+  // vouch for each other.
+  const { edges, luma } = sobelEdges(img);
+  const near = dilateBits(edges, w, h);
+  const lumaMid = medianLuma(luma);
+
+  const cands: { quad: Quad; score: number; family: string }[] = [];
+  const hough = houghBest(img, edges, near, luma, lumaMid);
+  if (hough) cands.push({ ...hough, family: "edges" });
+  const chromaQuad = maskToQuad(chromaMask(img), w, h);
+  if (chromaQuad) {
+    cands.push({
+      quad: chromaQuad,
+      score: scoreQuad(chromaQuad, near, luma, w, h, lumaMid),
+      family: "chroma",
+    });
+  }
+  const brightQuad = maskToQuad(brightnessMask(img), w, h);
+  if (brightQuad) {
+    cands.push({
+      quad: brightQuad,
+      score: scoreQuad(brightQuad, near, luma, w, h, lumaMid),
+      family: "bright",
+    });
+  }
+  for (const c of cands) {
+    for (const o of cands) {
+      if (o.family !== c.family && quadIOU(c.quad, o.quad) >= 0.75) {
+        c.score += 0.08; // independent eyes agree on this sheet
+        break;
+      }
+    }
+  }
+  houghDebug?.("fused", cands.map((c) => ({ family: c.family, score: +c.score.toFixed(3) })));
+  const passing = cands
+    .filter((c) => c.score >= 0.62)
+    .sort((a, b) => b.score - a.score);
+  if (passing.length) return orderQuad(passing[0].quad);
+  // nothing clears the floor: segmentation still serves, as it always did —
+  // a soft-edged sheet with a distinct hue has no edges to score
+  return chromaQuad ?? brightQuad;
+}
+
+// Approximate intersection-over-union of two convex quads, by sampling.
+export function quadIOU(a: Quad, b: Quad): number {
+  const xs = [...a, ...b].map((p) => p.x);
+  const ys = [...a, ...b].map((p) => p.y);
+  const x0 = Math.min(...xs);
+  const x1 = Math.max(...xs);
+  const y0 = Math.min(...ys);
+  const y1 = Math.max(...ys);
+  if (x1 <= x0 || y1 <= y0) return 0;
+  const N = 48;
+  let inA = 0;
+  let inB = 0;
+  let both = 0;
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const x = x0 + ((x1 - x0) * (i + 0.5)) / N;
+      const y = y0 + ((y1 - y0) * (j + 0.5)) / N;
+      const pa = inConvex(a, x, y);
+      const pb = inConvex(b, x, y);
+      if (pa) inA++;
+      if (pb) inB++;
+      if (pa && pb) both++;
+    }
+  }
+  const union = inA + inB - both;
+  return union ? both / union : 0;
+}
+
+function inConvex(q: Quad, x: number, y: number): boolean {
+  let sign = 0;
+  for (let i = 0; i < 4; i++) {
+    const p = q[i];
+    const n = q[(i + 1) % 4];
+    const cross = (n.x - p.x) * (y - p.y) - (n.y - p.y) * (x - p.x);
+    if (cross === 0) continue;
+    const s = Math.sign(cross);
+    if (sign === 0) sign = s;
+    else if (s !== sign) return false;
+  }
+  return true;
 }
 
 // --- pass one: edges, lines, and the best-supported quad ---------------------
@@ -57,14 +134,87 @@ export function setHoughDebug(fn: typeof houghDebug): void {
   houghDebug = fn;
 }
 
+// The floor-applying wrapper kept for the diagnostic harness.
 export function houghQuad(img: Raster): Quad | null {
-  const { width: w, height: h } = img;
   const { edges, luma } = sobelEdges(img);
+  const near = dilateBits(edges, img.width, img.height);
+  const best = houghBest(img, edges, near, luma, medianLuma(luma));
+  return best && best.score >= 0.62 ? best.quad : null;
+}
 
-  // dilated copy for tolerant perimeter-support lookups
-  const near = dilateBits(edges, w, h);
+// The coarse edge map — thick bands from a raw percentile threshold. Canny
+// starves on pages dense with print (its adaptive bar rises past the sheet's
+// own boundary); the coarse map bridges text gaps with fat bands. Both maps
+// feed the line pool; scoring stays on Canny's strict map.
+export function coarseEdges(luma: Uint8Array, w: number, h: number): Uint8Array {
+  const mag = new Uint8Array(w * h);
+  const hist = new Uint32Array(256);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      const gx =
+        luma[i - w + 1] + 2 * luma[i + 1] + luma[i + w + 1] -
+        (luma[i - w - 1] + 2 * luma[i - 1] + luma[i + w - 1]);
+      const gy =
+        luma[i + w - 1] + 2 * luma[i + w] + luma[i + w + 1] -
+        (luma[i - w - 1] + 2 * luma[i - w] + luma[i - w + 1]);
+      const m = (Math.abs(gx) + Math.abs(gy)) >> 2;
+      const v = m > 255 ? 255 : m;
+      mag[i] = v;
+      hist[v]++;
+    }
+  }
+  const total = (w - 2) * (h - 2);
+  let acc = 0;
+  let threshold = 255;
+  for (let v = 0; v < 256; v++) {
+    acc += hist[v];
+    if (acc >= total * 0.9) {
+      threshold = v;
+      break;
+    }
+  }
+  if (threshold < 10) threshold = 10;
+  const edges = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) edges[i] = mag[i] >= threshold ? 1 : 0;
+  return edges;
+}
 
-  const lines = houghLines(edges, w, h);
+function medianLuma(luma: Uint8Array): number {
+  const hist = new Uint32Array(256);
+  for (const v of luma) hist[v]++;
+  let acc = 0;
+  for (let v = 0; v < 256; v++) {
+    acc += hist[v];
+    if (acc >= luma.length / 2) return v;
+  }
+  return 128;
+}
+
+function houghBest(
+  img: Raster,
+  edges: Uint8Array,
+  near: Uint8Array,
+  luma: Uint8Array,
+  lumaMid: number,
+): { quad: Quad; score: number } | null {
+  const { width: w, height: h } = img;
+
+  // two line generators — Canny's thin truth and the coarse bands —
+  // deduplicated into one pool (the ensemble idea, applied to edges)
+  const lines = [...houghLines(edges, w, h)];
+  for (const l of houghLines(coarseEdges(luma, w, h), w, h)) {
+    const dup = lines.some(
+      (o) =>
+        Math.abs(o.rho - l.rho) <= 3 * RHO_STEP &&
+        Math.min(
+          Math.abs(o.theta - l.theta),
+          Math.PI - Math.abs(o.theta - l.theta),
+        ) <=
+          (3 * Math.PI) / THETA_STEPS,
+    );
+    if (!dup) lines.push(l);
+  }
   houghDebug?.("lines", lines);
   if (lines.length < 4) return null;
 
@@ -92,7 +242,7 @@ export function houghQuad(img: Raster): Quad | null {
           if (angDist(lines[c].theta, lines[d].theta) > PARALLEL) continue;
           const quad = quadOf(lines[a], lines[b], lines[c], lines[d], w, h);
           if (!quad) continue;
-          const score = scoreQuad(quad, near, luma, w, h);
+          const score = scoreQuad(quad, near, luma, w, h, lumaMid);
           if (score > 0.4) houghDebug?.("candidate", { quad, score });
           if (score > bestScore) {
             bestScore = score;
@@ -101,20 +251,45 @@ export function houghQuad(img: Raster): Quad | null {
         }
       }
     }
-  // the floor: at least ~60% of the perimeter on real edges (score folds
-  // the brightness prior in, so demand a little more than the support term)
-  return bestScore >= 0.62 && best ? orderQuad(best) : null;
+  // no floor here: the fusion in detectQuad applies it after the families
+  // have exchanged their agreement bonuses
+  return best ? { quad: orderQuad(best), score: bestScore } : null;
 }
 
-function sobelEdges(img: Raster): { edges: Uint8Array; luma: Uint8Array } {
+// True Canny, the way the scanners we envy do it: Sobel gradients, thinning
+// by non-maximum suppression along the gradient direction, then a double
+// threshold with hysteresis so weak edge segments survive only when they
+// touch strong ones. Exported for the unit suite.
+export function sobelEdges(img: Raster): { edges: Uint8Array; luma: Uint8Array } {
   const { width: w, height: h, data } = img;
-  const g = new Uint8Array(w * h);
+  const luma = new Uint8Array(w * h);
   for (let i = 0; i < w * h; i++) {
     const j = i * 4;
-    g[i] = (data[j] * 77 + data[j + 1] * 150 + data[j + 2] * 29) >> 8;
+    luma[i] = (data[j] * 77 + data[j + 1] * 150 + data[j + 2] * 29) >> 8;
   }
-  const mag = new Uint8Array(w * h);
-  const hist = new Uint32Array(256);
+  // Canny's first step is SMOOTHING — without it, sensor noise and wood
+  // grain survive non-maximum suppression as ridge chains. Two 3×3 box
+  // passes approximate a Gaussian.
+  let g = luma;
+  for (let pass = 0; pass < 2; pass++) {
+    const out = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        let sum = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          const yy = Math.min(h - 1, Math.max(0, y + dy));
+          for (let dx = -1; dx <= 1; dx++) {
+            const xx = Math.min(w - 1, Math.max(0, x + dx));
+            sum += g[yy * w + xx];
+          }
+        }
+        out[y * w + x] = sum / 9;
+      }
+    }
+    g = out;
+  }
+  const mag = new Uint16Array(w * h);
+  const dir = new Uint8Array(w * h); // 0: E-W, 1: NE-SW, 2: N-S, 3: NW-SE
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
       const i = y * w + x;
@@ -124,27 +299,78 @@ function sobelEdges(img: Raster): { edges: Uint8Array; luma: Uint8Array } {
       const gy =
         g[i + w - 1] + 2 * g[i + w] + g[i + w + 1] -
         (g[i - w - 1] + 2 * g[i - w] + g[i - w + 1]);
-      const m = (Math.abs(gx) + Math.abs(gy)) >> 2;
-      const v = m > 255 ? 255 : m;
-      mag[i] = v;
-      hist[v]++;
+      mag[i] = Math.abs(gx) + Math.abs(gy);
+      const ax = Math.abs(gx);
+      const ay = Math.abs(gy);
+      // quantized gradient direction (tan 22.5° ≈ 0.414, tan 67.5° ≈ 2.414)
+      if (ay * 1000 <= ax * 414) dir[i] = 0;
+      else if (ay * 414 >= ax * 1000) dir[i] = 2;
+      else dir[i] = (gx > 0) === (gy > 0) ? 3 : 1;
     }
   }
-  // the strongest ~10% of gradients are edges (with an absolute floor)
-  const total = (w - 2) * (h - 2);
+  // non-maximum suppression: an edge pixel beats both neighbors along its
+  // gradient, leaving one-pixel-thin lines
+  const OFF = [1, w - 1, w, w + 1]; // E, SW→NE mirror, S, SE
+  const thin = new Uint16Array(w * h);
+  const hist = new Uint32Array(1024);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      const m = mag[i];
+      if (!m) continue;
+      const o = OFF[dir[i]];
+      if (m >= mag[i - o] && m >= mag[i + o]) {
+        thin[i] = m;
+        hist[m > 1023 ? 1023 : m]++;
+      }
+    }
+  }
+  // double threshold from the surviving magnitudes' distribution
+  let surviving = 0;
+  for (const c of hist) surviving += c;
   let acc = 0;
-  let threshold = 255;
-  for (let v = 0; v < 256; v++) {
+  let high = 1023;
+  for (let v = 0; v < 1024; v++) {
     acc += hist[v];
-    if (acc >= total * 0.9) {
-      threshold = v;
+    if (acc >= surviving * 0.7) {
+      high = v;
       break;
     }
   }
-  if (threshold < 10) threshold = 10;
+  if (high < 60) high = 60;
+  // a page dense with print must not raise the bar past its own boundary:
+  // the sheet's edge against a hand is moderate contrast, and it is the
+  // one edge that matters
+  if (high > 140) high = 140;
+  const low = Math.max(24, high >> 1);
+  // hysteresis: strong pixels seed, weak pixels join only by connection
   const edges = new Uint8Array(w * h);
-  for (let i = 0; i < w * h; i++) edges[i] = mag[i] >= threshold ? 1 : 0;
-  return { edges, luma: g };
+  const stack: number[] = [];
+  for (let i = 0; i < w * h; i++) {
+    if (thin[i] >= high && !edges[i]) {
+      edges[i] = 1;
+      stack.push(i);
+      while (stack.length) {
+        const p = stack.pop()!;
+        const px = p % w;
+        const py = (p / w) | 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            const nx = px + dx;
+            const ny = py + dy;
+            if (nx < 1 || ny < 1 || nx >= w - 1 || ny >= h - 1) continue;
+            const n = ny * w + nx;
+            if (!edges[n] && thin[n] >= low) {
+              edges[n] = 1;
+              stack.push(n);
+            }
+          }
+        }
+      }
+    }
+  }
+  return { edges, luma };
 }
 
 function dilateBits(mask: Uint8Array, w: number, h: number): Uint8Array {
@@ -182,33 +408,40 @@ function houghLines(edges: Uint8Array, w: number, h: number): HLine[] {
         acc[t * rhoBins + r]++;
       }
     }
-  // peaks with a non-max window, at most 14 lines
+  // Peaks with a non-max window — extracted SEPARATELY for near-horizontal
+  // and near-vertical lines, so a page dense with printed text (whose
+  // baselines are all horizontal) cannot monopolize every slot and starve
+  // the sheet's own left and right edges.
   const lines: HLine[] = [];
   const minVotes = Math.max(25, Math.min(w, h) * 0.18);
-  for (let k = 0; k < 14; k++) {
-    let bi = -1;
-    let bv = 0;
-    for (let i = 0; i < acc.length; i++) {
-      if (acc[i] > bv) {
-        bv = acc[i];
-        bi = i;
+  const QUARTER = THETA_STEPS / 4; // 45°
+  const isVertical = (t: number) => t < QUARTER || t >= 3 * QUARTER;
+  for (const wantVertical of [true, false]) {
+    for (let k = 0; k < 7; k++) {
+      let bi = -1;
+      let bv = 0;
+      for (let i = 0; i < acc.length; i++) {
+        if (acc[i] > bv && isVertical((i / rhoBins) | 0) === wantVertical) {
+          bv = acc[i];
+          bi = i;
+        }
       }
-    }
-    if (bi < 0 || bv < minVotes) break;
-    const t = (bi / rhoBins) | 0;
-    const r = bi % rhoBins;
-    lines.push({
-      theta: (t * Math.PI) / THETA_STEPS,
-      rho: r * RHO_STEP - diag,
-      votes: bv,
-    });
-    for (let dt = -3; dt <= 3; dt++) {
-      const tt = t + dt;
-      if (tt < 0 || tt >= THETA_STEPS) continue;
-      for (let dr = -6; dr <= 6; dr++) {
-        const rr = r + dr;
-        if (rr < 0 || rr >= rhoBins) continue;
-        acc[tt * rhoBins + rr] = 0;
+      if (bi < 0 || bv < minVotes) break;
+      const t = (bi / rhoBins) | 0;
+      const r = bi % rhoBins;
+      lines.push({
+        theta: (t * Math.PI) / THETA_STEPS,
+        rho: r * RHO_STEP - diag,
+        votes: bv,
+      });
+      for (let dt = -3; dt <= 3; dt++) {
+        const tt = t + dt;
+        if (tt < 0 || tt >= THETA_STEPS) continue;
+        for (let dr = -6; dr <= 6; dr++) {
+          const rr = r + dr;
+          if (rr < 0 || rr >= rhoBins) continue;
+          acc[tt * rhoBins + rr] = 0;
+        }
       }
     }
   }
@@ -249,6 +482,7 @@ export function scoreQuad(
   luma: Uint8Array,
   w: number,
   h: number,
+  lumaMid = 128,
 ): number {
   // Per side: edge support (fraction of samples on a dilated edge) and the
   // LOCAL BRIGHTNESS STEP across the line — a true sheet boundary is
@@ -263,6 +497,7 @@ export function scoreQuad(
   let flats = 0;
   let brightIn = 0;
   let continuation = 0;
+  const cornerEnds = new Float32Array(8);
   for (let e = 0; e < 4; e++) {
     const a = quad[e];
     const b = quad[(e + 1) % 4];
@@ -299,15 +534,34 @@ export function scoreQuad(
     const side = hit / (steps + 1);
     if (side < minSide) minSide = side;
     supportTotal += side;
+    // corners are where two edges MEET: the last stretch of each side
+    // approaching its corners must itself lie on edges. A corner floating
+    // in clear air (a slanted line that left the sheet) fails here.
+    const endN = Math.max(2, Math.round(steps * 0.15));
+    let endHitsA = 0;
+    let endHitsB = 0;
+    for (let s = 0; s <= endN; s++) {
+      const ta = s / steps;
+      const xa = Math.round(a.x + (b.x - a.x) * ta);
+      const ya = Math.round(a.y + (b.y - a.y) * ta);
+      if (xa >= 0 && ya >= 0 && xa < w && ya < h && near[ya * w + xa]) endHitsA++;
+      const tb = 1 - s / steps;
+      const xb = Math.round(a.x + (b.x - a.x) * tb);
+      const yb = Math.round(a.y + (b.y - a.y) * tb);
+      if (xb >= 0 && yb >= 0 && xb < w && yb < h && near[yb * w + xb]) endHitsB++;
+    }
+    cornerEnds[e * 2] = endHitsA / (endN + 1);
+    cornerEnds[e * 2 + 1] = endHitsB / (endN + 1);
     const inMean = n ? inSum / n : 0;
     const step = n ? (inSum - outSum) / n : 0;
     if (step < minStep) minStep = step;
     if (step >= 8) positives++;
     if (Math.abs(step) < 8) flats++;
     stepTotal += Math.max(-30, Math.min(80, step));
-    // a document's side has PAPER just inside it: a bright margin. A
-    // boundary between two background materials has none.
-    brightIn += Math.max(0, Math.min(1, (inMean - 150) / 60));
+    // a document's side has PAPER just inside it: a margin brighter than
+    // the scene at large. Relative to the frame's median, because a
+    // shadowed indoor sheet and a sunlit one share no absolute number.
+    brightIn += Math.max(0, Math.min(1, (inMean - lumaMid) / 50));
     // a document's edge ENDS at its corners. A side whose line keeps riding
     // on edges beyond either corner is a line cut out of something longer —
     // a section break inside a busy sheet, a furniture line, a floor seam.
@@ -349,16 +603,27 @@ export function scoreQuad(
     area: +area.toFixed(2),
   });
   if (positives < 3 || minStep < -30) return 0;
-  // area weighs heavily: a printed section break inside a busy sheet can be
-  // a perfectly boundary-shaped line, but the DOCUMENT is the largest quad
-  // whose sides all behave like boundaries — with paper margins inside
-  // them, and with edges that END at the corners
+  // the weakest corner: min over corners of the two side-ends meeting there
+  // (corner k joins side k's end B with side (k+1)'s end A)
+  let minCorner = 1;
+  for (let k = 0; k < 4; k++) {
+    const meet = Math.min(cornerEnds[k * 2 + 1], cornerEnds[((k + 1) % 4) * 2]);
+    if (meet < minCorner) minCorner = meet;
+  }
+  // The document is the largest quad whose sides all behave like
+  // boundaries: paper margins inside them, edges that END at the corners —
+  // and edges that REACH the corners. The step is mostly a gate (with the
+  // flat/continuation penalties): as a graded reward it once taught a quad
+  // to dodge a white shoe by drifting off the sheet; support carries the
+  // ranking, and area saturates — growing past three-fifths of the frame
+  // buys nothing that support has not earned.
   return (
-    support * 0.62 +
+    support * 0.7 +
     minSide * 0.1 +
-    stepScore * 0.2 +
-    area * 0.25 +
-    (brightIn / 4) * 0.15 -
+    stepScore * 0.08 +
+    Math.min(area, 0.6) * 0.25 +
+    (brightIn / 4) * 0.15 +
+    minCorner * 0.12 -
     flats * 0.12 -
     (continuation / 4) * 0.4
   );

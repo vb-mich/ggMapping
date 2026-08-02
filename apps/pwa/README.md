@@ -60,20 +60,32 @@ gone.
 Hand-rolled, dependency-free, three passes, each one earned by a failure
 from a real phone photo.
 
-**First, EDGES — the way document scanners see.** Sobel magnitude (the
-strongest ~10% become edge pixels) feeds a coarse Hough transform (2°/2 px);
-quads assemble from two near-parallel line pairs and are scored by cues a
-real document boundary has and impostors lack: perimeter **edge support**
-(per side, so a missing side sinks the quad); a **brightness step** downward
-when crossing outward on at least three sides (an inner printed box and a
-floor seam step nowhere — such FLAT sides are punished hard; a side onto a
-white shoe may step up and still be a boundary); a **bright margin** just
-inside every side (paper, not a second background material); **area** (the
-document is the largest boundary-consistent quad, not a section break inside
-a busy sheet); and **corner finality** — a side whose line keeps riding on
-edges beyond its corners is a line cut out of something longer (a furniture
-edge, a plank seam), so it is penalized. This pass cuts handheld sheets out
-of cluttered rooms — hands, keyboards, glare floors, white shoes.
+**First, EDGES — the way document scanners see** (the architecture mirrors
+what the decompiled Clear Scanner runs on OpenCV, hand-rolled here in a few
+kilobytes). True **Canny** — Gaussian smoothing, Sobel gradients, non-maximum
+suppression, double threshold with hysteresis (capped, so a page dense with
+print cannot raise the bar past its own boundary) — plus a **coarse
+percentile edge map** as a second generator (fat bands bridge text gaps
+where Canny starves). Both feed one Hough transform (2°/2 px) whose peaks
+are extracted separately for near-horizontal and near-vertical lines (text
+baselines cannot monopolize the slots); quads assemble from near-parallel
+line pairs and are scored by cues a real document boundary has and impostors
+lack: perimeter **edge support** (per side, so a missing side sinks the
+quad); a **brightness step** downward when crossing outward on at least
+three sides (an inner printed box and a floor seam step nowhere — such FLAT
+sides are punished hard; a side onto a white shoe may step up and still be a
+boundary); a **margin brighter than the scene's median** just inside every
+side (relative, because a shadowed indoor sheet and a sunlit one share no
+absolute number); **saturating area** (the document is the largest
+boundary-consistent quad — but growth must be earned by support); **corner
+finality** — a side whose line keeps riding on edges beyond its corners is a
+line cut out of something longer; and **corner arrival** — both edges must
+REACH each corner, so a slanted line that floats off the sheet fails at its
+fake corner. The winner then competes with the color families below under
+one score, and families that agree (intersection-over-union ≥ 0.75) vouch
+for each other — Clear Scanner's own fusion pattern. This pass cuts handheld
+sheets out of cluttered rooms — hands, keyboards, glare floors, white shoes,
+and pages dense with print.
 
 **Second, COLOR** (edges too faint, hue still separates): the background's
 chromaticity is learned from the frame's border ring as **up to two

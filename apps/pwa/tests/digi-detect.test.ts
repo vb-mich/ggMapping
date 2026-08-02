@@ -6,7 +6,7 @@
 // requirement).
 import { describe, expect, it } from "vitest";
 
-import { detectQuad } from "../src/digitalizer/detect";
+import { detectQuad, quadIOU, sobelEdges } from "../src/digitalizer/detect";
 import { defaultQuad, type Pt, type Quad } from "../src/digitalizer/geometry";
 import { makeRaster, type Raster } from "../src/digitalizer/raster";
 
@@ -195,6 +195,42 @@ describe("detectQuad", () => {
       { x: 70, y: 80 },
     ];
     expect(detectQuad(frame(320, 240, truth))).toBeNull();
+  });
+
+  it("canny thins a step edge to a line and keeps it connected", () => {
+    const img = makeRaster(100, 100);
+    for (let y = 0; y < 100; y++)
+      for (let x = 0; x < 100; x++) {
+        const i = (y * 100 + x) * 4;
+        const v = x < 50 ? 40 : 220;
+        img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+        img.data[i + 3] = 255;
+      }
+    const { edges } = sobelEdges(img);
+    let total = 0;
+    let onLine = 0;
+    for (let y = 0; y < 100; y++)
+      for (let x = 0; x < 100; x++) {
+        if (!edges[y * 100 + x]) continue;
+        total++;
+        if (x >= 47 && x <= 53) onLine++;
+      }
+    expect(total).toBeGreaterThan(60); // the edge runs the full height
+    expect(total).toBeLessThan(300); // and is THIN, not a band
+    expect(onLine / total).toBeGreaterThan(0.9); // and where it belongs
+  });
+
+  it("quadIOU measures agreement between candidate families", () => {
+    const sq = (x: number, y: number, s: number): Quad => [
+      { x, y },
+      { x: x + s, y },
+      { x: x + s, y: y + s },
+      { x, y: y + s },
+    ];
+    expect(quadIOU(sq(0, 0, 100), sq(0, 0, 100))).toBeGreaterThan(0.95);
+    expect(quadIOU(sq(0, 0, 100), sq(200, 200, 100))).toBe(0);
+    const half = quadIOU(sq(0, 0, 100), sq(50, 0, 100));
+    expect(Math.abs(half - 1 / 3)).toBeLessThan(0.05);
   });
 
   it("defaultQuad is the centered inset start", () => {
