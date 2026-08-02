@@ -57,16 +57,33 @@ gone.
 
 ### Border detection — the choice and its size
 
-Hand-rolled, dependency-free, two passes. First, COLOR: the table's
-chromaticity is learned from the frame's border ring as **up to two clusters**
-(two-means; a table often wears two lights — shade and a sun-washed band —
-and a single median lets the washed band bleed into the sheet and drag a
-corner to the frame edge, a failure found in the field). Every pixel scores
-by its chromatic distance to the nearest background cluster and Otsu splits
-the scores — chromaticity survives what brightness does not: white paper on a
-light wooden table, and the soft shadow band a phone at a table always casts.
-A second cluster must own ≥10% of the ring and sit measurably apart, so a
-sheet corner grazing the border cannot hijack the background model.
+Hand-rolled, dependency-free, three passes, each one earned by a failure
+from a real phone photo.
+
+**First, EDGES — the way document scanners see.** Sobel magnitude (the
+strongest ~10% become edge pixels) feeds a coarse Hough transform (2°/2 px);
+quads assemble from two near-parallel line pairs and are scored by cues a
+real document boundary has and impostors lack: perimeter **edge support**
+(per side, so a missing side sinks the quad); a **brightness step** downward
+when crossing outward on at least three sides (an inner printed box and a
+floor seam step nowhere — such FLAT sides are punished hard; a side onto a
+white shoe may step up and still be a boundary); a **bright margin** just
+inside every side (paper, not a second background material); **area** (the
+document is the largest boundary-consistent quad, not a section break inside
+a busy sheet); and **corner finality** — a side whose line keeps riding on
+edges beyond its corners is a line cut out of something longer (a furniture
+edge, a plank seam), so it is penalized. This pass cuts handheld sheets out
+of cluttered rooms — hands, keyboards, glare floors, white shoes.
+
+**Second, COLOR** (edges too faint, hue still separates): the background's
+chromaticity is learned from the frame's border ring as **up to two
+clusters** (two-means — a table often wears two lights, shade and a
+sun-washed band; a single median lets the washed band bleed into the sheet).
+Every pixel scores by distance to the nearest cluster, Otsu splits the
+scores. A second cluster must own ≥10% of the ring and sit measurably apart,
+so a sheet corner grazing the border cannot hijack the background model.
+
+**Third, BRIGHTNESS** (a bright sheet on a dark neutral table): plain Otsu.
 Second, when color finds nothing (a neutral-colored dark table): the plain
 brightness threshold. Both passes end the same way: morphological cleanup →
 largest connected component → convex hull → maximum-area quad, validated

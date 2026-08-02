@@ -1,4 +1,4 @@
-// Border detection on synthetic frames. The hard case is the law here: WHITE
+﻿// Border detection on synthetic frames. The hard case is the law here: WHITE
 // paper on a LIGHT wooden table under a soft shadow band — brightness cannot
 // separate that (the color pass must); the bright-sheet-on-dark-table case
 // proves the brightness fallback; hostile frames must yield null (the caller
@@ -133,6 +133,35 @@ describe("detectQuad", () => {
     for (let i = 0; i < 4; i++) expect(near(found![i], truth[i], tol)).toBe(true);
   });
 
+  it("cuts a handheld sheet out of a cluttered scene (the edge pass)", () => {
+    // the field failure: no table at all — dark furniture on one side, warm
+    // floor on the other, and a bright white patch (a shoe) right below the
+    // sheet. Color cannot tell white paper from white shoes; edges can.
+    const truth: Quad = [
+      { x: 60, y: 30 },
+      { x: 268, y: 44 },
+      { x: 254, y: 206 },
+      { x: 74, y: 196 },
+    ];
+    const img = frame(320, 240, truth, { bg: WOOD, paper: PAPER, grain: 18 });
+    // repaint a third of the background dark (furniture)...
+    for (let y = 0; y < 240; y++)
+      for (let x = 0; x < 44; x++) {
+        const i = (y * 320 + x) * 4;
+        img.data[i] = 42; img.data[i + 1] = 40; img.data[i + 2] = 45;
+      }
+    // ...and a bright neutral patch under the sheet, nearly touching it
+    for (let y = 212; y < 240; y++)
+      for (let x = 120; x < 220; x++) {
+        const i = (y * 320 + x) * 4;
+        img.data[i] = 240; img.data[i + 1] = 238; img.data[i + 2] = 232;
+      }
+    const found = detectQuad(img);
+    expect(found).not.toBeNull();
+    const tol = Math.hypot(320, 240) * 0.03;
+    for (let i = 0; i < 4; i++) expect(near(found![i], truth[i], tol)).toBe(true);
+  });
+
   it("finds the corners of a bright sheet on a dark neutral table (the brightness fallback)", () => {
     const truth: Quad = [
       { x: 60, y: 40 },
@@ -174,3 +203,5 @@ describe("detectQuad", () => {
     expect(q[2]).toEqual({ x: 920, y: 736 });
   });
 });
+
+
