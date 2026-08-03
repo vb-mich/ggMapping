@@ -47,7 +47,7 @@ Two flavors from the same sources (`engine/wasm/bindings.cpp`):
 
 * **node** (`dist/jerrymap.js`) — NODERAWFS + the CLI main, so the identity gate
   runs it against Python and native byte-for-byte;
-* **web** (`dist/web/jerrymap.mjs`) — no filesystem, MODULARIZE'd ES6, exposing
+* **web** (`prebuilt/jerrymap.mjs`, **committed**) — no filesystem, MODULARIZE'd ES6, exposing
   only the `jm_*` C API (create/load/step/run/log/report/state/events/time);
   this is the PWA's engine, smoke-checked in CI against the committed oracle log.
 

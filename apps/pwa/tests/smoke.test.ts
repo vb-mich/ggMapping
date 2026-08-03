@@ -9,9 +9,10 @@ import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const ROOT = join(__dirname, "..", "..", "..");
-const ENGINE = join(ROOT, "engine", "wasm", "dist", "web", "jerrymap.mjs");
+const ENGINE = join(ROOT, "engine", "wasm", "prebuilt", "jerrymap.mjs");
 
 interface RawModule {
+  _jm_version(): number;
   _jm_lineage(): number;
   _jm_patina(state: number): number;
   _jm_create(cfg: number, seed: bigint, eras: number): number;
@@ -320,6 +321,26 @@ describe("web-flavored engine smoke", () => {
       expect(p.payload.sum).toBeUndefined(); // event schema 2 renamed it
     }
     m._jm_free(h);
+  });
+
+  // The engine the app ships is a COMMITTED artifact (engine/wasm/prebuilt),
+  // so a static host can build without an Emscripten toolchain. The price is a
+  // staleness hazard: an engine change without a rebuilt commit would deploy
+  // old rules beside new sources. Every increment bumps the version constant
+  // and a rules increment bumps the lineage, so asserting both against the
+  // C++ sources makes a stale artifact a red CI instead of a stale deploy.
+  it("is the committed artifact of these very sources (version and lineage)", async () => {
+    const bindings = readFileSync(
+      join(ROOT, "engine", "wasm", "bindings.cpp"), "utf8");
+    const wantVersion = /return "(jerrymap-engine [0-9.]+)"/.exec(bindings)?.[1];
+    const simHpp = readFileSync(
+      join(ROOT, "engine", "include", "jerrymap", "sim.hpp"), "utf8");
+    const wantLineage = /LINEAGE = "(v[0-9.]+)"/.exec(simHpp)?.[1];
+    expect(wantVersion).toBeTruthy();
+    expect(wantLineage).toBeTruthy();
+    const m = await loadEngine();
+    expect(m.UTF8ToString(m._jm_version())).toBe(wantVersion);
+    expect(m.UTF8ToString(m._jm_lineage())).toBe(wantLineage);
   });
 
   it("reports one rules lineage, and its worlds carry the same one", async () => {

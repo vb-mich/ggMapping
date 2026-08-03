@@ -7,3 +7,7 @@ engine/tests/golden/** -text
 * text=auto eol=lf
 *.png binary
 *.wasm binary
+
+# the committed engine artifact: the loader is text, the binary is a binary
+engine/wasm/prebuilt/*.mjs text eol=lf
+engine/wasm/prebuilt/*.wasm binary

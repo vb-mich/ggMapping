@@ -66,7 +66,7 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: { "@engine": path.resolve(here, "../../engine/wasm/dist/web") },
+    alias: { "@engine": path.resolve(here, "../../engine/wasm/prebuilt") },
   },
   server: {
     fs: { allow: [path.resolve(here, "../..")] },

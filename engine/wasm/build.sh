@@ -3,7 +3,11 @@
 #   node — the identity-gate runner: NODERAWFS, links the CLI main, runs under
 #          `node dist/jerrymap.js --seed 42 --eras 20 --out DIR`
 #   web  — the PWA's engine: no filesystem, MODULARIZE'd ES6 module exposing
-#          only the jm_* C API (dist/web/jerrymap.mjs + .wasm)
+#          only the jm_* C API. It lands in prebuilt/ and is COMMITTED, so any
+#          static host can build the app without an Emscripten toolchain; the
+#          browser-smoke asserts the committed artifact matches the sources
+#          (version, lineage, and the golden's bytes), so a stale commit is a
+#          red CI, not a stale deploy.
 # Usage: build.sh [node|web|all]   (default: all)
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -27,10 +31,10 @@ if [[ "$what" == "node" || "$what" == "all" ]]; then
 fi
 
 if [[ "$what" == "web" || "$what" == "all" ]]; then
-  mkdir -p dist/web
+  mkdir -p prebuilt
   emcc -std=c++20 -O3 -Wall -I../include \
     $CORE bindings.cpp \
-    -o dist/web/jerrymap.mjs \
+    -o prebuilt/jerrymap.mjs \
     --no-entry \
     -sMODULARIZE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker,node \
     -sFILESYSTEM=0 -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=2097152 -fexceptions \
@@ -39,4 +43,4 @@ if [[ "$what" == "web" || "$what" == "all" ]]; then
     "-sEXPORTED_FUNCTIONS=_jm_version,_jm_lineage,_jm_patina,_jm_create,_jm_load,_jm_step,_jm_run,_jm_log,_jm_report,_jm_state,_jm_events,_jm_time,_jm_free,_malloc,_free"
 fi
 
-ls -la dist/ dist/web/ 2>/dev/null || ls -la dist/
+ls -la dist/ prebuilt/ 2>/dev/null || ls -la prebuilt/

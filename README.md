@@ -32,7 +32,7 @@ succession is enacted, tagged `v0.4-succession`:
 | `docs/` | the handbook, the fork notes, and **CONTRACTS.md** |
 | `reference/` | the frozen Python v0.4 founding document (`sim.py`) and its seed-42 sample log — history; the oracle role passed to `/engine` at succession |
 | `engine/` | the C++20 headless engine, its CLI, and tests (no floats, no globals) |
-| `engine/wasm/` | Emscripten bindings and the Node identity harness |
+| `engine/wasm/` | Emscripten bindings, the Node identity harness, and `prebuilt/` — the **committed** web-flavor engine the app ships, so static hosts build without emsdk (CI asserts it matches the sources) |
 | `apps/pwa/` | the PWA shell (`jm-pwa`): the Simulator — config, deck editor, worker-run engine, canvas map, record, local files |
 | `tools/dice/` | the dice roller (stub — future conversation) |
 | `tools/helper/` | the helper tool: decision records and re-rolls (stub — future conversation) |
@@ -58,4 +58,7 @@ g++ -std=c++20 -O2 -o jerrymap engine/cli/main.cpp engine/src/*.cpp -Iengine/inc
 ```
 
 Tests, WASM, and the identity harness: see `engine/README.md` and
-`scripts/run_gate.py`.
+`scripts/run_gate.py`. The app itself needs no toolchain beyond Node — it
+consumes the committed engine at `engine/wasm/prebuilt/`; after an engine
+change, `bash engine/wasm/build.sh web` refreshes it (commit the result — the
+browser-smoke fails CI if the artifact lags the sources).

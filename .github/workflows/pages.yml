@@ -19,11 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: mymindstorm/setup-emsdk@v14
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
-      - name: Build the web-flavored engine
-        run: bash engine/wasm/build.sh web
+      # The app ships the committed engine (engine/wasm/prebuilt) — the same
+      # bytes every other static host serves; identity-gate CI guards currency.
       - name: Build the app for the Pages subpath
         run: |
           npm ci

@@ -46,12 +46,12 @@ jobs:
       run: { working-directory: apps/pwa }
     steps:
       - uses: actions/checkout@v4
-      - uses: mymindstorm/setup-emsdk@v14
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
-      - name: Build the web-flavored engine
-        run: bash engine/wasm/build.sh web
-        working-directory: .
+      # No Emscripten here on purpose: the app consumes the COMMITTED engine
+      # (engine/wasm/prebuilt), exactly what every static host serves. The
+      # smoke suite asserts that artifact matches the sources (version,
+      # lineage, golden bytes), so a stale commit fails right here.
       - name: Install app dependencies
         run: npm ci
       - name: Unit tests + browser-build smoke (base-42 vs the oracle log)
