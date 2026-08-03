@@ -31,14 +31,27 @@ test("the Rulebook tab opens the reader: title, badge, and a real outline", asyn
   await expect(page.getByTestId("book-lineage")).toHaveText(headerBadge.trim());
 
   if (isNarrow(page)) {
-    // phone: the outline folds into a drawer
+    // phone: a sticky bar keeps the reading controls in reach; the outline
+    // folds into a drawer that closes three ways
+    const bar = page.getByTestId("book-bar");
+    await expect(bar).toBeVisible();
     await expect(page.getByTestId("book-side")).toBeHidden();
-    await page.getByTestId("book-drawer-toggle").click();
+    const toggle = page.getByTestId("book-drawer-toggle");
+    await toggle.click();
     await expect(page.getByTestId("book-side")).toBeVisible();
     await page.screenshot({ path: "e2e-artifacts/rulebook-drawer-mobile.png" });
+    await toggle.click(); // 1: the always-reachable toggle closes it
+    await expect(page.getByTestId("book-side")).toBeHidden();
+    await toggle.click();
+    await page.getByTestId("book-backdrop").click({ position: { x: 5, y: 400 } });
+    await expect(page.getByTestId("book-side")).toBeHidden(); // 2: the backdrop
+    await toggle.click();
     await page.getByTestId("book-side").getByRole("link", { name: /^5\./ }).click();
     await expect(page).toHaveURL(/#\/rules\/5-/);
-    await expect(page.getByTestId("book-side")).toBeHidden(); // it closes
+    await expect(page.getByTestId("book-side")).toBeHidden(); // 3: navigating
+    // the bar carries the reading controls: theme and profile stay reachable
+    await expect(bar.getByTestId("book-theme")).toBeVisible();
+    await expect(bar.getByTestId("book-profile")).toBeVisible();
   } else {
     // desktop: a sidebar, one link per chapter of the book
     await expect(page.getByTestId("book-side")).toBeVisible();
@@ -88,6 +101,24 @@ test("the deck editor's warnings link into the book at chapter 10", async ({
   const ch10 = page.locator("[data-testid='book-page'] h1", { hasText: /^10\./ });
   await expect(ch10).toBeVisible();
   expect(await landedAt(page, (await ch10.boundingBox())!.y)).toBe(true);
+});
+
+test("three text sizes, applied to the page and remembered", async ({ page }) => {
+  await page.goto("/#/rules");
+  const pageSize = () =>
+    page
+      .getByTestId("book-page")
+      .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  const mid = await pageSize();
+  await page.getByTestId("book-size-3").click();
+  const big = await pageSize();
+  expect(big).toBeGreaterThan(mid);
+  await page.getByTestId("book-size-1").click();
+  expect(await pageSize()).toBeLessThan(mid);
+  await page.reload(); // the choice survives a visit
+  await expect(page.getByTestId("book-size-1")).toHaveAttribute("aria-pressed", "true");
+  expect(await pageSize()).toBeLessThan(mid);
+  await page.getByTestId("book-size-2").click(); // leave the default behind
 });
 
 test("search finds a rule and navigates to its section", async ({ page }) => {

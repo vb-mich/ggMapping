@@ -205,6 +205,7 @@ export const STRINGS = {
   rbSearchPlaceholder: "Search the book",
   rbNoHits: "No matches",
   rbLoading: "Opening the book",
+  rbTextSize: "Text size",
 
   // My map — the digitalizer screen (act one: local only)
   mmDefaultMapName: "My first map",

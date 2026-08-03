@@ -1,13 +1,48 @@
 // The Rulebook reader: the handbook rendered from its single source (book.ts),
 // an outline built from the file's own headings, and deep links per heading.
 // Desktop shows the outline as a sidebar; a phone folds it into a drawer.
-import { useComputed, useSignal } from "@preact/signals";
+import { effect, signal, useComputed, useSignal } from "@preact/signals";
 import { useEffect, useMemo, useRef } from "preact/hooks";
 
-import { engineLineage } from "../state";
-import { rulesHash, type Route } from "../router";
+import { applyTheme, engineLineage, theme } from "../state";
+import { go, rulesHash, type Route } from "../router";
 import { STRINGS } from "../strings";
 import { chapterByNumber, findHeading, outline, renderBook, type Section } from "./book";
+
+// --- reading comfort ---------------------------------------------------------
+// Three classic sizes, persisted; the class scales the whole page (em-based).
+type BookSize = 1 | 2 | 3;
+const SIZE_KEY = "jm-book-size";
+const stored = Number(localStorage.getItem(SIZE_KEY));
+export const bookSize = signal<BookSize>(
+  stored === 1 || stored === 3 ? (stored as BookSize) : 2,
+);
+effect(() => localStorage.setItem(SIZE_KEY, String(bookSize.value)));
+
+// One rendering per viewport class (no duplicate controls in the DOM): the
+// phone gets a sticky bar, the desk gets the controls in the book's own head.
+const narrowQuery = window.matchMedia("(max-width: 899px)");
+const narrow = signal(narrowQuery.matches);
+narrowQuery.addEventListener("change", (e) => (narrow.value = e.matches));
+
+function SizeSwitch() {
+  return (
+    <span class="book-size-switch" role="group" aria-label={STRINGS.rbTextSize}>
+      {([1, 2, 3] as const).map((n) => (
+        <button
+          key={n}
+          class={bookSize.value === n ? `ghost size-${n} active` : `ghost size-${n}`}
+          data-testid={`book-size-${n}`}
+          title={STRINGS.rbTextSize}
+          aria-pressed={bookSize.value === n}
+          onClick={() => (bookSize.value = n)}
+        >
+          A
+        </button>
+      ))}
+    </span>
+  );
+}
 
 interface Hit {
   slug: string;
@@ -53,6 +88,15 @@ export function Rulebook({ route }: { route: Route }) {
   const hits = useComputed(() => searchBook(query.value));
 
   const anchor = route.screen === "rules" ? route.anchor : null;
+
+  // ESC closes the drawer wherever focus sits
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") drawerOpen.value = false;
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // land on the routed heading — desktop and mobile alike
   useEffect(() => {
@@ -146,6 +190,42 @@ export function Rulebook({ route }: { route: Route }) {
 
   return (
     <main class="rulebook" data-testid="rulebook">
+      {narrow.value && (
+        <div class="book-bar" data-testid="book-bar">
+          <button
+            class="ghost book-drawer-toggle"
+            data-testid="book-drawer-toggle"
+            aria-expanded={drawerOpen.value}
+            onClick={() => (drawerOpen.value = !drawerOpen.value)}
+          >
+            {STRINGS.rbOutlineLabel}
+          </button>
+          <SizeSwitch />
+          <button
+            class="ghost"
+            data-testid="book-theme"
+            onClick={() => applyTheme(theme.value === "dark" ? "light" : "dark")}
+          >
+            {theme.value === "dark" ? STRINGS.themeLight : STRINGS.themeDark}
+          </button>
+          <button
+            class="ghost"
+            data-testid="book-profile"
+            aria-label={STRINGS.pfTitle}
+            title={STRINGS.pfTitle}
+            onClick={() => go("#/profile")}
+          >
+            ⚙
+          </button>
+          {/* the drawer hangs off the bar itself, so it always opens right
+              under the controls that summoned it, scrolled or not */}
+          {drawerOpen.value && (
+            <aside class="book-side open" data-testid="book-side">
+              {outlineList}
+            </aside>
+          )}
+        </div>
+      )}
       <div class="book-head">
         <h2 data-testid="book-title">{outline.title}</h2>
         {engineLineage.value && (
@@ -153,22 +233,24 @@ export function Rulebook({ route }: { route: Route }) {
             {STRINGS.lineageLabel} {engineLineage.value}
           </span>
         )}
-        <button
-          class="ghost book-drawer-toggle"
-          data-testid="book-drawer-toggle"
-          aria-expanded={drawerOpen.value}
-          onClick={() => (drawerOpen.value = !drawerOpen.value)}
-        >
-          {STRINGS.rbOutlineLabel}
-        </button>
+        {!narrow.value && <SizeSwitch />}
       </div>
       <div class="book-body">
-        <aside class={drawerOpen.value ? "book-side open" : "book-side"} data-testid="book-side">
-          {outlineList}
-        </aside>
+        {drawerOpen.value && narrow.value && (
+          <div
+            class="book-backdrop"
+            data-testid="book-backdrop"
+            onClick={() => (drawerOpen.value = false)}
+          />
+        )}
+        {!narrow.value && (
+          <aside class="book-side" data-testid="book-side">
+            {outlineList}
+          </aside>
+        )}
         <article
           ref={article}
-          class="book-page"
+          class={`book-page book-size-${bookSize.value}`}
           data-testid="book-page"
           // the book is the repo's own file, parsed at build time from the
           // single source the engine obeys — not user input

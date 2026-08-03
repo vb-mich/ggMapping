@@ -540,28 +540,52 @@ button.danger { background: var(--error); border-color: var(--error); color: #ff
 .book-hits a small { color: inherit; opacity: 0.7; }
 .book-hits .muted { color: var(--muted); padding: 0.18rem 0.35rem; }
 
-/* the reading column: a comfortable measure, nothing fancier */
-.book-page { max-width: 68ch; line-height: 1.65; min-width: 0; }
-.book-page h1 { font-size: 1.35rem; margin: 1.6em 0 0.5em; padding-top: 0.4em; border-top: 1px solid var(--card-edge); }
+/* the reading column: a comfortable measure that grows with the window.
+   Inner sizes are em-based so the three-level size switch scales the whole
+   page from one font-size on the column. */
+.book-page { max-width: 82ch; line-height: 1.65; min-width: 0; }
+.book-size-1 { font-size: 0.85rem; }
+.book-size-2 { font-size: 0.95rem; }
+.book-size-3 { font-size: 1.1rem; }
+.book-page h1 { font-size: 1.45em; margin: 1.6em 0 0.5em; padding-top: 0.4em; border-top: 1px solid var(--card-edge); }
 .book-page h1:first-of-type { margin-top: 0.4em; border-top: 0; }
-.book-page h2 { font-size: 1.12rem; margin: 1.3em 0 0.4em; }
-.book-page h3 { font-size: 0.98rem; margin: 1.1em 0 0.3em; }
-.book-page p, .book-page li { font-size: 0.92rem; }
+.book-page h2 { font-size: 1.2em; margin: 1.3em 0 0.4em; }
+.book-page h3 { font-size: 1.05em; margin: 1.1em 0 0.3em; }
 .book-page table { border-collapse: collapse; margin: 0.6em 0; display: block; overflow-x: auto; }
-.book-page th, .book-page td { border: 1px solid var(--card-edge); padding: 0.25rem 0.55rem; font-size: 0.86rem; text-align: left; }
+.book-page th, .book-page td { border: 1px solid var(--card-edge); padding: 0.25rem 0.55rem; font-size: 0.92em; text-align: left; }
 .book-page th { background: var(--card); }
+
+/* the size switch: three As, growing */
+.book-size-switch { display: inline-flex; gap: 0.15rem; margin-left: auto; }
+.book-size-switch button { padding: 0.1rem 0.45rem; line-height: 1.1; }
+.book-size-switch .size-1 { font-size: 0.75rem; }
+.book-size-switch .size-2 { font-size: 0.95rem; }
+.book-size-switch .size-3 { font-size: 1.15rem; }
+.book-size-switch .active { background: var(--accent); color: var(--accent-ink); }
+
+/* the phone's reading bar: always in reach while the page scrolls */
+.book-bar {
+  position: sticky; top: 0; z-index: 31;
+  display: flex; align-items: center; gap: 0.4rem;
+  background: var(--card); border: 1px solid var(--card-edge); border-radius: 8px;
+  padding: 0.3rem 0.5rem; margin-bottom: 0.4rem;
+}
+.book-bar .book-size-switch { margin-left: 0; }
+.book-bar [data-testid="book-theme"] { margin-left: auto; }
+.book-backdrop { position: fixed; inset: 0; z-index: 29; background: rgba(0, 0, 0, 0.35); }
 .book-figure { display: block; color: var(--muted); font-size: 0.8rem; margin: 0.4em 0; }
 .book-page blockquote { border-left: 3px solid var(--card-edge); margin: 0.6em 0; padding: 0.1em 0.8em; color: var(--muted); }
 
 @media (min-width: 900px) {
-  .book-body { grid-template-columns: 17rem minmax(0, 1fr); }
+  .book-body { grid-template-columns: 15rem minmax(0, 1fr); }
   .book-side { position: sticky; top: 0.5rem; align-self: start; max-height: calc(100vh - 1rem); overflow-y: auto; }
 }
 @media (max-width: 899px) {
   .book-drawer-toggle { display: inline-block; }
-  .book-side { display: none; }
+  /* the drawer is a child of the sticky bar: it opens right below it whether
+     the bar sits in flow (page top) or stuck to the viewport (scrolled) */
   .book-side.open {
-    display: block; position: fixed; inset: 3.2rem 0.5rem auto 0.5rem; z-index: 30;
+    display: block; position: absolute; top: calc(100% + 0.3rem); left: -1px; right: -1px;
     background: var(--card); border: 1px solid var(--card-edge); border-radius: 8px;
     padding: 0.6rem; max-height: 70vh; overflow-y: auto;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
