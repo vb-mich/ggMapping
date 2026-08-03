@@ -40,11 +40,12 @@ export const STRINGS = {
   moodSettle: "settle",
   moodLevel: "level",
   moodRise: "rise",
-  deckWarnAvgWork: "The handbook suggests keeping the average work number near 7.",
+  deckWarnAvgWork:
+    "The handbook suggests keeping the average work number close to the starting deck's, about 6.5.",
   deckWarnAnomaly:
     "The handbook suggests keeping the instruction balance of the starting deck: about one Anomaly in twenty cards.",
   deckWarnMoodMix:
-    "The handbook suggests a mood mix near the starting deck's: about 13× settle, 4× level, 3× rise in twenty cards.",
+    "The handbook suggests a mood mix near the starting deck's: about 12× settle, 7× level, 3× rise in the 22 cards.",
   deckWarnAddpanelGrowth:
     "The handbook pairs extra Add Panel copies with heavy archiving; otherwise the map risks scattering into many half-empty panels.",
   deckNoteAddpanel:

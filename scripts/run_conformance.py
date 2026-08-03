@@ -14,7 +14,7 @@ Checks read the rendered log and the engine's structured event stream; they
 assert properties of the game, never byte equality (that is the gate's job).
 
 Usage:
-  python scripts/run_conformance.py --native build/jerrymap.exe [--twin reference/sim_v08.py]
+  python scripts/run_conformance.py --native build/jerrymap.exe [--twin reference/sim_v09.py]
 """
 import argparse
 import os
@@ -24,7 +24,7 @@ import sys
 import tempfile
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_TWIN = os.path.join(REPO, "reference", "sim_v08.py")
+DEFAULT_TWIN = os.path.join(REPO, "reference", "sim_v09.py")
 
 checks = []
 
@@ -194,8 +194,11 @@ def conform(lines, label):
     # An age that consumes a Stack visit ALWAYS closes with step 6's
     # bookkeeping; the absence of it above is what proves the Add Panel age
     # took no visit. What it must not do is re-serve the same panel twice.
+    # (two Add Panel copies since v0.9 can land back to back; both headers
+    # read "the new panel", which is a phrase, not a panel — skip those)
     repeats = [(A[i]["subject"], A[i + 1]["subject"])
                for i, a in enumerate(A[:-1]) if a["card"] == "ADDPANEL"
+               and A[i + 1]["card"] != "ADDPANEL"
                and A[i + 1]["subject"] == a["subject"]]
     check("ch.6 n.3", f"{label}: an Add Panel age consumes no Stack visit",
           not repeats)
@@ -252,17 +255,18 @@ def conform(lines, label):
           f"only {non_settlement_witnessed} such visit(s)")
 
     # ---- chapter 5: the starting deck ------------------------------------
-    # "Here below is the list of cards of your very first deck, a total of 20
-    #  cards to start." — 4 Extend 6,7,7,8 | 3 Basin 6,7,8 | 1 Ridge 7 |
-    #  1 Great Ridge 7 | 4 Calm 5,6,6,7 | 2 Free Stroke 6,8 | 3 Settlement
-    #  6,7,8 | 1 Anomaly 7 | 1 Add Panel 4 (from the end of era one).
+    # The community's deck, canon since v0.9 — 1 Extend 7 | 3 Basin 6,7,8 |
+    # 1 Ridge 7 | 1 Great Ridge 7 | 7 Calm 5,6,6,6,6,6,7 | 2 Free Stroke 6,8 |
+    # 4 Settlement 6,7,7,8 | 1 Anomaly 7 | 2 Add Panel 3,5 (from the end of
+    # era one). 22 cards; 20 sit in the era-one deck.
     # The genesis deck is shuffled once and the first card played becomes the
-    # marker, so the ages before the first cycle marker are exactly one full
-    # pass: the deck itself, printed works and all.
+    # marker, so the ages before the marker's return are exactly one full
+    # pass: the deck itself, printed works and all — and the marker's return
+    # closes the first cycle on era-one age 21 (20 cards + the marker again).
     BOOK_DECK = {
-        "EXTEND": [6, 7, 7, 8], "BASIN": [6, 7, 8], "RIDGE": [7],
-        "GREATRIDGE": [7], "CALM": [5, 6, 6, 7], "FREESTROKE": [6, 8],
-        "SETTLEMENT": [6, 7, 8], "ANOMALY": [7],
+        "EXTEND": [7], "BASIN": [6, 7, 8], "RIDGE": [7],
+        "GREATRIDGE": [7], "CALM": [5, 6, 6, 6, 6, 6, 7], "FREESTROKE": [6, 8],
+        "SETTLEMENT": [6, 7, 7, 8], "ANOMALY": [7],
     }
     first_cycle = next((i for i, a in enumerate(A)
                         if any(l == "    the deck completed its cycle" for l in a["body"])),
@@ -275,12 +279,21 @@ def conform(lines, label):
     got = {k: sorted(v) for k, v in genesis.items()}
     check("ch.5", f"{label}: the starting deck is the book's table",
           got == BOOK_DECK, f"got {got}")
+    check("ch.5", f"{label}: the first cycle closes on era-one age 21",
+          first_cycle is not None and A[first_cycle]["era"] == 1
+          and A[first_cycle]["age"] == 21,
+          f"marker returned at "
+          f"{(A[first_cycle]['era'], A[first_cycle]['age']) if first_cycle is not None else None}")
 
-    addp_work = next((int(m.group(1)) for a in A if a["card"] == "ADDPANEL"
-                      for l in a["body"]
-                      if (m := re.match(r"^    work (\d+), mood", l))), None)
-    check("ch.5", f"{label}: Add Panel joins at work 4",
-          addp_work == 4, f"got {addp_work}")
+    addp_works = sorted(int(m.group(1)) for a in A if a["card"] == "ADDPANEL"
+                        for l in a["body"]
+                        if (m := re.match(r"^    work (\d+), mood", l)))
+    # every Add Panel age replays one of the two printed numbers
+    check("ch.5", f"{label}: the two Add Panel copies print 3 and 5",
+          bool(addp_works) and set(addp_works) == {3, 5},
+          f"works seen: {sorted(set(addp_works))}")
+    check("ch.5", f"{label}: no Add Panel age inside era one",
+          not any(a["card"] == "ADDPANEL" and a["era"] == 1 for a in A))
 
     # ---- chapter 7, step 3: the First Elevation table --------------------
     # "if the chosen unit has no countable side neighbors ... roll d6 on the
@@ -357,13 +370,8 @@ def conform(lines, label):
     #  counts as support for one, and is never itself subject to one."
     # Where the units are is not printed as a map, so the checks below rebuild
     # it from the placements (see walk_people).
-    #
-    # Beside a town: a field may be sown next to a home however dense. Only
-    # directly-placed urban units can be seen in a log (a climb prints no
-    # unit), so this counts witnesses and asserts there is at least one; it
-    # cannot over-report.
     URBAN = ("urb_lo", "urb_md", "urb_hi")
-    beside_urban, strikes = [], 0
+    strikes = 0
     deepenings, clearings, early_clear, unlocatable = [], 0, [], 0
     for l in lines:
         if "the anomaly strikes the homes" in l:
@@ -376,9 +384,6 @@ def conform(lines, label):
             continue
         if not kind.startswith("farm"):
             continue
-        near_urban = [people[v] for v in around(u) if people.get(v) in URBAN]
-        if near_urban:
-            beside_urban.append((u, sorted(near_urban)))
         if band in (1, 2):
             # this farmland step cleared new ground; the settlement it grew
             # from is one of the components the new field touches
@@ -389,11 +394,6 @@ def conform(lines, label):
             if comps and not clean:
                 early_clear.append(u)
 
-    check("ch.9", f"{label}: a field is sown beside a town, whatever its density",
-          bool(beside_urban),
-          "no witness in this run (climbs print no unit, so only directly "
-          "placed urban units are visible here; the constructed case is in "
-          "engine/tests)")
     check("ch.9", f"{label}: deepening only ever takes a LOW field, in the d6 1-2 band",
           bool(deepenings) and all(k == "farm_lo" and b in (1, 2)
                                    for _, k, b in deepenings),
@@ -410,6 +410,13 @@ def conform(lines, label):
           len(deepenings) > 0 and clearings > 0,
           f"{len(deepenings)} deepening(s), {clearings} clearing(s)")
 
+    # ---- the v0.9 rider: the water target is gone -------------------------
+    # FORK_NOTES §v0.9: the parent-calibrated "(target 30-40)" described a
+    # mean, not a world (8 of 20 canon worlds ever landed inside it), and it
+    # left the metrics footer with the lineage break.
+    check("v0.9", f"{label}: the footer-target string appears nowhere",
+          not any("(target 30-40)" in l for l in lines))
+
     # ---- chapter 6, step 7: the calendar ---------------------------------
     # "Move the time dial by 1 age. Remember, every 25 ages, a new era begins."
     lengths = {}
@@ -418,6 +425,17 @@ def conform(lines, label):
     short = [e for e, n in lengths.items() if e < max(lengths) and n != 25]
     check("ch.6 s.7", f"{label}: every completed era runs 25 ages",
           not short, f"era(s) {short} did not")
+
+
+def beside_urban_witnesses(lines):
+    """Farm placements whose reconstructed neighbourhood holds an urban unit."""
+    URBAN = ("urb_lo", "urb_md", "urb_hi")
+    hits = 0
+    for ev, u, kind, band, people in walk_people(lines):
+        if ev == "place" and kind.startswith("farm"):
+            if any(people.get(v) in URBAN for v in around(u)):
+                hits += 1
+    return hits
 
 
 def main():
@@ -436,6 +454,26 @@ def main():
     d = os.path.join(work, "native")
     run([os.path.abspath(args.native), "--out", d] + flags, d)
     conform(read_log(d, args.seed), "native")
+
+    # ch. 9: "a field ... is never itself subject to one" — sown beside a town
+    # however dense. The witness (a farm placed with an urban neighbour visible
+    # in the log) is seed-dependent, so a small native sweep looks for it; the
+    # gate's own cells prove these logs byte-identical across implementations,
+    # so a native witness speaks for the twin too. The constructed case (which
+    # cannot miss) is in engine/tests.
+    WITNESS_SEEDS = [args.seed, "11", "1234"]
+    witnesses = 0
+    for s in WITNESS_SEEDS:
+        dd = os.path.join(work, "witness", s)
+        if s == args.seed:
+            dd = d  # reuse the native run above
+        else:
+            run([os.path.abspath(args.native), "--out", dd, "--seed", s,
+                 "--eras", args.eras], dd)
+        witnesses += beside_urban_witnesses(read_log(dd, s))
+    check("ch.9", "native: a field is sown beside a town, whatever its density"
+          f" (sweep of seeds {','.join(WITNESS_SEEDS)})",
+          witnesses > 0, "no witness at any swept seed")
 
     if args.twin and args.twin.lower() != "none":
         d = os.path.join(work, "twin")

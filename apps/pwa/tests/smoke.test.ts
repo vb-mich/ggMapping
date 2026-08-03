@@ -52,7 +52,7 @@ describe("web-flavored engine smoke", () => {
     m._jm_run(h);
     const produced = m.UTF8ToString(m._jm_log(h)) + m.UTF8ToString(m._jm_report(h)) + "\n";
     const golden = readFileSync(
-      join(ROOT, "reference", "sample_log_seed42_v08.txt"),
+      join(ROOT, "reference", "sample_log_seed42_v09.txt"),
       "latin1",
     );
     expect(produced.length).toBe(golden.length);
@@ -103,11 +103,12 @@ describe("web-flavored engine smoke", () => {
     expect(shuffles).toBe(cycles); // one shuffle per completed cycle
     expect(shuffles).toBeGreaterThan(15); // the whole game, ~500/20 ages
 
-    // deck recurrence sanity: Add Panel roughly every 20 ages once awake
+    // deck recurrence sanity: two Add Panel copies in the 22-card deck
+    // (v0.9) come round about every 11 ages between them once awake
     const gaps = addpanelAges.slice(1).map((a, i) => a - addpanelAges[i]);
     const avg = gaps.reduce((s, g) => s + g, 0) / gaps.length;
-    expect(avg).toBeGreaterThan(15);
-    expect(avg).toBeLessThan(30);
+    expect(avg).toBeGreaterThan(7);
+    expect(avg).toBeLessThan(17);
     m._jm_free(h);
   });
 
@@ -133,7 +134,7 @@ describe("web-flavored engine smoke", () => {
 
     const canon = run("{}", 42n);
     const golden = readFileSync(
-      join(ROOT, "reference", "sample_log_seed42_v08.txt"),
+      join(ROOT, "reference", "sample_log_seed42_v09.txt"),
       "latin1",
     );
     expect(canon.log).toBe(golden.slice(0, canon.log.length));

@@ -31,13 +31,14 @@ export const KIND_LABELS: Record<string, string> = {
 };
 
 // Handbook chapter 5: the starting deck.
+// The community's deck (handbook ch. 5, canon since v0.9).
 export const DEFAULT_COPIES: Record<Kind, number> = {
-  extend: 4,
+  extend: 1,
   basin: 3,
   ridge: 1,
   greatridge: 1,
-  settlement: 3,
-  calm: 4,
+  settlement: 4,
+  calm: 7,
   anomaly: 1,
   freestroke: 2,
 };
@@ -94,21 +95,23 @@ export function deckWarnings(d: DeckEdit): string[] {
   }
   if (cards === 0) return warnings;
 
-  if (Math.abs(workSum / cards - 7) > 0.5) warnings.push(STRINGS.deckWarnAvgWork);
+  // ch. 10: keep the average close to the starting deck's, about 6.5
+  if (Math.abs(workSum / cards - 6.5) > 0.5) warnings.push(STRINGS.deckWarnAvgWork);
 
   const anomalyShare = d.copies.anomaly / cards;
   if (anomalyShare < 0.025 || anomalyShare > 0.075)
     warnings.push(STRINGS.deckWarnAnomaly);
 
-  // Starting mix in twentieths: 13 settle, 4 level, 3 rise.
-  const target: Record<string, number> = { settle: 13 / 20, level: 4 / 20, rise: 3 / 20 };
+  // ch. 10: the starting mix — 12 settle, 7 level, 3 rise in the 22 cards.
+  const target: Record<string, number> = { settle: 12 / 22, level: 7 / 22, rise: 3 / 22 };
   const drifted = Object.keys(target).some(
     (m) => Math.abs((moodCount[m] ?? 0) / cards - target[m]) > 0.1,
   );
   if (drifted) warnings.push(STRINGS.deckWarnMoodMix);
 
-  // Chapter 3's growth knob: extra Add Panels pair with heavy archiving.
-  if (d.addpanelCopies > 1) warnings.push(STRINGS.deckWarnAddpanelGrowth);
+  // Chapter 3's growth knob: copies beyond the starting deck's two pair
+  // with heavy archiving.
+  if (d.addpanelCopies > 2) warnings.push(STRINGS.deckWarnAddpanelGrowth);
 
   return warnings;
 }

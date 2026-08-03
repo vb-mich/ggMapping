@@ -80,7 +80,7 @@ test("a deck edit changes the run", async ({ page }) => {
   const before = await reportText(page);
 
   await page.getByTestId("deck-inc-calm").click();
-  await expect(page.getByTestId("deck-totals")).toContainText("21 cards");
+  await expect(page.getByTestId("deck-totals")).toContainText("23 cards");
   await runToDone(page);
   const after = await reportText(page);
   expect(after).not.toBe(before);
@@ -186,7 +186,7 @@ test("time travel to an Add Panel age shows the new panel's fills", async ({
   // Find the first Add Panel age from the committed golden, so the target is
   // the lineage's own truth rather than something the test invents.
   const golden = readFileSync(
-    join(HERE, "..", "..", "..", "reference", "sample_log_seed42_v08.txt"),
+    join(HERE, "..", "..", "..", "reference", "sample_log_seed42_v09.txt"),
     "utf8",
   ).split("\n");
   let era = 0,
@@ -326,9 +326,10 @@ test("work numbers mark the age's worked units on the map", async ({ page }) => 
   expect(await shot()).toBe(withNumbers); // and restored exactly
 
   // an age whose steps include ones that name no unit — a deck shuffle — is
-  // still complete: those badge the panel instead (era 1 age 20 of this seed)
+  // still complete: those badge the panel instead. On the 20-card era-one
+  // deck the marker returns on age 21 (v0.9), and that age carries the shuffle
   await page.getByTestId("nav-era").fill("1");
-  await page.getByTestId("nav-age").fill("20");
+  await page.getByTestId("nav-age").fill("21");
   await page.getByTestId("nav-go").click();
   await expect(page.getByTestId("now-excerpt")).toContainText("the deck is shuffled");
   await page.locator(".map-buttons button").nth(0).click();

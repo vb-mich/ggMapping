@@ -281,7 +281,7 @@ Json event_json(const Event& e) {
             I("era", e.a); I("ages", e.b); I("painted", e.c);
             Json rc = Json::array();
             for (int i = 0; i < 8; ++i) rc.push(Json::of(e.counts[i]));
-            p.set("rung_counts", std::move(rc));
+            p.set("elevation_counts", std::move(rc)); // schema 3: was rung_counts
             I("done", e.counts[8]); I("panels", e.counts[9]);
             I("archived", e.counts[10]); I("cliffs", e.counts[11]);
             I("merges", e.counts[12]); p.set("archive_on", Json::of(e.flag));
@@ -300,7 +300,7 @@ Json event_json(const Event& e) {
         case Ev::Upgrade: S("kind", e.s1); break;
         case Ev::AnomalyResult: S("name", e.s1); break;
         case Ev::PanelReturns: I("filled", e.a); I("area", e.b); break;
-        case Ev::Paint: I("rung", e.a); S("why", e.s1); break;
+        case Ev::Paint: I("elevation", e.a); S("why", e.s1); break; // schema 3: was rung
         case Ev::Trace: S("label", e.s1); break;
         case Ev::Hold: S("what", e.s1); break;
         case Ev::ReworkChange: I("from", e.a); I("to", e.b); break;

@@ -21,16 +21,17 @@ namespace jerrymap {
 // The world lineage (CONTRACTS §9): ONE constant. The state document writes it,
 // the loader rejects anything else, and the jm_* API reports it — so nothing
 // downstream needs to hardcode a duplicate that can drift.
-inline constexpr const char* LINEAGE = "v0.8";
+inline constexpr const char* LINEAGE = "v0.9";
 
 struct Config {
     int panel_w = 5, panel_h = 6;
+    // the community's deck (handbook ch. 5, canon since v0.9)
     std::vector<std::pair<std::string, int>> deck = {
-        {"extend", 4}, {"basin", 3}, {"ridge", 1}, {"greatridge", 1},
-        {"settlement", 3}, {"calm", 4}, {"anomaly", 1}, {"freestroke", 2}};
+        {"extend", 1}, {"basin", 3}, {"ridge", 1}, {"greatridge", 1},
+        {"settlement", 4}, {"calm", 7}, {"anomaly", 1}, {"freestroke", 2}};
     int wake_era = 2;
     bool alive = true, semi = true, fragile = true;
-    int addpanel_copies = -1;        // -1: resolve to 1 (alive) / 4
+    int addpanel_copies = -1;        // -1: resolve to 2 (alive) / 4
     bool work_spread = true;
     std::map<std::string, int> work_overrides;
     std::map<std::string, std::string> mood_overrides;

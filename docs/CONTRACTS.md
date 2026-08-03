@@ -1,6 +1,6 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **4.0.0** · State schema: **1** · Event schema: **2** · World lineage: **v0.8**
+Contract version: **5.0.0** · State schema: **1** · Event schema: **3** · World lineage: **v0.9**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
@@ -8,10 +8,11 @@ Nothing in `/engine`, `/apps`, or `/tools` may contradict it. Changes here bump 
 contract version and must state their migration story.
 
 Authority chain: `docs/0-Jerrymapping-the-game.md` (the handbook, beta 0.1, amended by
-the v0.5 depth erratum, the v0.7 amendments and the v0.8 fields promotion) defines the game;
+the v0.5 depth erratum, the v0.7 amendments, the v0.8 fields promotion and the
+v0.9 community deck) defines the game;
 `docs/FORK_NOTES.md` defines this lineage's deltas and dials; the **C++ engine is the
 reference of record** (succession, §8.4), and
-`reference/sim_v08.py` is the **living twin** whose byte-identity the gate proves —
+`reference/sim_v09.py` is the **living twin** whose byte-identity the gate proves —
 every rules increment lands in both, and the matrix must be green three ways before
 the increment is law. `reference/sim.py` is the frozen v0.4 founding document,
 history. Where prose and implementations disagree, the twin-proven engine wins until
@@ -25,8 +26,10 @@ The words are **panel**, **age**, **era**, **rework**, **unit**, **elevation**. 
 words *tile*, *visit*, and *rung* are banned — any case, no exemptions remaining —
 from every rendered output: every log line, the metrics footer, and every UI string.
 CI enforces this over every rendered log of the matrix and over the app's string
-tables. The ban governs **output text**: schema keys (`rung_counts`, `paint.rung`),
-the `--tile` CLI flag, and code identifiers keep their historical names, exactly as
+tables. The ban governs **output text** and, since event schema 3, the event
+payload keys (`era_summary.elevation_counts`, `paint.elevation` — renamed at
+5.0.0 with no consumer, closing the rename ledger's schema side):
+the `--tile` CLI flag and code identifiers keep their historical names, exactly as
 the twin itself does. The card that grows the map is **addpanel** end to end: config
 key, CLI flag, engine identifier, log text.
 
@@ -256,7 +259,7 @@ Framing (no step number):
 | `age_start` | era, age, panel, card | `[e{era} a{age:02d}] panel {panel} \| {CARD}` (card uppercased); on an **Add Panel age** `panel` is null and the subject reads `the new panel` (§5.3) |
 | `free_panel` | era | `[e{era}] stack empty: a panel is added for free` |
 | `addpanel_wake` | — | `    the Add Panel card joins the back of the deck` |
-| `era_summary` | era, ages, painted, rung_counts[8], done, panels, archived, cliffs, merges, archive_on | `=== era {era}: ages {ages} \| painted {n} \| water {w:.0f}% coastal {c:.0f}% plain {p:.0f}% hills {h:.0f}% mtn {m:.0f}% \| done {done}/{panels} panels \| `(`archived {a} \| ` when archive_on)`cliffs {cl} merges {mg}` |
+| `era_summary` | era, ages, painted, elevation_counts[8], done, panels, archived, cliffs, merges, archive_on | `=== era {era}: ages {ages} \| painted {n} \| water {w:.0f}% coastal {c:.0f}% plain {p:.0f}% hills {h:.0f}% mtn {m:.0f}% \| done {done}/{panels} panels \| `(`archived {a} \| ` when archive_on)`cliffs {cl} merges {mg}` |
 | `final_report` | — | the FINAL METRICS block, rendered from state (§6.6) |
 
 Decision echoes (no step number; emitted by the engine right after the Decider call):
@@ -293,7 +296,7 @@ Numbered actions (carry `payload.step`; template prefix `    {step}. `):
 | kind | payload | template body |
 |---|---|---|
 | `field_deepens` | unit | `the field deepens at r{r}c{c} {panel}` |
-| `paint` | unit, rung, why | `paint r{r}c{c} {panel} {rung} ({why})` |
+| `paint` | unit, elevation, why | `paint r{r}c{c} {panel} {rung} ({why})` — schema 3 renamed the payload key from `rung`; the template's `{rung}` placeholder names the byte-frozen color word, which is log text and rides lineage bumps, not the schema |
 | `trace` | unit, label | `rework r{r}c{c} {panel} ({label})` |
 | `shore_heal` | unit | `the shore forgets its sea at r{r}c{c} {panel}: coastal -> plain` |
 | `hold` | what ∈ land/town/settled/city_shore | `the land holds: embellish` · `the town holds: embellish` · `settled: embellish` · `the city holds the shore: embellish` |
@@ -365,14 +368,14 @@ byte-identical to never having stopped (log continuation included). Save points 
 {
   "schema": "jerrymap-state",
   "version": 1,
-  "lineage": "v0.8",
+  "lineage": "v0.9",
 
   "config": {
     "panel_w": 5, "panel_h": 6,
-    "deck": [["extend",4],["basin",3],["ridge",1],["greatridge",1],
-             ["settlement",3],["calm",4],["anomaly",1],["freestroke",2]],
+    "deck": [["extend",1],["basin",3],["ridge",1],["greatridge",1],
+             ["settlement",4],["calm",7],["anomaly",1],["freestroke",2]],
     "wake_era": 2, "alive": true, "semi": true, "fragile": true,
-    "addpanel_copies": 1, "work_spread": true,
+    "addpanel_copies": 2, "work_spread": true,
     "work_overrides": {}, "mood_overrides": {},
     "archive_permille": 0,
     "stroke_die": 4, "stroke_add": 1,
@@ -485,7 +488,7 @@ reference's defaults:
 
 ```
 --eras N (8)  --seed N (random 1..10^7)  --out DIR (runs)  --tile WxH (5x6)
---addpanel N (1 in this lineage)  --archive-chance P (0, percent, one decimal)
+--addpanel N (2 in this lineage)  --archive-chance P (0, percent, one decimal)
 --stroke-die N (4)  --stroke-add N (1)
 --greatridge-die N (unset)  --greatridge-add N (0)  --extend-cap N (4)
 --work k=v,…  --mood k=v,…
@@ -505,8 +508,8 @@ event-rendered lines, then the final report — **LF line endings always**; stdo
 ## 8. The gate
 
 ### 8.1 Oracle matrix
-Byte-identity of `seed{N}_log.txt`, the Python twin (`reference/sim_v08.py`) vs
-native C++ vs WASM, on the v0.8 lineage:
+Byte-identity of `seed{N}_log.txt`, the Python twin (`reference/sim_v09.py`) vs
+native C++ vs WASM, on the v0.9 lineage:
 
 | cell | seed | eras | dials |
 |---|---|---|---|
@@ -605,13 +608,27 @@ the twin — but anything readable from the log runs against both.
   break byte-identity with the oracle and require a lineage bump).
 * **State schema version**: integer; loaders reject unknown versions.
 * **Event schema version**: integer; additive payload fields are minor.
-* **World lineage**: `v0.8` — the PCG32 dialect with the depth erratum, the Add
-  Panel working-panel rule, and the fields as canon. A lineage
+* **World lineage**: `v0.9` — the PCG32 dialect with the depth erratum, the Add
+  Panel working-panel rule, the fields as canon, and the community's deck. A lineage
   bump means old seeds speak a different world; it never changes saved-state
   replayability within its lineage (loaders reject foreign lineages, §6.3).
 
 ### 9.1 Changelog
 
+* **5.0.0** — a rules increment, lineage `v0.8 → v0.9` (major: renderer text and
+  rules changed), **event schema 2 → 3**. **The community's deck is the starting
+  deck** (handbook ch. 5): Extend 1, Basin 3, Ridge 1, Great Ridge 1,
+  Settlement 4, Calm 7, Anomaly 1, Free Stroke 2, and Add Panel ×2 joining at
+  the end of era one — 22 cards, the two Add Panel copies printing 3 and 5
+  under the spread rule. `addpanel_copies` resolves to 2 when unset. Riding the
+  break: the metrics footer no longer prints `(target 30-40)` beside water
+  (FORK_NOTES §v0.9 — the target described a mean, not a world). The schema
+  bump is the rename ledger's schema side closing: `era_summary.rung_counts →
+  elevation_counts` and `paint.rung → paint.elevation`, renamed with **no
+  consumer anywhere** (app, scripts, and tests read neither); `--tile` stays,
+  because the twin's CLI defines that surface and the reference still speaks
+  it. Fixtures regenerate; v0.8 fixtures retire to `reference/history-v0.8/`;
+  the twin becomes `reference/sim_v09.py`.
 * **4.0.0** — a rules increment, lineage `v0.7 → v0.8` (major: renderer text and
   rules changed). **The fields are canon.** Handbook chapter 11 is gone and its
   two rules are written into chapter 9: a farmed unit is off the density ladder

@@ -187,16 +187,16 @@ Here below is the list of cards of your very first deck, a total of 20 cards to 
 
 | Copies | Work Numbers | Mood     | Instruction             |
 | ------ | ------------ | -------- | ----------------------- |
-| 4      | 6, 7, 7, 8   | Settle   | Extend                  |
-| 3      | 6, 7, 8      | Settle   | Basin                   |
-| 1      | 7            | Rise     | Ridge                   |
-| 1      | 7            | Rise     | Great Ridge             |
-| 4      | 5, 6, 6, 7   | Level    | -                       |
-| 2      | 6, 8         | Settle   | Free Stroke             |
-| 3      | 6, 7, 8      | Settle   | Settlement              |
-| 1      | 7            | Rise     | Anomaly                 |
-| 1\*    | 4\*          | Settle\* | Add Panel\*             |
-\*The Add Panel card will be added only at the end of the 1st era of your map
+| 1      | 7                   | Settle   | Extend                  |
+| 3      | 6, 7, 8             | Settle   | Basin                   |
+| 1      | 7                   | Rise     | Ridge                   |
+| 1      | 7                   | Rise     | Great Ridge             |
+| 7      | 5, 6, 6, 6, 6, 6, 7 | Level    | -                       |
+| 2      | 6, 8                | Settle   | Free Stroke             |
+| 4      | 6, 7, 7, 8          | Settle   | Settlement              |
+| 1      | 7                   | Rise     | Anomaly                 |
+| 2\*    | 3, 5\*              | Settle\* | Add Panel\*             |
+\*The Add Panel cards will be added only at the end of the 1st era of your map
 
 The meaning of the cards are explained in a later chapter.
 The evolution and expansion of the deck is explained in chapter 10.
@@ -481,7 +481,7 @@ The map grows. This card sleep outside the deck during the first era, and join t
 
 You're free to add cards as you wish, but be mindful, adding a new card is an action that can have profound effects on your map. 
 Here below some suggestions:
-- Keep the average work number of the cards at 7
+- Keep the average work number of your cards close to the starting deck's, about 6.5
 - Keep the number of **instructions** balanced as the initial deck (e.g. 1 every 20 is an Anomaly)
-- Use the same **mood** for all the instructions as the initial deck (e.g. Great Ridge is always Rise). Or keep the mood mix near the starting deck's: about 13x Settle, 4x Level, 3x Rise in twenty cards.
+- Use the same **mood** for all the instructions as the initial deck (e.g. Great Ridge is always Rise). Or keep the mood mix near the starting deck's: about 12x Settle, 7x Level, 3x Rise in the 22 cards.
 - If you implement a "Remove Card" instruction, make it a one-shot instruction that applies only when the deck size reaches a threshold. Remove card tend to destroy your deck over time.

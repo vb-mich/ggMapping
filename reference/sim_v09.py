@@ -59,8 +59,8 @@ def cheb(a, b):
     return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
 
 # ---------------------------------------------------------------- sim
-DEFAULT_DECK = dict(extend=4, basin=3, ridge=1, greatridge=1,
-                    settlement=3, calm=4, anomaly=1, freestroke=2)
+DEFAULT_DECK = dict(extend=1, basin=3, ridge=1, greatridge=1,
+                    settlement=4, calm=7, anomaly=1, freestroke=2)
 
 # the density ladder: open country 0, rural 1, urban low 2, medium 3, high 4
 DENS = {"farm_lo": 0, "farm_hi": 0, "rural": 1,
@@ -136,7 +136,7 @@ class Sim:
         if self.cfg["semi"]:
             self.cfg["alive"] = True
         if self.cfg["addpanel"] is None:
-            self.cfg["addpanel"] = 1 if self.cfg["alive"] else 4
+            self.cfg["addpanel"] = 2 if self.cfg["alive"] else 4
         self.rng = PCG32(seed)
         self.seed, self.eras_wanted = seed, eras
         self.base = {}       # gpos -> rung
@@ -1226,7 +1226,7 @@ class Sim:
                      f"(atlas {len(self.atlas)})")
         lines.append("elevation shares: " + " ".join(
             f"{RNAME[i]} {sh[i]:.1f}%" for i in range(8)))
-        lines.append(f"aggregates: water {w:.1f}% (target 30-40) | "
+        lines.append(f"aggregates: water {w:.1f}% | "
                      f"plain {sh[5]:.1f}% (30-35) | hills {sh[6]:.1f}% (10-15) | "
                      f"mountains {sh[7]:.1f}% (5-8)")
         if self.cov_era3 is not None:

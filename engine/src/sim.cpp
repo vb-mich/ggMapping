@@ -1435,7 +1435,7 @@ Sim::Sim(const Config& config, std::int64_t sd, int eras, Decider& dec)
     validate(cfg, eras);
     geo.W = cfg.panel_w;
     geo.H = cfg.panel_h;
-    if (cfg.addpanel_copies < 0) cfg.addpanel_copies = cfg.alive ? 1 : 4;
+    if (cfg.addpanel_copies < 0) cfg.addpanel_copies = cfg.alive ? 2 : 4;
     if (cfg.semi) cfg.alive = true;
     std::vector<Panel> layout;
     if (geo.W == 5 && geo.H == 6) {
@@ -1654,7 +1654,7 @@ std::string Sim::final_report() const {
             s += std::string(" ") + RUNG_NAME[i] + " " + sf_fmt(sh[i], 1) + "%";
         lines.push_back(s);
     }
-    lines.push_back("aggregates: water " + sf_fmt(w, 1) + "% (target 30-40) | plain " +
+    lines.push_back("aggregates: water " + sf_fmt(w, 1) + "% | plain " +
                     sf_fmt(sh[5], 1) + "% (30-35) | hills " + sf_fmt(sh[6], 1) +
                     "% (10-15) | mountains " + sf_fmt(sh[7], 1) + "% (5-8)");
     if (cov_set) {

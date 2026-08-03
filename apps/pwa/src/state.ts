@@ -44,7 +44,7 @@ export const foreignLineage = signal<string | null>(null);
 export const retiredKey = signal<string | null>(null);
 
 export const deckCopies = signal<Record<Kind, number>>({ ...DEFAULT_COPIES });
-export const addpanelCopies = signal(1);
+export const addpanelCopies = signal(2);
 export const workOverrides = signal<Partial<Record<string, number>>>({});
 export const moodOverrides = signal<Partial<Record<string, string>>>({});
 
@@ -134,7 +134,7 @@ export function loadConfigJson(json: string): boolean {
   grAdd.value = cfg.greatridge_add ?? 0;
   extendCap.value = cfg.extend_cap ?? 4;
   flatWork.value = cfg.work_spread === false;
-  addpanelCopies.value = cfg.addpanel_copies ?? 1;
+  addpanelCopies.value = cfg.addpanel_copies ?? 2;
   if (cfg.deck) {
     const copies = { ...DEFAULT_COPIES };
     for (const [kind, n] of cfg.deck)
@@ -189,7 +189,7 @@ export function backToCanon(): void {
   extendCap.value = 4;
   flatWork.value = false;
   deckCopies.value = { ...DEFAULT_COPIES };
-  addpanelCopies.value = 1;
+  addpanelCopies.value = 2;
   workOverrides.value = {};
   moodOverrides.value = {};
 }
