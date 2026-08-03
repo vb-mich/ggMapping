@@ -79,8 +79,14 @@ describe("the rulebook's single source", () => {
     expect(findHeading(ten!.slug)).toBe(ten);
   });
 
-  it("does not leak Obsidian embed brackets into the rendering", () => {
+  it("resolves every Obsidian embed to a real image, none missing", () => {
     expect(BOOK_SOURCE).toContain("![["); // the source keeps them (identity)
-    expect(renderBook()).not.toContain("![[");
+    const html = renderBook();
+    expect(html).not.toContain("![[");
+    expect(html).not.toContain("missing figure");
+    const embeds = BOOK_SOURCE.match(/!\[\[/g)?.length ?? 0;
+    expect((html.match(/<img /g) ?? []).length).toBeGreaterThanOrEqual(embeds);
+    // the width pipe becomes a display width on its figure
+    expect(html).toMatch(/<img [^>]*width="697"/);
   });
 });

@@ -111,10 +111,56 @@ export function findHeading(slug: string): Section | undefined {
   return undefined;
 }
 
-// The rendered book. Headings carry the same slugs as the outline; the
-// handbook's Obsidian image embeds (![[name]]) reference vault files that do
-// not ship with the repo, so they render as a labeled placeholder rather than
-// literal brackets. The SOURCE stays byte-identical — this is rendering only.
+// --- the handbook's figures --------------------------------------------------
+// The book is authored in Obsidian, whose image embeds are wiki-style:
+// ![[file.png]] and ![[file.png|width]]. Every figure ships from docs/img
+// (bundled below, so the deployed app carries the book's own pictures); the
+// integrity test keeps reference and file in lockstep.
+const BOOK_IMAGES: Record<string, string> = Object.fromEntries(
+  Object.entries(
+    import.meta.glob("../../../../docs/img/*", {
+      eager: true,
+      query: "?url",
+      import: "default",
+    }) as Record<string, string>,
+  ).map(([path, url]) => [path.split("/").pop()!, url]),
+);
+
+export const WIKI_EMBED = /!\[\[([^\]|]+?)(?:\|(\d+))?\]\]/g;
+
+/** The Obsidian dialect, resolved: wiki embeds become standard <img> tags
+ *  with the bundled URL and the pipe value as display width (a cap — CSS
+ *  keeps every figure inside the reading column). Pure: src and the
+ *  name→url table in, markdown out; unknown names keep a visible
+ *  placeholder for the reader while the integrity test fails the build. */
+export function resolveWikiEmbeds(
+  src: string,
+  images: Record<string, string>,
+): string {
+  const tag = (rawName: string, width?: string): string => {
+    const name = rawName.trim();
+    const url = images[name];
+    if (!url)
+      return `<em class="book-figure">[missing figure: ${name}]</em>`;
+    const w = width ? ` width="${width}"` : "";
+    return `<img src="${url}" alt="${name}" loading="lazy"${w}>`;
+  };
+  // A standalone embed line becomes an HTML block — and a raw-HTML block
+  // swallows every line until a BLANK one (CommonMark type 6), which would
+  // eat a heading sitting right under a figure. The extra newline closes the
+  // block; inline embeds stay inline.
+  const STANDALONE = new RegExp(
+    `^[ \\t]*${WIKI_EMBED.source}[ \\t]*$`,
+    "gm",
+  );
+  return src
+    .replace(STANDALONE, (_, name: string, width?: string) => `${tag(name, width)}\n`)
+    .replace(WIKI_EMBED, (_, name: string, width?: string) => tag(name, width));
+}
+
+// The rendered book. Headings carry the same slugs as the outline; wiki
+// embeds resolve to the bundled figures. The SOURCE stays byte-identical —
+// this is rendering only.
 export function renderBook(): string {
   const slugger = new GithubSlugger();
   const renderer = new marked.Renderer();
@@ -125,10 +171,15 @@ export function renderBook(): string {
     const slug = slugger.slug(text);
     return `<h${depth} id="${slug}">${inner}</h${depth}>\n`;
   };
-  const src = BOOK_SOURCE.replace(
-    /!\[\[([^\]|]+?)(?:\|[^\]]*)?\]\]/g,
-    (_, name: string) =>
-      `<em class="book-figure">[illustration in the handbook's vault: ${name.trim()}]</em>`,
-  );
-  return marked.parse(src, { renderer, async: false });
+  // standard markdown images keep working: an img/ path resolves to the
+  // same bundled files the wiki embeds use
+  renderer.image = ({ href, text }: Tokens.Image): string => {
+    const name = decodeURIComponent(href.split("/").pop() ?? "");
+    const url = BOOK_IMAGES[name] ?? href;
+    return `<img src="${url}" alt="${text}" loading="lazy">`;
+  };
+  return marked.parse(resolveWikiEmbeds(BOOK_SOURCE, BOOK_IMAGES), {
+    renderer,
+    async: false,
+  });
 }

@@ -574,6 +574,11 @@ button.danger { background: var(--error); border-color: var(--error); color: #ff
 .book-bar [data-testid="book-theme"] { margin-left: auto; }
 .book-backdrop { position: fixed; inset: 0; z-index: 29; background: rgba(0, 0, 0, 0.35); }
 .book-figure { display: block; color: var(--muted); font-size: 0.8rem; margin: 0.4em 0; }
+/* figures: the width hint caps, the column always wins, phones included */
+.book-page img {
+  max-width: 100%; height: auto; display: block;
+  margin: 0.6em 0; border: 1px solid var(--card-edge); border-radius: 6px;
+}
 .book-page blockquote { border-left: 3px solid var(--card-edge); margin: 0.6em 0; padding: 0.1em 0.8em; color: var(--muted); }
 
 @media (min-width: 900px) {

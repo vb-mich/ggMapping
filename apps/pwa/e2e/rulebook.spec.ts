@@ -129,6 +129,28 @@ test("three text sizes, applied to the page and remembered", async ({ page }) =>
   await page.getByTestId("book-size-2").click(); // leave the default behind
 });
 
+test("the book's figures render inside the reading column", async ({ page }, testInfo) => {
+  // chapter 3: the map dial figure, unhinted
+  await page.goto("/#/rules/ch/3");
+  const dial = page.locator("[data-testid='book-page'] img[alt='map-dial.png']");
+  await dial.scrollIntoViewIfNeeded();
+  await expect(dial).toBeVisible();
+  await expect.poll(() => dial.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  await page.screenshot({ path: `e2e-artifacts/rulebook-ch3-${testInfo.project.name}.png` });
+
+  // chapter 7: a width-hinted figure — the hint caps, the column always wins
+  await page.goto("/#/rules/ch/7");
+  const fig = page.locator("[data-testid='book-page'] img[alt='fill-step-example.png']");
+  await fig.scrollIntoViewIfNeeded();
+  await expect(fig).toBeVisible();
+  await expect.poll(() => fig.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  const imgW = (await fig.boundingBox())!.width;
+  const colW = (await page.getByTestId("book-page").boundingBox())!.width;
+  expect(imgW).toBeLessThanOrEqual(colW + 1); // capped, never overflowing
+  expect(imgW).toBeLessThanOrEqual(697); // and never wider than its hint
+  await page.screenshot({ path: `e2e-artifacts/rulebook-ch7-${testInfo.project.name}.png` });
+});
+
 test("search finds a rule and navigates to its section", async ({ page }) => {
   await page.goto("/#/rules");
   if (isNarrow(page)) await page.getByTestId("book-drawer-toggle").click();

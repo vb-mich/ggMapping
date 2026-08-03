@@ -1,4 +1,4 @@
-## vbDeck Player's Handbook
+## ggMapping Player's Handbook
 Version: beta 0.1
 
 ---
@@ -10,13 +10,13 @@ In this manual, you'll sometimes be referred as artist, sometimes as player or c
 You can take this as a game, as a hobby or an art project. You can create a map on your own, or you can involve other people. Jerrymapping makes an amazing solo or cooperative experience for friends, families and couples. 
 
 ![[Map-gen-example.png]]
-*An example of map you can create following vbDeck system*
+*An example of map you can create following ggMapping system*
 
-vbDeck is a pre-set system to jerrymapping for those who want to start right away without having to come up with a whole new system on their own. This system has to be intended as a starting point, an initial guide to jerrymapping. Every rule and sub-system can be interpreted and edited without fear, you're encouraged to make changes and make the system your own system!
+ggMapping is a pre-set system to jerrymapping for those who want to start right away without having to come up with a whole new system on their own. This system has to be intended as a starting point, an initial guide to jerrymapping. Every rule and sub-system can be interpreted and edited without fear, you're encouraged to make changes and make the system your own system!
 
 The way to approach this system is to learn by doing, a bit like learning to play a role playing game, you don't need to go through the whole manual before starting. Look at the sections and chapters that you need bit by bit. After a while, without even realizing, you'll have gone through all the rules and you'll start applying them smoothly without thinking.
 
-vbDeck system is agnostic to panel size, but it works best with panels that are roughly in a square-ish aspect ratio.
+ggMapping system is agnostic to panel size, but it works best with panels that are roughly in a square-ish aspect ratio.
 
 ## The spirit of the rules
 
@@ -36,14 +36,18 @@ Jerrymapping is a very affordable, yet immersive experience!
 
 # 2. The panels
 
-The panel is the base panel of your map. A panel is composed of multiple UNITS disposed in a matrix.
-vbDeck system is agnostic to panel size, but it works best with panels that are roughly in a square-ish aspect ratio. 
+The panel is the base of your map. 
+A panel is composed of multiple UNITS disposed in a matrix.
+
+ggMapping system is agnostic to panel size, but it works best with panels that are roughly in a square-ish aspect ratio. 
 All the references for this rulebook are for a panel of 5x6 units.
 
-![[Pasted image 20260725163238.png|262]]
+![[panel-img.png|262]]
 *An example of panel*
 ## Panels Material
-You're free to chose the material you like. If you intend to use wet painting (acrylic, water based, etc...) than a heavier 250~300gsm paper is better. If you want to use colored pencils, then a lighter 150~180gsm paper is ok.
+You're free to chose the material you like. 
+If you intend to use wet painting (acrylic, water based, etc...) than a heavier 250\~300gsm paper is better. 
+If you want to use colored pencils, then a lighter 150\~180gsm paper is ok.
 Try to touch and feel different kind of papers in your hand and choose what feels best to you.
 
 Lighter paper takes less space when staked and is less heavy, making it ideal to be carried around.
@@ -72,14 +76,19 @@ Measurements:
 
 # 3. The basics
 ## Coordinates
-First thing is to understand the coordinate system. The map follows a cartesian system where the positive y axis is defines as North, negative y axis is South, positive x axis is East and negative x axis is West.
+First thing is to understand the coordinate system. 
+The map follows a cartesian system where the positive y axis is defines as North, negative y axis is South, positive x axis is East and negative x axis is West.
 Each panel represent a Unit point in the coordinate system.
 E.g. The four panels around the center (0,0) of the map are respectively: N1/E1 (North 1 / East 1), S1/E1, S1/W1, N1/W1.
 
 You need to mark the coordinates on each panel, use the bottom right corner relative to the north, so that you always know the correct orientation just by looking at the coordinates tag.
 
 ## Rolling dice
-Many cards and rules will ask you to roll dice.
+Many cards and rules will ask you to roll dice. 
+
+IMPORTANT:
+>If you have no dice or you just don't like rolling dice, **YOU ARE FREE TO CHOSE** the outcome instead of rolling dice.
+
 **Dice notation is read as follows.** "d6" means: roll the six-sided die. "d4+1" means: roll the four-sided die and add 1.
 
 Sometimes a card asks for a random unit in a panel. In that case you need to roll a **d6 and d10 together**:
@@ -88,28 +97,9 @@ Sometimes a card asks for a random unit in a panel. In that case you need to rol
 
 **Example.** You roll d6 = 4 and d10 = 7. The unit is row 4, column 2 (because 7 - 5 = 2).
 
-Why using dice instead of just choosing randomly? Yes you can, but humans are notoriously terrible at generating random numbers. Without rolling dice, your map risk to end up not balanced.
-## Units
-
-A **unit** is one small square in a panel. It is the smallest piece of the world. A unit holds one piece of ground, and sometimes something drawn on top of it.
-A panel is made of a matrix of units.
-### The base
-Each unit has a base, you can think the unit base as the terrain (land or water). 
-
-Units in the panel are squares, but your painting is NOT!
-The artist is completely free to move across units to make smooth and beautiful paintings. Units are the reference that needs to be respected to achieve a good result and a balanced map.
-
-In the manual, no standard colors are suggested for the various levels of terrain and features, the player is strongly invited to come up with their own palette. You might even want to change colors from time to time or even from day to day! It's YOUR map and your own style if what will make the map really unique and special.
-
-But remember, the patterns matter, keep the units readable to you in order to maintain a healthy and coherent evolution of your map.
-
-### Overlays
-**Overlays** are drawn on top of the base and never change the elevation under them:
-
-* **Decoration**: rivers, roads, and any flourish, drawn by you.
-* **People**: farmland, rural, and urban marks. **Farmland** lives on **plain** base only. **Rural** and **urban** live on **plain or coastal** base. Rural and urban pieces also climb a ladder of their own, the **city density ladder**.
-* **Anomaly marks**: symbols like a volcano's red cap or a canyon line (the Anomaly card).
-
+**DO I REALLY NEED TO ROLL DICE?**
+No, you can totally "vibe painting" based on your instinct!
+Just mind that humans are generally good randomizers, with dice you're guaranteed to have a balanced result.
 ## The map time
 The map evolution follows a calendar based on the number of cards you draw and execute.
 
@@ -117,6 +107,33 @@ The map evolution follows a calendar based on the number of cards you draw and e
 - 25 ages make 1 **era**
 
 You're encouraged to mark both the map time and the real date on the back of each panel after each visit. 
+
+![[map-dial.png]]
+Here is an example of a decorated Map Time Dial
+
+## Colors
+In the manual, no standard colors are suggested for the various levels of terrain and features, the player is strongly invited to come up with their own palette. 
+You might even want to change colors from time to time or even from day to day! 
+It's YOUR map and your own style if what will make the map really unique and special.
+
+But remember, the patterns matter, keep the units readable to you in order to maintain a healthy and coherent evolution of your map.
+
+## Units
+
+A **unit** is one small square in a panel. It is the smallest piece of the world. A unit holds one piece of ground, and sometimes something drawn on top of it.
+A panel is made of a matrix of units.
+### The base
+Each unit has a base, you can think the unit base as the terrain (land or water). 
+
+**Units in the panel are squares, but your painting is NOT!**
+The artist is completely free to move across units to make smooth and beautiful paintings. Units are the reference that needs to be respected to achieve a good result and a balanced map.
+
+### Overlays
+**Overlays** are drawn on top of the base and never change the elevation under them:
+
+* **Decoration**: rivers, roads, and any flourish, drawn by you.
+* **People**: farmland, rural, and urban marks. **Farmland** lives on **plain** base only. **Rural** and **urban** live on **plain or coastal** base. Rural and urban pieces also climb a ladder of their own, the **city density ladder**.
+* **Anomaly marks**: symbols like a volcano's red cap or a canyon line (the Anomaly card).
 
 ## The elevation ladder
 
@@ -138,7 +155,7 @@ The **base** of a unit is the elevation of its ground. There are eight steps, on
 Some players might like to see their map growing faster and others might like to see it evolving faster. 
 You have a few easy ways to tune the map growth:
 1. Archive panels. When a panel is full you can keep it in a separate stack, the archive. This will make work on unfinished panels faster. You can bring back panels from the archive at any time!
-2. Insert more "Add Panel" cards to the deck. This should be used in combination with heavy archiving activity, otherwise you risk to end up with a very scattered map of many half-empty panels
+2. Insert more "Add Panel" cards to the deck. This should be used in combination with heavy archiving activity, otherwise you risk to end up with a very scattered map of many half-empty panels.
 
 # 4. Main Rules
 ## The Step Rule
@@ -176,32 +193,35 @@ Examples of rework:
 
 NOTE: Blank units cannot be reworked.
 
+![[Nudge-example.png]]
+
 # 5. Starting your first map
 ## Seeding panels
 
 When starting a new map you'll start with 12 blank panels, 3 for each quadrant.
-![[Pasted image 20260725143409.png]]
+![[seeding-panels.png]]
 
 ## Your first deck
 Here below is the list of cards of your very first deck, a total of 20 cards to start. These cards are considered **Base Cards** and they cannot be retired from the deck.
 
-| Copies | Work Numbers | Mood     | Instruction             |
-| ------ | ------------ | -------- | ----------------------- |
-| 1      | 7                   | Settle   | Extend                  |
-| 3      | 6, 7, 8             | Settle   | Basin                   |
-| 1      | 7                   | Rise     | Ridge                   |
-| 1      | 7                   | Rise     | Great Ridge             |
-| 7      | 5, 6, 6, 6, 6, 6, 7 | Level    | -                       |
-| 2      | 6, 8                | Settle   | Free Stroke             |
-| 4      | 6, 7, 7, 8          | Settle   | Settlement              |
-| 1      | 7                   | Rise     | Anomaly                 |
-| 2\*    | 3, 5\*              | Settle\* | Add Panel\*             |
+| Copies | Work Numbers        | Mood     | Instruction |
+| ------ | ------------------- | -------- | ----------- |
+| 1      | 7                   | Settle   | Extend      |
+| 3      | 6, 7, 8             | Settle   | Basin       |
+| 1      | 7                   | Rise     | Ridge       |
+| 1      | 7                   | Rise     | Great Ridge |
+| 7      | 5, 6, 6, 6, 6, 6, 7 | Level    | -           |
+| 2      | 6, 8                | Settle   | Free Stroke |
+| 4      | 6, 7, 7, 8          | Settle   | Settlement  |
+| 1      | 7                   | Rise     | Anomaly     |
+| 2\*    | 3, 5\*              | Settle\* | Add Panel\* |
 \*The Add Panel cards will be added only at the end of the 1st era of your map
 
 The meaning of the cards are explained in a later chapter.
 The evolution and expansion of the deck is explained in chapter 10.
 
-Once the cards are created, shuffle the deck and mark the first card on the bottom.
+Once the cards are created, shuffle the deck and mark the first card on the bottom. 
+As you might have notices, there is no shuffle instructions (yet), the deck is shuffled once you have drawn the last card and reached the first.
 
 # 6. The turn
 
@@ -212,10 +232,9 @@ The whole game is this loop:
 3. **Make the Spread.** Find the panels that sit beside the current panel on the map (up to four) and lay them in their correct places around the current panel. Leave a marker in each one's place in the Stack so it can go back to the same position.
 4. **Do the instructions.** This is the big move: a ridge, a basin, a town. If it cannot happen, use the Rework.
 5. **Do the card's fill part.** Fill or rework as many units as the card's printed **work number** says how many.
-**The city lives.** Every visit to a panel that is already full gives that panel's tallest settlement one climb or sprawl step, whatever the card was. Cities keep growing as long as the map keeps visiting them.
-
-6. **Put things back.** The played card goes to the **front of the deck**. The Spread panels go back where they came from. The current panel goes to the **back of the Stack**. If it is completely full, you can decide to put the panel in an archive instead. If the card you just played was the marked first card of the deck, then shuffle the deck and mark the new first card on the bottom. The deck shuffles once per cycle, for the whole game. 
-7. **Advance the calendar.** Move the time dial by 1 age. Remember, every **25 ages**, a new **era** begins. 
+6. **Increase population.** Every visit to a panel that is already full, gives that panel's tallest settlement one climb or sprawl step (see Chapter 9, Settlement), whatever the card was. Cities keep growing as long as the map keeps visiting them.
+7. **Put things back.** The played card goes to the **front of the deck**. The Spread panels go back where they came from. The current panel goes to the **back of the Stack**. If it is completely full, you can decide to put the panel in an archive instead. If the card you just played was the marked first card of the deck, then shuffle the deck and mark the new first card on the bottom. The deck shuffles once per cycle, for the whole game. 
+8. **Advance the calendar.** Move the time dial by 1 age. Remember, every **25 ages**, a new **era** begins. 
 
 That is the entire game. 
 Draw card, spread panels, do instructions, fill units, repeat.
@@ -228,7 +247,7 @@ NOTE:
 # 7. Filling units
 
 Every card has a fill number. Filling is the painting work: you color units one at a time, and the map's texture grows on its own. 
-Fill as many units as the card's printed **work number** says. Units painted earlier in the same visit count as filled for everything that follows, the choosing, the dominant rung, and the Step Rule. A fill is fixed in the moment it's drawn; that chaining is how one visit grows a connected patch instead of scattered dots.
+Fill as many units as the card's printed **work number** says. Units painted earlier in the same visit count as filled for everything that follows, the choosing, the dominant elevation step, and the Step Rule. A fill is fixed in the moment it's drawn; that chaining is how one visit grows a connected patch instead of scattered dots.
 
 **For each unit:**
 
@@ -240,16 +259,16 @@ Pick the empty unit on the current panel that touches the most filled units on i
 ### Step 2. Read the card's mood. 
 No die. The mood is printed on the card you drew, and it colors every unit of this visit:
 
-| Mood | Result |
-|---|---|
-| **Settle** | copy the dominant rung |
-| **Level** | dominant rung, one step toward plain |
-| **Rise** | dominant rung, one step away from plain |
+| Mood       | Result                                            |
+| ---------- | ------------------------------------------------- |
+| **Settle** | copy the dominant elevation step                  |
+| **Level**  | dominant elevation step, one step toward plain    |
+| **Rise**   | dominant elevation step, one step away from plain |
 
 ### Step 3. Find the dominant elevation. 
-Look at the filled side neighbors of the chosen unit (across borders too). The most common elevation among them is dominant. Remember: overlays count as their base; anomaly units are not counted at all. If two rungs tie, roll a die between them.
+Look at the filled side neighbors of the chosen unit (across borders too). The most common elevation among them is dominant. Remember: overlays count as their base; anomaly units are not counted at all. If two elevation step tie, roll a die between them.
 
-* Special case: if the chosen unit has no countable side neighbors (none is filled, or the filled ones are all anomaly units), skip the dominant rung. Instead, you choose or roll d6 on the **First Elevation table** and go to Step 5:
+* Special case: if the chosen unit has no countable side neighbors (none is filled, or the filled ones are all anomaly units), skip the dominant step. Instead, **you choose** or roll d6 on the **First Elevation table** and go to Step 5:
 
 | d6  | First Elevation |
 | --- | --------------- |
@@ -282,9 +301,11 @@ Look at the filled side neighbors of the chosen unit (across borders too). The m
 	* If the dominant level is plain itself, you choose: coastal or hills.
 
 ### Step 5. Check the Step Rule. 
-The result must sit within one rung of every filled side neighbor. If it does not, move it to the nearest rung that does. If no rung works, use the Cliff exception.
+The result must sit within one elevation step of every filled side neighbor. If it does not, move it to the nearest elevation step that does. If no step works, use the Cliff exception.
 
 **Step 6. Color the unit.** If the panel is now full, stop filling: the rest of the work becomes **rework** on this panel, on units of your choice.
+
+![[fill-step-example.png|697]]
 
 # 8. Strokes instructions
 
@@ -333,14 +354,14 @@ Left and right are seen from the stroke itself, facing its heading. The heading 
 
 ## How high, how deep: dig, climb, carry
 
-A stroke does not pick one rung and repeat it. It moves on the ladder as it moves on the map:
+A stroke does not pick one elevation step and repeat it, it moves on the ladder as it moves on the map:
 
-| Stroke             | First unit                                        | Each next unit                     |
-| ------------------ | ------------------------------------------------- | ---------------------------------- |
-| Basin              | shallow (or the start point's rung, when growing) | **one level deeper** than the last |
-| Ridge, Great Ridge | hills                                             | **one level higher** than the last |
-| Extend             | the rung of the run unit it faces                 | **the same level** as the last     |
-| Free Stroke        | your choice                                       | your choice                        |
+| Stroke             | First unit                                             | Each next unit                     |
+| ------------------ | ------------------------------------------------------ | ---------------------------------- |
+| Basin              | shallow (or the start point's elevation, when growing) | **one level deeper** than the last |
+| Ridge, Great Ridge | hills                                                  | **one level higher** than the last |
+| Extend             | the elevation step of the run unit it faces            | **the same level** as the last     |
+| Free Stroke        | your choice                                            | your choice                        |
 
 **Basins dig, ridges climb, Extend carries.**
 
@@ -355,26 +376,27 @@ This is how geography draws itself. A basin heading out from a shore digs shallo
    * **Empty, and an elevation of the class is valid there**: paint it (dig, climb, or carry, then let the Step Rule adjust). Continue.
    * **Filled with the stroke's own class**: the stroke **merges** into it and ends. This is good news: two seas become one sea, two ridges become one range.
    * **Anything else**: a different class, coastal or plain, an overlay it may not touch, an anomaly unit, or empty with no valid level of the class: the stroke **ends** just before it. Features are allowed to end.
+![[stroke-example.png|697]]
 # 9. The cards instructions
 ## Extend
 
 The map's connective tissue. Features on neighbor panels reach into this one.
 
 1. Look at the four borders of the current panel. On the **neighbor side** of each border, find **runs**: straight lines of touching units of one class, along the border row. **Only water runs and runs of the heights count.** Coastal and plain are background, not features. Anomaly units never count as runs and never join them.
-2. A run is **open** if at least one unit directly in front of it, on your side of the border, is empty and can legally take some rung of the run's class.
+2. A run is **open** if at least one unit directly in front of it, on your side of the border, is empty and can legally take some elevation of the run's class.
 3. Choose the **longest open run** on any border, counting at most four units: every run of four or more counts the same. Tie: roll a die. The cap matters: without it, the biggest sea or range wins every Extend and slowly swallows the map.
-4. **Enter**: paint the legal empty facing unit closest to the middle of the run. Its rung: the same as the run unit it faces, adjusted by the Step Rule if needed. The heading is straight into your panel (a run on the north border enters heading south, and so on).
-5. Continue as a normal stroke: wobble each step, **carry** the rung, d4+1 units in total, normal collision rules.
+4. **Enter**: paint the legal empty facing unit closest to the middle of the run. Its elevation: the same as the run unit it faces, adjusted by the Step Rule if needed. The heading is straight into your panel (a run on the north border enters heading south, and so on).
+5. Continue as a normal stroke: wobble each step, **carry** the elevation step, d4+1 units in total, normal collision rules.
 6. No open runs on any border: do Rework.
 
 
-> GRAPHIC EXAMPLES TO BE ADDED
+![[extend-example.png]]
 
 ## Basin
 
 1. If any water unit sits on the current panel, or directly across one of its borders: choose one such unit as the **start point**. The stroke will grow that body. Roll d8 for the heading.
-2. Otherwise, **seed**: roll d6 and d10, then d8 for the heading. The first painted unit of the stroke goes there, at **shallow**, and it counts as the first of the d4+1 units (Nudge if needed: the spot must legally take a water rung, so it must sit in open ground or by a shore).
-3. Paint a water stroke, **d4+1 new units**, with wobble, **digging one rung deeper with each unit** (the Step Rule adjusting as always). When growing an existing body, the start point's rung is the reference for the first new unit, and all d4+1 painted units are new. One special case: if the start point lies across a border, do not roll the d8. The first new unit is the empty unit facing it on your panel, heading straight inward, and the wobble begins after that. If that facing unit is not free and legal, choose a different start point, or do Rework.
+2. Otherwise, **seed**: roll d6 and d10, then d8 for the heading. The first painted unit of the stroke goes there, at **shallow**, and it counts as the first of the d4+1 units (Nudge if needed: the spot must legally take a water step, so it must sit in open ground or by a shore).
+3. Paint a water stroke, **d4+1 new units**, with wobble, **digging one elevation step deeper with each unit** (the Step Rule adjusting as always). When growing an existing body, the start point's elevation step is the reference for the first new unit, and all d4+1 painted units are new. One special case: if the start point lies across a border, do not roll the d8. The first new unit is the empty unit facing it on your panel, heading straight inward, and the wobble begins after that. If that facing unit is not free and legal, choose a different start point, or do Rework.
 
 New lakes are born shallow and dig as they go. A basin running out to sea leaves a falling floor behind it; a basin running along a coast is held shallow by the shore. Lakes grow lobes, seas eat coastlines, and when two bodies meet they merge. Do not fear a deep heart in a small lake: the Step Rule will force graded rings around it as the land closes in, and the lake will look carved, not stamped.
 
@@ -384,7 +406,7 @@ No dice. The heights are yours to place.
 
 1. Choose any empty unit on the current panel where hills are legal (the Step Rule decides; beside deep water they are not). None: do Reworks.
 2. Choose a heading, any of the eight directions.
-3. Draw a climbing stroke of the heights: first unit **hills**, then one rung higher with each unit, so mountains from the second unit on. Choose the length: **2 to 5** units for Ridge, **4 to 10** for Great Ridge. Wobble as you wish at each step, straight, left, or right, following the stroke rules of chapter 8.
+3. Draw a climbing stroke of the heights: first unit **hills**, then one elevation step higher with each unit, so mountains from the second unit on. Choose the length: **2 to 5** units for Ridge, **4 to 10** for Great Ridge. Wobble as you wish at each step, straight, left, or right, following the stroke rules of chapter 8.
 
 Do not worry that raw heights look lonely at first. The Settle days will wrap them in foothills and the foothills in plains, one visit at a time. Near settled lowlands the Step Rule bends the stroke down into hills instead of stopping it. The Great Ridge is the deck's one giant: it will often cross into neighbor panels and become the spine of a whole region.
 
@@ -463,7 +485,7 @@ Roll d12:
 
 ## Free Stroke
 
-Paint one stroke: you choose the start unit, the heading, and the rung of every unit, up to d4+1 units. You may roll the wobble die, or steer each step by hand. The Step Rule still applies to every unit, and the stroke still ends against anything it may not paint.
+Paint one stroke: you choose the start unit, the heading, and the elevation step of every unit, up to d4+1 units. You may roll the wobble die, or steer each step by hand. The Step Rule still applies to every unit, and the stroke still ends against anything it may not paint.
 
 This is the painter's card, the map listens to you directly.
 
@@ -479,9 +501,11 @@ The map grows. This card sleep outside the deck during the first era, and join t
 6. Then do this card's **fill part on the new panel**: the work follows the new panel, and its first units grow inward from the border it shares with the map. No panel is ever born blank.
 # 10. Adding new cards
 
-You're free to add cards as you wish, but be mindful, adding a new card is an action that can have profound effects on your map. 
+**You're free to add cards and instructions as you wish!**
+But be mindful, adding a new card is an action that can have profound effects on your map. 
+
 Here below some suggestions:
 - Keep the average work number of your cards close to the starting deck's, about 6.5
 - Keep the number of **instructions** balanced as the initial deck (e.g. 1 every 20 is an Anomaly)
 - Use the same **mood** for all the instructions as the initial deck (e.g. Great Ridge is always Rise). Or keep the mood mix near the starting deck's: about 12x Settle, 7x Level, 3x Rise in the 22 cards.
-- If you implement a "Remove Card" instruction, make it a one-shot instruction that applies only when the deck size reaches a threshold. Remove card tend to destroy your deck over time.
+- If you implement a "Remove Card" instruction, make it a one-shot instruction that applies only when the deck size reaches a threshold. A "Remove card" instruction tends to destroy your deck over time.

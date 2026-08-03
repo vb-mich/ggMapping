@@ -181,7 +181,8 @@ def conform(lines, label):
     check("ch.6 n.3", f"{label}: the placed panel becomes the working panel",
           not no_claim, f"{len(no_claim)} age(s) never claimed the new panel")
 
-    # step 2 is skipped, so nothing from step 6 applies to a Stack panel here
+    # step 2 is skipped, so nothing from step 7's bookkeeping ("Put things
+    # back") applies to a Stack panel here
     leaked = [(a, l) for a in addp for l in a["body"]
               if l.startswith("    the city lives")
               or l.startswith("    panel to back of stack")
@@ -191,7 +192,7 @@ def conform(lines, label):
           not leaked,
           f"{len(leaked)} stray line(s), e.g. {leaked[0][1].strip() if leaked else ''}")
 
-    # An age that consumes a Stack visit ALWAYS closes with step 6's
+    # An age that consumes a Stack visit ALWAYS closes with step 7's
     # bookkeeping; the absence of it above is what proves the Add Panel age
     # took no visit. What it must not do is re-serve the same panel twice.
     # (two Add Panel copies since v0.9 can land back to back; both headers
@@ -224,9 +225,12 @@ def conform(lines, label):
     check("ch.9", f"{label}: the printed placement score is the squared distance",
           not bad_score, f"e.g. {bad_score[0] if bad_score else ''}")
 
-    # ---- chapter 6, the city lives ---------------------------------------
-    # "Every visit to a panel that is already full gives that panel's tallest
-    #  settlement one climb or sprawl step, whatever the card was."
+    # ---- chapter 6 step 6, "Increase population" --------------------------
+    # "Every visit to a panel that is already full, gives that panel's tallest
+    #  settlement one climb or sprawl step (see Chapter 9, Settlement),
+    #  whatever the card was." (The book renumbered its steps and named this
+    #  one; the ENGINE LOG still says "the city lives" and that text is
+    #  byte-frozen by the gate — the check reads the log, cites the book.)
     # A panel is full from the age that reports it "full, stays in play"; every
     # later visit to it must carry the step — including non-Settlement cards.
     # The rule speaks of "that panel's tallest settlement", so it applies to
@@ -247,10 +251,10 @@ def conform(lines, label):
             m = people_re.search(l)
             if m:
                 settled.add(m.group(1))
-    check("ch.6", f"{label}: every visit to a full panel gives the city its step",
+    check("ch.6 s.6", f"{label}: every visit to a full panel gives the city its step",
           not missing,
           f"{len(missing)} visit(s) without it, e.g. {missing[0] if missing else ''}")
-    check("ch.6", f"{label}: witnessed with non-Settlement cards",
+    check("ch.6 s.6", f"{label}: witnessed with non-Settlement cards",
           non_settlement_witnessed > 0,
           f"only {non_settlement_witnessed} such visit(s)")
 
@@ -417,13 +421,13 @@ def conform(lines, label):
     check("v0.9", f"{label}: the footer-target string appears nowhere",
           not any("(target 30-40)" in l for l in lines))
 
-    # ---- chapter 6, step 7: the calendar ---------------------------------
+    # ---- chapter 6 step 8, "Advance the calendar" (was step 7) ------------
     # "Move the time dial by 1 age. Remember, every 25 ages, a new era begins."
     lengths = {}
     for a in A:
         lengths[a["era"]] = max(lengths.get(a["era"], 0), a["age"])
     short = [e for e, n in lengths.items() if e < max(lengths) and n != 25]
-    check("ch.6 s.7", f"{label}: every completed era runs 25 ages",
+    check("ch.6 s.8", f"{label}: every completed era runs 25 ages",
           not short, f"era(s) {short} did not")
 
 
