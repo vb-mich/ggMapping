@@ -1,3 +1,4 @@
+import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 
 import { DISPLAY_NAME, STRINGS } from "../strings";
@@ -27,8 +28,26 @@ import {
   workOverrides,
 } from "../state";
 import { applyUpdate, updateAvailable } from "../updates";
-import { beforeProfile, go, route } from "../router";
+import { beforeProfile, go, route, type Route } from "../router";
 import { MyMapScreen } from "../digitalizer/ui/MyMapScreen";
+
+// The Rulebook loads as its own chunk: the book and its parser stay out of
+// the shell bundle, and the route pays for them only when opened.
+let RulebookLoaded: typeof import("../rulebook/Rulebook").Rulebook | null = null;
+function RulebookLazy({ route: r }: { route: Route }) {
+  const ready = useSignal(RulebookLoaded !== null);
+  useEffect(() => {
+    if (!RulebookLoaded)
+      void import("../rulebook/Rulebook").then((m) => {
+        RulebookLoaded = m.Rulebook;
+        ready.value = true;
+      });
+  }, []);
+  if (!ready.value || !RulebookLoaded)
+    return <main class="rulebook loading">{STRINGS.rbLoading}…</main>;
+  const R = RulebookLoaded;
+  return <R route={r} />;
+}
 import { ProfileScreen } from "../digitalizer/ui/ProfileScreen";
 import { ConfigPanel } from "./ConfigPanel";
 import { DeckEditor } from "./DeckEditor";
@@ -114,12 +133,28 @@ export function App() {
             {STRINGS.navSimulator}
           </button>
           <button
-            class={route.value.screen === "sim" ? "tab" : "tab active"}
+            class={
+              route.value.screen === "sim" || route.value.screen === "rules"
+                ? "tab"
+                : "tab active"
+            }
             data-testid="tab-mymap"
-            aria-current={route.value.screen !== "sim" ? "page" : undefined}
+            aria-current={
+              route.value.screen !== "sim" && route.value.screen !== "rules"
+                ? "page"
+                : undefined
+            }
             onClick={() => go("#/map")}
           >
             {STRINGS.navMyMap}
+          </button>
+          <button
+            class={route.value.screen === "rules" ? "tab active" : "tab"}
+            data-testid="tab-rulebook"
+            aria-current={route.value.screen === "rules" ? "page" : undefined}
+            onClick={() => go("#/rules")}
+          >
+            {STRINGS.navRulebook}
           </button>
         </nav>
         {engineLineage.value && (
@@ -201,6 +236,8 @@ export function App() {
             </div>
           </main>
         </>
+      ) : route.value.screen === "rules" ? (
+        <RulebookLazy route={route.value} />
       ) : route.value.screen.startsWith("profile") ? (
         <ProfileScreen route={route.value} />
       ) : (

@@ -517,3 +517,53 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
 .delete-confirm { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
 .delete-confirm small { color: var(--error); max-width: 14rem; }
 button.danger { background: var(--error); border-color: var(--error); color: #fff; }
+
+/* ---- the Rulebook reader ------------------------------------------------ */
+.rulebook { display: block; padding: 0.6rem 0.8rem; }
+.rulebook.loading { color: var(--muted); padding: 2rem; text-align: center; }
+.book-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+.book-head h2 { margin: 0; font-size: 1.05rem; }
+.book-drawer-toggle { display: none; }
+.book-body { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.book-side { min-width: 0; }
+.book-outline { font-size: 0.86rem; }
+.book-outline ul { list-style: none; margin: 0; padding: 0; }
+.book-outline ul ul { padding-left: 0.9rem; border-left: 1px solid var(--card-edge); margin: 0.15rem 0 0.3rem; }
+.book-outline a {
+  display: block; padding: 0.18rem 0.35rem; border-radius: 4px;
+  color: var(--ink); text-decoration: none;
+}
+.book-outline a:hover { background: var(--card-edge); }
+.book-outline a.active { background: var(--accent); color: var(--accent-ink); }
+.book-search input { width: 100%; margin-bottom: 0.3rem; }
+.book-hits { max-height: 40vh; overflow-y: auto; margin-bottom: 0.4rem; }
+.book-hits a small { color: inherit; opacity: 0.7; }
+.book-hits .muted { color: var(--muted); padding: 0.18rem 0.35rem; }
+
+/* the reading column: a comfortable measure, nothing fancier */
+.book-page { max-width: 68ch; line-height: 1.65; min-width: 0; }
+.book-page h1 { font-size: 1.35rem; margin: 1.6em 0 0.5em; padding-top: 0.4em; border-top: 1px solid var(--card-edge); }
+.book-page h1:first-of-type { margin-top: 0.4em; border-top: 0; }
+.book-page h2 { font-size: 1.12rem; margin: 1.3em 0 0.4em; }
+.book-page h3 { font-size: 0.98rem; margin: 1.1em 0 0.3em; }
+.book-page p, .book-page li { font-size: 0.92rem; }
+.book-page table { border-collapse: collapse; margin: 0.6em 0; display: block; overflow-x: auto; }
+.book-page th, .book-page td { border: 1px solid var(--card-edge); padding: 0.25rem 0.55rem; font-size: 0.86rem; text-align: left; }
+.book-page th { background: var(--card); }
+.book-figure { display: block; color: var(--muted); font-size: 0.8rem; margin: 0.4em 0; }
+.book-page blockquote { border-left: 3px solid var(--card-edge); margin: 0.6em 0; padding: 0.1em 0.8em; color: var(--muted); }
+
+@media (min-width: 900px) {
+  .book-body { grid-template-columns: 17rem minmax(0, 1fr); }
+  .book-side { position: sticky; top: 0.5rem; align-self: start; max-height: calc(100vh - 1rem); overflow-y: auto; }
+}
+@media (max-width: 899px) {
+  .book-drawer-toggle { display: inline-block; }
+  .book-side { display: none; }
+  .book-side.open {
+    display: block; position: fixed; inset: 3.2rem 0.5rem auto 0.5rem; z-index: 30;
+    background: var(--card); border: 1px solid var(--card-edge); border-radius: 8px;
+    padding: 0.6rem; max-height: 70vh; overflow-y: auto;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  }
+}

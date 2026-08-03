@@ -26,10 +26,18 @@ describe("naming policy", () => {
       join(APP, "vite.config.ts"),
     ];
     const needle = new RegExp(DISPLAY_NAME, "gi");
+    // The handbook's on-disk name carries the historical product name; the
+    // Rulebook must reference that file (it renders THE authority file, never
+    // a copy). Naming the file is not displaying the name, so the exact
+    // filename is exempt — a rename of the product still touches exactly one
+    // display constant, and a renamed handbook file fails right here.
+    const AUTHORITY_FILE = "0-Jerrymapping-the-game.md";
+    expect(existsSync(join(APP, "..", "..", "docs", AUTHORITY_FILE))).toBe(true);
     let count = 0;
     const where: string[] = [];
     for (const f of files) {
-      const hits = readFileSync(f, "utf8").match(needle)?.length ?? 0;
+      const text = readFileSync(f, "utf8").replaceAll(AUTHORITY_FILE, "");
+      const hits = text.match(needle)?.length ?? 0;
       if (hits) where.push(`${f}: ${hits}`);
       count += hits;
     }

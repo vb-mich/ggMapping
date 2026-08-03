@@ -1,6 +1,7 @@
-// Hash routing between the app's screens: the Simulator (default) and
-// My map (the digitalizer), with the scan flow and panel detail as
-// sub-routes so the phone's back button walks out of them naturally.
+// Hash routing between the app's screens: the Simulator (default), My map
+// (the digitalizer) with the scan flow and panel detail as sub-routes so the
+// phone's back button walks out of them naturally, and the Rulebook with a
+// heading anchor as its sub-route (deep links for rules questions).
 import { signal } from "@preact/signals";
 
 export type Route =
@@ -10,7 +11,8 @@ export type Route =
   | { screen: "panel"; tx: number; ty: number }
   | { screen: "profile" }
   | { screen: "profile-playback" }
-  | { screen: "profile-maps" };
+  | { screen: "profile-maps" }
+  | { screen: "rules"; anchor: string | null };
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
@@ -18,6 +20,11 @@ export function parseRoute(hash: string): Route {
     if (parts[1] === "playback") return { screen: "profile-playback" };
     if (parts[1] === "maps") return { screen: "profile-maps" };
     return { screen: "profile" };
+  }
+  if (parts[0] === "rules") {
+    // #/rules/<slug-of-heading>, or #/rules/ch/<n> to survive a retitle
+    const anchor = parts.slice(1).join("/");
+    return { screen: "rules", anchor: anchor || null };
   }
   if (parts[0] !== "map") return { screen: "sim" };
   if (parts[1] === "scan") return { screen: "scan" };
@@ -56,3 +63,4 @@ export function go(hash: string): void {
 }
 
 export const panelHash = (tx: number, ty: number) => `#/map/panel/${tx}/${ty}`;
+export const rulesHash = (slug?: string) => (slug ? `#/rules/${slug}` : "#/rules");

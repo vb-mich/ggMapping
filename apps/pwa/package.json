@@ -1,7 +1,7 @@
 {
   "name": "jm-pwa",
   "private": true,
-  "version": "0.16.0",
+  "version": "0.17.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@preact/signals": "^2.0.0",
+    "github-slugger": "^2.0.0",
+    "marked": "^18.0.7",
     "preact": "^10.25.0"
   },
   "devDependencies": {

@@ -33,7 +33,7 @@ succession is enacted, tagged `v0.4-succession`:
 | `reference/` | the frozen Python v0.4 founding document (`sim.py`) and its seed-42 sample log — history; the oracle role passed to `/engine` at succession |
 | `engine/` | the C++20 headless engine, its CLI, and tests (no floats, no globals) |
 | `engine/wasm/` | Emscripten bindings, the Node identity harness, and `prebuilt/` — the **committed** web-flavor engine the app ships, so static hosts build without emsdk (CI asserts it matches the sources) |
-| `apps/pwa/` | the PWA shell (`jm-pwa`): the Simulator — config, deck editor, worker-run engine, canvas map, record, local files |
+| `apps/pwa/` | the PWA shell (`jm-pwa`): the Simulator (config, deck editor, worker-run engine, canvas map, record, local files), My map (the digitalizer), and the Rulebook — the handbook rendered from `docs/0-Jerrymapping-the-game.md` itself, imported at build time so the deployed app ships the exact book its engine obeys. Parser: `marked` (+`github-slugger` for GitHub-identical anchors) — ~12.6 KB gzip of the reader's lazy chunk (30.7 KB gzip total with the book text and screen); chosen over `markdown-it` (~3× the gzip) since GFM tables are core in both and the sanitization edge is moot for a trusted build-time import. The reader chunk loads only on the Rulebook route; the shell bundle stays book-free (asserted in `tests/bundle.test.ts`), 39.0 → 39.3 KB gzip (the tab and route stub). |
 | `tools/dice/` | the dice roller (stub — future conversation) |
 | `tools/helper/` | the helper tool: decision records and re-rolls (stub — future conversation) |
 | `tools/digitalizer/` | the map digitalizer (stub — future conversation) |

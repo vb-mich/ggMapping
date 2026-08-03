@@ -5,6 +5,7 @@
 import { useComputed } from "@preact/signals";
 
 import { DEFAULT_COPIES, DEFAULT_MOODS, DEFAULT_WORK_AVG, KINDS, KIND_LABELS, type Kind } from "../deck";
+import { rulesHash } from "../router";
 import { STRINGS } from "../strings";
 import {
   addpanelCopies,
@@ -126,7 +127,7 @@ export function DeckEditor() {
             </tr>
           ))}
           <tr class="addpanel-row">
-            <td class={offCanon("addpanel", addpanelCopies.value, 1) ? "off-canon" : ""}>
+            <td class={offCanon("addpanel", addpanelCopies.value, 2) ? "off-canon" : ""}>
               {KIND_LABELS.addpanel}
             </td>
             <td>
@@ -160,6 +161,12 @@ export function DeckEditor() {
           {warnings.value.map((w) => (
             <li key={w}>{w}</li>
           ))}
+          <li class="warnings-source">
+            {/* by chapter NUMBER, not slug: the link survives a retitle */}
+            <a href={rulesHash("ch/10")} data-testid="link-ch10">
+              {STRINGS.deckWarnSeeChapter}
+            </a>
+          </li>
         </ul>
       )}
       <button

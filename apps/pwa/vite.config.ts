@@ -66,7 +66,21 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: { "@engine": path.resolve(here, "../../engine/wasm/prebuilt") },
+    alias: [
+      { find: "@engine", replacement: path.resolve(here, "../../engine/wasm/prebuilt") },
+      // the handbook, THE authority file — aliased so app sources carry a
+      // path-neutral name (naming policy: paths never hold the display name).
+      // A regex find, because a plain alias only matches before a "/" and the
+      // import carries ?raw; slash-normalized so vitest's fs-allow agrees.
+      {
+        find: /^@book\?raw$/,
+        replacement:
+          path
+            .resolve(here, "../../docs/0-Jerrymapping-the-game.md")
+            .split(path.sep)
+            .join("/") + "?raw",
+      },
+    ],
   },
   server: {
     fs: { allow: [path.resolve(here, "../..")] },
