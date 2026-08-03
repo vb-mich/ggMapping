@@ -67,8 +67,12 @@ test("a deep link lands on its section, scrolled correctly", async ({ page }) =>
   await page.goto("/#/rules/your-first-deck");
   const heading = page.locator("#your-first-deck");
   await expect(heading).toBeVisible();
-  // scrolled to the heading: it sits in the viewport's upper region
-  expect(await landedAt(page, (await heading.boundingBox())!.y)).toBe(true);
+  // scrolled to the heading: it sits in the viewport's upper region.
+  // Polled: the scroll runs in an effect after the route lands, and a slow
+  // runner can read the box first (CI caught this; fast machines hide it).
+  await expect
+    .poll(async () => landedAt(page, (await heading.boundingBox())!.y))
+    .toBe(true);
 
   // chapter 5's deck table is a real table carrying the 9 card rows
   const table = page.locator("#your-first-deck ~ table").first();
@@ -86,7 +90,9 @@ test("a deep link lands on its section, scrolled correctly", async ({ page }) =>
   await page.goto("/#/rules/8-strokes-instructions");
   const ch8 = page.locator('[id="8-strokes-instructions"]');
   await expect(ch8).toBeVisible();
-  expect(await landedAt(page, (await ch8.boundingBox())!.y)).toBe(true);
+  await expect
+    .poll(async () => landedAt(page, (await ch8.boundingBox())!.y))
+    .toBe(true);
 });
 
 test("the deck editor's warnings link into the book at chapter 10", async ({
@@ -100,7 +106,9 @@ test("the deck editor's warnings link into the book at chapter 10", async ({
   await expect(page).toHaveURL(/#\/rules\/ch\/10$/);
   const ch10 = page.locator("[data-testid='book-page'] h1", { hasText: /^10\./ });
   await expect(ch10).toBeVisible();
-  expect(await landedAt(page, (await ch10.boundingBox())!.y)).toBe(true);
+  await expect
+    .poll(async () => landedAt(page, (await ch10.boundingBox())!.y))
+    .toBe(true);
 });
 
 test("three text sizes, applied to the page and remembered", async ({ page }) => {
