@@ -279,6 +279,14 @@ test("the record survives reload, mid-age included, and exports as one file", as
   await page.getByTestId("btn-commit").click();
   await expect(page.getByTestId("chip-era")).toContainText("age 1");
 
+  // the record IS a timeline: scrub back to the age-zero world, then to now
+  await expect(page.getByTestId("record-scrubber")).toBeVisible();
+  await page.getByTestId("scrub-range").fill("0");
+  await expect(page.getByTestId("scrub-chip")).toContainText("era 1 · age 0");
+  await page.getByTestId("scrub-range").fill("1");
+  await expect(page.getByTestId("scrub-chip")).not.toBeVisible();
+  await expect(page.getByTestId("card-picker").or(page.getByTestId("glance"))).toBeVisible();
+
   // the export: one file holding the whole record
   const [download] = await Promise.all([
     page.waitForEvent("download"),

@@ -305,13 +305,21 @@ function WorldBody(props: { meta: NonNullable<typeof activeMeta.value>; s: Helpe
   const editing = useSignal<{ panel: [number, number]; preselect: [number, number] | null } | null>(null);
   const showCatchup = useSignal(false);
   const patina = useSignal<Map<string, number>>(new Map());
+  // The record IS a timeline: replay stored every age's closing state, so a
+  // view of any past moment is free. null = now; play always snaps back.
+  const viewAt = useSignal<number | null>(null);
 
   const view = s.view;
-  const shown = view && (view.kind === "question" || view.kind === "closed")
-    ? view.kind === "closed"
-      ? view.state
-      : s.current()
-    : s.current();
+  if (view && viewAt.value !== null) viewAt.value = null;
+  const committed = s.committed();
+  const past = viewAt.value !== null ? committed[viewAt.value]?.state : null;
+  const shown =
+    past ??
+    (view && (view.kind === "question" || view.kind === "closed")
+      ? view.kind === "closed"
+        ? view.state
+        : s.current()
+      : s.current());
 
   // the engine's patina for the shown document
   const shownJson = canonical(shown);
@@ -432,6 +440,29 @@ function WorldBody(props: { meta: NonNullable<typeof activeMeta.value>; s: Helpe
         />
       </section>
 
+      {!s.open && !view && committed.length > 1 && (
+        <section class="card record-scrubber" data-testid="record-scrubber">
+          <span class="legend-label">{STRINGS.hpLogTitle}</span>
+          <input
+            type="range"
+            min={0}
+            max={committed.length - 1}
+            value={viewAt.value ?? committed.length - 1}
+            data-testid="scrub-range"
+            onInput={(e) => {
+              const v = Number((e.target as HTMLInputElement).value);
+              viewAt.value = v >= committed.length - 1 ? null : v;
+            }}
+          />
+          {viewAt.value !== null && (
+            <span class="chip" data-testid="scrub-chip">
+              {STRINGS.hpEra} {committed[viewAt.value].state.time.era} ·{" "}
+              {STRINGS.hpAge} {committed[viewAt.value].state.time.age_in_era}
+            </span>
+          )}
+        </section>
+      )}
+
       {beyond.length > 0 && (
         <section class="card notice" data-testid="beyond-spread">
           <span>
@@ -455,7 +486,7 @@ function WorldBody(props: { meta: NonNullable<typeof activeMeta.value>; s: Helpe
         </section>
       )}
 
-      {editing.value ? (
+      {viewAt.value !== null ? null : editing.value ? (
         <PaintEditor
           world={s.current()}
           panel={editing.value.panel}

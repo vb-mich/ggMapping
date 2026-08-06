@@ -710,3 +710,5 @@ button.danger { border-color: #c0392b; color: #c0392b; }
 }
 .helper a.book-link { color: var(--muted); text-decoration: underline; }
 .helper a.book-link:hover { color: inherit; }
+.record-scrubber { display: flex; align-items: center; gap: 0.6rem; }
+.record-scrubber input[type="range"] { flex: 1; }
