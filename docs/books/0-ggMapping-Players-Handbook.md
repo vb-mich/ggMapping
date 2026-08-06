@@ -92,9 +92,12 @@ Plain version for you to decorate -> https://drive.google.com/file/d/14Y3d_Emow5
 
 # 4. Filling rules
 
+First of all, there are no standard colors the various elevations and features, you are free to chose your own palette or even your own system for picking colors. Just make sure elevations are recognizable to you. 
+
+Here are few simple filling rules:
 1. **Fill the pockets first.** Paint the empty unit touching the most painted units, across borders too. Ties: you choose, pick the pocket that pulls the map toward something you love.
 2. **Copy the dominant elevation.** Take the most common elevation among painted side neighbors (up-down-left-right). Anomaly units never count here: they have no elevation voice.
-3. **Bend it by the card's mood.** 
+3. **Apply the card's mood:** 
 	- **Settle** keeps the same elevation. 
 	- **Level** moves one step toward plain. 
 	- **Rise** moves one step away; Rise on plain is your choice of coastal or hills.
@@ -110,7 +113,8 @@ Plain version for you to decorate -> https://drive.google.com/file/d/14Y3d_Emow5
 
 5. **Chain.** Units painted earlier in the visit count for everything after: one visit grows a connected patch, not scattered dots.
 6. **The law decides.** If the wanted elevation breaks the Step Rule, take the nearest step that does not. If no step works, satisfy the lowest neighbor and paint one step above it: that jump is a cliff, and cliffs are not mistakes.
-7. **If the panel fills mid-visit**, the rest of the work becomes rework (chapter 7).
+
+<u>If all the units in a panel are already painted, the rest of the work becomes rework (chapter 7).</u>
 
 *The exact rules: Master Manual, chapter 7.*
 # 5. The cards
@@ -185,6 +189,8 @@ Want your "new dimensions" feature? This is the card made for it! The one licens
 Put the new panel at the open position closest to the middle of the map; ties prefer a loose end, where water or heights meet the void. It is your working panel this turn, and its first units grow inward from the border it shares with the map. No panel is born blank.
 Tip: Use the online map digitalizer to easily spot the best place for a new panel.
 
+<u>If an instruction cannot result in paint, then it becomes rework (chapter 7).</u>
+
 *The exact rules: Master Manual, chapter 9.*
 
 # 6. A stroke, step by step
@@ -203,15 +209,27 @@ The stroke is the shared mechanic behind Basin, Ridge, Great Ridge, Free Stroke 
 
 # 7. When something cannot happen
 
-It can happen that a card instruction
+Cards are ALWAYS effective, but sometimes the instruction cannot be executed, either because of rules restriction or because the panel is already completely painted. 
+In that case apply the nudge or the instruction become a rework task.
 
 * **The Nudge.** If a unit cannot take what you must place, slide to the nearest unit that can. Ties: your choice.
-* **The Rework.** If the instruction cannot happen at all, or the panel is full, decorate instead: work the same units the instruction would have touched, without changing elevation. Waves on the deep sea, stones in a field, a festival in town, a collage, texture, life. Reworks are what makes an old panel look loved! Blank units are never reworked. (The simulator's records say embellish for a rework, and waymark for a settlement that found no home: a small sign of the visit, placed where you like.)
+* **The Rework.** If the instruction cannot happen at all, or the panel is full, decorate instead: work the same units the instruction would have touched, without changing elevation. Waves on the deep sea, roads, collages, a festival in the city, etc... Reworks are what makes an old panel look loved! Blank units are never reworked. (The simulator's records say embellish for a rework, and waymark for a settlement that found no home: a small sign of the visit, placed where you like.)
 * **The healing.** While reworking, a coastal unit with no water on any side may become plain: the shore forgets its sea. Beyond that, artistic freedom over reworked ground. Use it like salt.
 
 *The exact rules: Master Manual, chapter 4.*
 
-# 8. On randomness
+# 8. Adding new cards
+
+**You're free to add cards and instructions as you wish!**
+But be mindful, adding a new card is an action that can have profound effects on your map. 
+
+Here below some suggestions:
+- Keep the average work number of your cards close to the starting deck's, about 6.5
+- Keep the number of **instructions** balanced as the initial deck (e.g. 1 every 20 is an Anomaly)
+- Use the same **mood** for all the instructions as the initial deck (e.g. Great Ridge is always Rise). Or keep the mood mix near the starting deck's: about 12x Settle, 7x Level, 3x Rise in the 22 cards.
+- If you implement a "Remove Card" instruction, make it a one-shot instruction that applies only when the deck size reaches a threshold. A "Remove card" instruction tends to destroy your deck over time.
+
+# 9. On randomness
 
 Here is the honest truth this book is built on: people are poor randomizers. We streak, we favor, we repeat. Left to instinct alone, every ridge bends the way your wrist bends, every sea grows toward the same corner, and the map fills with your habits instead of a generated world. As Jerry once said "I try to think as little as possible".
 
