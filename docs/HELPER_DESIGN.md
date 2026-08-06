@@ -9,7 +9,7 @@ The simulator plays a world by itself. The Helper plays it WITH the player: the 
 2. The Helper's world state follows the paper, so the player can always edit any unit directly (the paint editor) and can override any computed outcome. Overrides are first-class recorded events, not corruptions.
 3. The rules explain and validate; they never block. A player who breaks the Step Rule gets told, kindly, and the tool follows them anyway.
 
-## The loop, one age
+## The loop, one age (guided mode, the default)
 1. The player says which card was drawn (picker mirroring the deck state), or taps "draw for me". The marker and cycle are tracked; the calendar advances at commit.
 2. The engine runs the age to its first open decision and stops.
 3. The decision is presented in the right shape:
@@ -17,6 +17,9 @@ The simulator plays a world by itself. The Helper plays it WITH the player: the 
    * Dice: three buttons of equal dignity, per the book: enter my roll / roll for me / choose the outcome.
 4. Repeat until the age closes. Every consequence line previews before commit, in Master Manual vocabulary.
 5. Commit writes the age; undo pops whole decisions; an age can be reopened before the next begins.
+
+## Proposal mode (the advisor, one toggle away)
+For the player who wants to be shown: select the card and the Helper resolves the WHOLE age as a highlighted proposal on the map, answering every open choice with the simulator's own policies, sequence numbers and all. The player reviews it against their paper, may TAP ANY STEP to take that one decision over (the age drops into guided mode from that point forward), then accepts. Honesty rule: wherever canon says the choice is the player's by law, the ridge's steering, every tie, the dice-optional outcomes, the proposal wears a visible "suggestion" mark: it is the simulator's taste speaking, never the rules. Both modes emit records of identical shape, and the mode is a per-age preference, not a world property.
 
 ## The decision surface (extracted from the living twin, v0.9 lineage)
 Die kinds, complete as extracted: d6 row, d10 column (and the geometry-sized variants for custom panels), d6 first elevation, d6 wobble, d8 heading (two sites), d4+1 length (inside stroke walks), d6 foundation, d6 grow, d4 farm intensity, d12 anomaly, d4 islets.
@@ -45,7 +48,7 @@ An age's mathematics never reaches beyond the working panel and its Spread, so t
 The working panel and its Spread on the canvas (engine-rendered, patina via the engine's map), candidates glowing when a choice is open, the would-be log line as a preview, the deck and calendar, and the instruction text in the book's words with a deep link into the Rulebook reader's chapter.
 
 ## Identity and tests
-The rules must not fork: the Helper drives the SAME engine through the SAME seam. Headline test: a full game played through the Helper's decision pipeline, then the stored record replayed through the plain ScriptedDecider, byte-identical logs and states. Per-card e2e: one guided age for every instruction kind, including a cliff, a waymark, an override, an undo, and a custom-geometry world. Plus the adopter's path: a mid-map world entered as skeleton only, one panel detailed on demand at its first Spread appearance, an age played, an away-from-tool catch-up of three ages, and the whole record replayed byte-identical, checkpoints included. The nine-cell gate is untouched.
+The rules must not fork: the Helper drives the SAME engine through the SAME seam. Headline test: a full game played through the Helper's decision pipeline, then the stored record replayed through the plain ScriptedDecider, byte-identical logs and states. Per-card e2e: one guided age for every instruction kind, including a cliff, a waymark, an override, an undo, and a custom-geometry world. Plus the adopter's path: a mid-map world entered as skeleton only, one panel detailed on demand at its first Spread appearance, an age played, an away-from-tool catch-up of three ages, and the whole record replayed byte-identical, checkpoints included. Plus proposal mode: one age resolved as a proposal, one step of it taken over by hand, accepted, and the record still replays byte-identical: the two modes may never diverge in what they write. The nine-cell gate is untouched.
 
 ## Out of scope, v1
 Digitalizer-image recognition, multiplayer, timeline scrubbing beyond replay (the record IS a timeline; a simple view-at-age via replay may ship if free), and any rules divergence whatsoever.

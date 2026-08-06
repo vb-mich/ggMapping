@@ -96,6 +96,82 @@ bool in_cls(int rung, bool water_cls) {
     return water_cls ? is_water(rung) : is_height(rung);
 }
 
+// --- pick candidate types (declared here so the witness can encode them) ----
+
+struct BasinCand {
+    GPos start;
+    bool has_facing = false;
+    GPos facing{};
+    bool operator<(const BasinCand& o) const { return start < o.start; }
+};
+
+struct ExtRun {
+    int length;
+    int d;
+    bool water_cls;
+    std::vector<std::pair<GPos, GPos>> seg;             // (inside, outside)
+    std::vector<std::pair<int, std::pair<GPos, GPos>>> open_facing;
+};
+
+struct EntryCand {
+    int k;
+    std::pair<GPos, GPos> p;
+    bool operator<(const EntryCand& o) const { return k < o.k; }
+};
+
+struct PlaceCand {
+    GPos u;
+    bool needs_paint = false;
+    std::vector<int> legal;
+    bool operator<(const PlaceCand& o) const { return u < o.u; }
+};
+
+// --- the candidate witness encodings (CONTRACTS §4) -------------------------
+// One encoding per candidate type; the sentinel's "cands" rows. A unit-valued
+// candidate always exposes the tappable unit under the key "unit".
+
+Json unit_arr(GPos u) {
+    Json a = Json::array();
+    a.push(Json::of(u.x));
+    a.push(Json::of(u.y));
+    return a;
+}
+
+Json cand_json(int v) { return Json::of(v); }
+
+Json cand_json(const GPos& u) { return unit_arr(u); }
+
+Json cand_json(const Panel& t) {
+    Json a = Json::array();
+    a.push(Json::of(t.tx));
+    a.push(Json::of(t.ty));
+    return a;
+}
+
+Json cand_json(const BasinCand& b) {
+    Json o = Json::object();
+    o.set("unit", unit_arr(b.start));
+    if (b.has_facing) o.set("facing", unit_arr(b.facing));
+    return o;
+}
+
+Json cand_json(const EntryCand& e) {
+    Json o = Json::object();
+    o.set("unit", unit_arr(e.p.first));      // the inside unit the stroke enters
+    o.set("outside", unit_arr(e.p.second));  // the run unit it faces
+    return o;
+}
+
+Json cand_json(const PlaceCand& p) {
+    Json o = Json::object();
+    o.set("unit", unit_arr(p.u));
+    o.set("needs_paint", Json::of(p.needs_paint));
+    Json legal = Json::array();
+    for (int b : p.legal) legal.push(Json::of(b));
+    o.set("legal", std::move(legal));
+    return o;
+}
+
 } // namespace
 
 // ---------------------------------------------------------------- plumbing
@@ -132,7 +208,22 @@ template <class T>
 T Sim::pick(std::vector<T> cands, const std::string& purpose) {
     assert(!cands.empty());
     std::sort(cands.begin(), cands.end());
-    if (cands.size() == 1) return cands[0];
+    if (cands.size() == 1) {
+        pick_ctx_.clear(); // a silent pick stays silent: no record, no witness
+        return cands[0];
+    }
+    if (dec_->wants_offer()) {
+        // The candidate witness (CONTRACTS §4): the sorted candidates, in the
+        // very order the Decider's index addresses, plus any call-site context.
+        // A side channel — no randomness, no events, no log lines.
+        Json w = Json::object();
+        Json arr = Json::array();
+        for (const T& c : cands) arr.push(cand_json(c));
+        w.set("cands", std::move(arr));
+        if (!pick_ctx_.empty()) w.set("ctx", json_parse(pick_ctx_));
+        dec_->offer(json_emit(w));
+    }
+    pick_ctx_.clear();
     int idx = dec_->pick(static_cast<int>(cands.size()), purpose);
     Event e; e.kind = Ev::Choice; e.a = static_cast<std::int64_t>(cands.size());
     e.s1 = purpose;
@@ -628,15 +719,6 @@ void Sim::card_ridge(Panel t, bool great) {
     stroke_choice_ = false;
 }
 
-namespace {
-struct BasinCand {
-    GPos start;
-    bool has_facing = false;
-    GPos facing{};
-    bool operator<(const BasinCand& o) const { return start < o.start; }
-};
-} // namespace
-
 void Sim::card_basin(Panel t) {
     std::vector<BasinCand> cands;
     for (GPos u : geo.units(t)) {
@@ -689,21 +771,6 @@ void Sim::card_basin(Panel t) {
     int L = roll_die(cfg.stroke_die, "len") + cfg.stroke_add;
     stroke(*g, SH, h, L, true, 1, "basin seed");
 }
-
-namespace {
-struct ExtRun {
-    int length;
-    int d;
-    bool water_cls;
-    std::vector<std::pair<GPos, GPos>> seg;             // (inside, outside)
-    std::vector<std::pair<int, std::pair<GPos, GPos>>> open_facing;
-};
-struct EntryCand {
-    int k;
-    std::pair<GPos, GPos> p;
-    bool operator<(const EntryCand& o) const { return k < o.k; }
-};
-} // namespace
 
 void Sim::card_extend(Panel t) {
     std::vector<ExtRun> runs;
@@ -765,6 +832,23 @@ void Sim::card_extend(Panel t) {
     std::vector<int> idxs;
     for (std::size_t k = 0; k < runs.size(); ++k)
         if (counted(runs[k]) == best) idxs.push_back(static_cast<int>(k));
+    if (dec_->wants_offer() && idxs.size() > 1) {
+        // ctx rows aligned with the (already ascending) index candidates:
+        // what each contested run IS, so a player can see it on the map
+        Json ctx = Json::array();
+        for (int k : idxs) {
+            const ExtRun& r = runs[static_cast<std::size_t>(k)];
+            Json row = Json::object();
+            row.set("length", Json::of(r.length));
+            row.set("side", Json::of(DIR_NAME[r.d]));
+            row.set("water", Json::of(r.water_cls));
+            Json units = Json::array();
+            for (auto& pr : r.seg) units.push(unit_arr(pr.second));
+            row.set("units", std::move(units));
+            ctx.push(std::move(row));
+        }
+        pick_ctx_ = json_emit(ctx);
+    }
     const ExtRun run = runs[static_cast<std::size_t>(pick(idxs, "extend run"))];
     int n = static_cast<int>(run.seg.size());
     int bestd = 1 << 30;
@@ -912,15 +996,6 @@ std::vector<std::vector<GPos>> Sim::settlement_components(Panel t) {
     return comps;
 }
 
-namespace {
-struct PlaceCand {
-    GPos u;
-    bool needs_paint = false;
-    std::vector<int> legal;
-    bool operator<(const PlaceCand& o) const { return u < o.u; }
-};
-} // namespace
-
 bool Sim::place_people(const std::vector<GPos>& cand_units, const std::string& kind,
                        const std::vector<int>& bases) {
     int d = dens_of_kind(kind);
@@ -1057,6 +1132,17 @@ void Sim::city_lives(Panel t) {
     std::vector<int> tied;
     for (std::size_t i = 0; i < comps.size(); ++i)
         if (key(comps[i]) == best) tied.push_back(static_cast<int>(i));
+    if (dec_->wants_offer() && tied.size() > 1) {
+        Json ctx = Json::array();
+        for (int i : tied) {
+            Json row = Json::object();
+            Json units = Json::array();
+            for (GPos u : comps[static_cast<std::size_t>(i)]) units.push(unit_arr(u));
+            row.set("units", std::move(units));
+            ctx.push(std::move(row));
+        }
+        pick_ctx_ = json_emit(ctx);
+    }
     int idx = tied.size() == 1 ? tied[0] : pick(tied, "living city");
     note(Ev::CityLives);
     try_upgrade(comps[static_cast<std::size_t>(idx)]);
@@ -1075,6 +1161,17 @@ void Sim::card_settlement(Panel t) {
         std::vector<int> tied;
         for (std::size_t i = 0; i < comps.size(); ++i)
             if (key(comps[i]) == best) tied.push_back(static_cast<int>(i));
+        if (dec_->wants_offer() && tied.size() > 1) {
+            Json ctx = Json::array();
+            for (int i : tied) {
+                Json row = Json::object();
+                Json units = Json::array();
+                for (GPos u : comps[static_cast<std::size_t>(i)]) units.push(unit_arr(u));
+                row.set("units", std::move(units));
+                ctx.push(std::move(row));
+            }
+            pick_ctx_ = json_emit(ctx);
+        }
         int idx = tied.size() == 1 ? tied[0] : pick(tied, "lead city");
         std::vector<GPos> comp = comps[static_cast<std::size_t>(idx)];
         for (int rep = 0; rep < 2; ++rep) {

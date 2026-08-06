@@ -71,11 +71,86 @@ const char* stash(Bundle& b, std::string s) {
     return b.out.c_str();
 }
 
+// The structured event stream with rendered text (CONTRACTS §5): each event's
+// §5 document plus "text", the log lines it rendered — shared by jm_events
+// and the helper responses, so the familiar log is engine-rendered end to end.
+Json events_with_text(const Sim& sim) {
+    Json arr = Json::array();
+    for (const StoredEvent& se : sim.events()) {
+        Json j = event_json(se.e);
+        Json text = Json::array();
+        for (std::size_t i = se.line_lo; i < se.line_hi; ++i)
+            text.push(Json::of(sim.loglines()[i]));
+        j.set("text", std::move(text));
+        arr.push(std::move(j));
+    }
+    return arr;
+}
+
+// One decision record as a response row (kind/purpose/domain/result, §4).
+Json record_json(const DecisionRecord& r) {
+    Json j = Json::object();
+    const char* kind =
+        r.kind == DecisionRecord::Kind::Die ? "die"
+        : r.kind == DecisionRecord::Kind::Pick ? "pick"
+        : r.kind == DecisionRecord::Kind::Chance ? "chance" : "shuffle";
+    j.set("kind", Json::of(kind));
+    j.set("purpose", Json::of(r.purpose));
+    j.set("domain", Json::of(r.domain));
+    if (r.kind == DecisionRecord::Kind::Shuffle) {
+        Json p = Json::array();
+        for (std::uint32_t v : r.perm) p.push(Json::of(static_cast<std::int64_t>(v)));
+        j.set("result", std::move(p));
+    } else if (r.kind == DecisionRecord::Kind::Chance) {
+        j.set("result", Json::of(r.result != 0));
+    } else {
+        j.set("result", Json::of(r.result));
+    }
+    return j;
+}
+
+// The witnessed candidates ride the offer as {"cands":[...], "ctx"?}; spread
+// them into a response object (null cands when nothing was witnessed).
+void set_cands(Json& into, const std::string& witnessed) {
+    if (witnessed.empty()) {
+        into.set("cands", Json::null());
+        into.set("ctx", Json::null());
+        return;
+    }
+    Json w = json_parse(witnessed);
+    into.set("cands", w.at("cands"));
+    into.set("ctx", w.has("ctx") ? w.at("ctx") : Json::null());
+}
+
+Json question_json(const PendingDecision& p) {
+    Json q = Json::object();
+    const char* kind =
+        p.kind == DecisionRecord::Kind::Die ? "die"
+        : p.kind == DecisionRecord::Kind::Pick ? "pick"
+        : p.kind == DecisionRecord::Kind::Chance ? "chance" : "shuffle";
+    q.set("kind", Json::of(kind));
+    q.set("purpose", Json::of(p.purpose));
+    q.set("domain", Json::of(p.domain));
+    set_cands(q, p.candidates_json);
+    return q;
+}
+
+Json error_json(const std::string& message) {
+    Json j = Json::object();
+    j.set("status", Json::of("error"));
+    j.set("message", Json::of(message));
+    return j;
+}
+
+std::uint64_t parse_state(const char* s) {
+    return std::strtoull(s && *s ? s : "0", nullptr, 10);
+}
+
 } // namespace
 
 extern "C" {
 
-const char* jm_version() { return "jerrymap-engine 5.0.0"; }
+const char* jm_version() { return "jerrymap-engine 5.3.0"; }
 
 // The rules lineage this engine speaks (CONTRACTS §9). Seeds do not survive a
 // lineage break, so anything that shares or compares maps must report it — and
@@ -164,17 +239,7 @@ const char* jm_state(int h) { // CONTRACTS §6 save document
 const char* jm_events(int h) {
     auto it = registry().find(h);
     if (it == registry().end()) return "";
-    Sim& sim = *it->second->sim;
-    Json arr = Json::array();
-    for (const StoredEvent& se : sim.events()) {
-        Json j = event_json(se.e);
-        Json text = Json::array();
-        for (std::size_t i = se.line_lo; i < se.line_hi; ++i)
-            text.push(Json::of(sim.loglines()[i]));
-        j.set("text", std::move(text));
-        arr.push(std::move(j));
-    }
-    return stash(*it->second, json_emit(arr));
+    return stash(*it->second, json_emit(events_with_text(*it->second->sim)));
 }
 
 // Cheap progress probe: where the run stands, without serializing the world.
@@ -192,5 +257,153 @@ const char* jm_time(int h) {
 }
 
 void jm_free(int h) { registry().erase(h); }
+
+// ---------------------------------------------------------------- the Helper
+// The play-with-paper seam (HELPER_DESIGN, CONTRACTS §4): stateless calls —
+// a state document in, a script in, one age out. Responses are one JSON
+// document: {"status":"question"|"closed"|"error", ...}. No handles: the
+// Helper's replay-to-frontier restores and reruns, so nothing may rest here.
+
+static std::string helper_out;
+
+static const char* helper_respond(Json j) {
+    helper_out = json_emit(j);
+    return helper_out.c_str();
+}
+
+static Json closed_json(Sim& sim, std::size_t consumed) {
+    Json j = Json::object();
+    j.set("status", Json::of("closed"));
+    j.set("consumed", Json::of(static_cast<std::int64_t>(consumed)));
+    j.set("finished", Json::of(sim.finished()));
+    j.set("state", sim.save_state());
+    j.set("events", events_with_text(sim));
+    return j;
+}
+
+// Create a fresh scripted world (the Helper's blank origin). The only decision
+// construction consults is the deck shuffle; an empty script surfaces it as
+// the first question, the Helper answers it with jm_perm, and the closed
+// response carries the age-zero state with the run and era headers.
+const char* jm_helper_create(const char* config_json, std::int64_t seed,
+                             int eras, const char* script) {
+    try {
+        FrontierDecider dec(decisions_parse(script ? script : ""));
+        try {
+            Sim sim(config_from_json(config_json ? config_json : ""), seed, eras, dec);
+            return helper_respond(closed_json(sim, dec.consumed()));
+        } catch (const FrontierReached& f) {
+            Json j = Json::object();
+            j.set("status", Json::of("question"));
+            j.set("consumed", Json::of(static_cast<std::int64_t>(dec.consumed())));
+            j.set("question", question_json(f.pending));
+            j.set("events", Json::array());
+            return helper_respond(std::move(j));
+        }
+    } catch (const std::exception& e) {
+        return helper_respond(error_json(e.what()));
+    } catch (...) {
+        return helper_respond(error_json("helper create failed"));
+    }
+}
+
+// Run ONE age of a saved world under a decision script.
+//   mode 0, guided:  replay-to-frontier — the script answers until it runs
+//                    out; the next open decision returns as a question with
+//                    its witnessed candidates, and the partial age's events
+//                    ride along for the preview.
+//   mode 1, propose: past the script the simulator's own policy answers; the
+//                    closed response carries the fresh records, each with the
+//                    candidates it chose from, and the advanced policy state.
+//   mode 2, replay:  the plain ScriptedDecider, for the identity test — the
+//                    script must close the age exactly.
+// policy_state: decimal PCG32 state (mode 1 only; "" elsewhere).
+const char* jm_helper_age(const char* state_json, const char* script,
+                          int mode, const char* policy_state) {
+    try {
+        Json st = json_parse(state_json ? state_json : "");
+        std::vector<DecisionRecord> tape = decisions_parse(script ? script : "");
+        if (mode == 1) {
+            PolicyFallbackDecider dec(std::move(tape), parse_state(policy_state));
+            Sim sim(st, dec);
+            sim.step();
+            Json j = closed_json(sim, dec.consumed());
+            Json fresh = Json::array();
+            for (std::size_t i = 0; i < dec.fresh().size(); ++i) {
+                Json row = record_json(dec.fresh()[i]);
+                set_cands(row, dec.fresh_cands()[i]);
+                fresh.push(std::move(row));
+            }
+            j.set("fresh", std::move(fresh));
+            j.set("policy_state", Json::of(std::to_string(dec.policy_state())));
+            return helper_respond(std::move(j));
+        }
+        if (mode == 2) {
+            ScriptedDecider dec(std::move(tape));
+            Sim sim(st, dec);
+            sim.step();
+            return helper_respond(closed_json(sim, dec.consumed()));
+        }
+        FrontierDecider dec(std::move(tape));
+        Sim sim(st, dec);
+        try {
+            sim.step();
+            return helper_respond(closed_json(sim, dec.consumed()));
+        } catch (const FrontierReached& f) {
+            Json j = Json::object();
+            j.set("status", Json::of("question"));
+            j.set("consumed", Json::of(static_cast<std::int64_t>(dec.consumed())));
+            j.set("question", question_json(f.pending));
+            j.set("events", events_with_text(sim)); // the partial age so far
+            return helper_respond(std::move(j));
+        }
+    } catch (const std::exception& e) {
+        return helper_respond(error_json(e.what()));
+    } catch (...) {
+        return helper_respond(error_json("helper age failed"));
+    }
+}
+
+// The portable RNG (CONTRACTS §3) for the Helper's own dice: roll-for-me,
+// provisional deck orders, the proposal's policy. ONE implementation — the
+// engine's — so no port of PCG32 grows in the app.
+const char* jm_rng_seed(std::int64_t seed) {
+    static std::string out;
+    out = std::to_string(Pcg32(static_cast<std::uint64_t>(seed)).state());
+    return out.c_str();
+}
+
+const char* jm_roll(int n, const char* rng_state) {
+    static std::string out;
+    try {
+        Pcg32 rng = Pcg32::from_state(parse_state(rng_state));
+        int v = rng.die(n);
+        Json j = Json::object();
+        j.set("value", Json::of(v));
+        j.set("state", Json::of(std::to_string(rng.state())));
+        out = json_emit(j);
+    } catch (...) {
+        out = "{}";
+    }
+    return out.c_str();
+}
+
+const char* jm_perm(int len, const char* rng_state) {
+    static std::string out;
+    try {
+        Pcg32 rng = Pcg32::from_state(parse_state(rng_state));
+        std::vector<std::uint32_t> p(static_cast<std::size_t>(len));
+        rng.shuffle_perm(p.size(), p.data());
+        Json j = Json::object();
+        Json perm = Json::array();
+        for (std::uint32_t v : p) perm.push(Json::of(static_cast<std::int64_t>(v)));
+        j.set("perm", std::move(perm));
+        j.set("state", Json::of(std::to_string(rng.state())));
+        out = json_emit(j);
+    } catch (...) {
+        out = "{}";
+    }
+    return out.c_str();
+}
 
 } // extern "C"

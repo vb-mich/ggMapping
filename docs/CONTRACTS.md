@@ -1,6 +1,6 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **5.2.0** · State schema: **1** · Event schema: **3** · World lineage: **v0.9**
+Contract version: **5.3.0** · State schema: **1** · Event schema: **3** · World lineage: **v0.9**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
@@ -225,6 +225,106 @@ and are part of this contract: `row`, `column`, `first elevation`, `dominant tie
 `deepen field` (ch. 9),
 `extend run`, `extend entry`, `place {kind}`, `people base`, `riser`, `living city`,
 `lead city`, `panel position`, `archive`, `deck` (shuffles).
+
+### 4.1 The definitive decision taxonomy (5.3.0, extracted at the seam)
+
+The complete decision surface of lineage v0.9, enumerated from the engine's
+Decider call sites — the set a UI that presents decisions must cover, one for
+one. **A consumer must fail loudly on a purpose it does not know**; guessing a
+shape forks the rules by accident. `{what}` and `{kind}` are the dynamic
+labels listed beneath the table.
+
+Dice (`kind: die`; the UI shape is the book's triple: enter my roll / roll for
+me / choose the outcome — handbook "Rolling dice", the free-choice note):
+
+| purpose | die | where |
+|---|---|---|
+| `row` | d`H` (d6 canon) | landing a rolled unit (die-sized heights) |
+| `column` | d10 halved for the canon 5-wide panel; d`W` when W is die-sized | landing a rolled unit |
+| `first elevation` | d6 | first paint with no painted side neighbor |
+| `wobble` | d6 | every stroke step (rolled strokes) |
+| `heading` | d8 | basin strokes (two sites) |
+| `len` | d`stroke_die` + `stroke_add` | basin, free stroke, extend carry |
+| `length` | d`greatridge_die` + `greatridge_add` | great ridge, rolled mode only |
+| `foundation` | d6 | settlement founding |
+| `grow` | d6 | settlement growth |
+| `farm intensity` | d4 | founding farmland |
+| `anomaly` | d12 | the anomaly table |
+| `islets` | d4 | archipelago |
+
+Choices (`kind: pick`; the engine sorts candidates — §4 ordering rule — and
+the Decider answers with an index into that order). The **payload** column is
+the candidate encoding the witness carries (§4.2):
+
+| purpose | payload | meaning |
+|---|---|---|
+| `row (choice)` / `column (choice)` | int | 1..H / 1..W, non-die geometry |
+| `wobble (choice)` | int | 1..6, the ridge's steered wobble |
+| `nudge {what}` | unit | nearest legal homes for a rolled unit |
+| `fill spot` | unit | most-neighbored empties, tied |
+| `dominant tie` / `rework dominant` | int | tied dominant elevations |
+| `away direction` | int | 4 (coastal) or 6 (hills), away from plain |
+| `ridge seed (choice)` / `free seed (choice)` | unit | legal seeds |
+| `heading (choice)` | int | 0..7 = N NE E SE S SW W NW (§2.2) |
+| `length (choice)` | int | 2..5 ridge, 4..10 great ridge |
+| `basin start` | `{unit, facing?}` | in-panel water, or border water with its facing entry |
+| `extend run` | int + ctx `{length, side, water, units[]}` | tied border runs |
+| `extend entry` | `{unit, outside}` | tied middlemost entries into the run |
+| `free class (choice)` | int | 0 water, 1 heights |
+| `place {kind}` | `{unit, needs_paint, legal[]}` | legal homes; `legal` = paintable bases when the unit is blank |
+| `people base` | int | tied base elevations under a placed overlay |
+| `riser` | unit | tied top-density risers |
+| `deepen field` | unit | the settlement's low fields (ch. 9) |
+| `living city` / `lead city` | int + ctx `{units[]}` | tied settlement components |
+| `panel position` | panel | tied nearest open positions |
+
+`{what}` ∈ `basin seed`, `home`, and the twelve anomaly names (`lone island`,
+`sunken land`, `crater lake`, `archipelago`, `marsh`, `trench`, `mesa`,
+`oasis`, `volcano`, `canyon`, `old ruins`, `wonder`). `{kind}` ∈ `farm_lo`,
+`farm_hi`, `rural`.
+
+Chance (`kind: chance`): `archive` only, domain = `archive_permille`.
+Shuffle (`kind: shuffle`): `deck` only — genesis deck build and each
+cycle-complete shuffle; domain = deck size, result = the permutation.
+
+**Latitude note (the Helper's honesty rule).** Every record in this taxonomy
+is an open decision: picks are the player's by law (the ridge's steering,
+every tie), and dice are player-optional by the handbook's free-choice note.
+A proposal answering any of them with the simulator's policy is therefore
+**taste, never rules**, and wears the suggestion mark — while everything that
+never reaches the Decider (single-candidate picks, computed consequences) is
+rules and wears none.
+
+### 4.2 The candidate witness (5.3.0)
+
+Right before a multi-candidate pick the engine offers the sorted candidate
+list to the Decider as JSON: `{"cands": [...], "ctx"?}` — encodings per the
+taxonomy table (`unit` → `[gx, gy]`, `panel` → `[tx, ty]`, ints as numbers,
+struct candidates as objects whose tappable unit is always under `"unit"`).
+`ctx` rows, where present, align one for one with the candidate rows. The
+witness is a **side channel**: it consumes no randomness, emits no event,
+renders no text, and exists only when the decider asks for it
+(`wants_offer()`); AutoDecider and ScriptedDecider never do, which the gate
+proves on every commit. Single-candidate picks remain silent — no record, no
+witness (§4).
+
+### 4.3 The frontier machinery (5.3.0, the Helper's seam)
+
+`FrontierDecider` is ScriptedDecider's law — kind and domain must match,
+divergence is a hard error — with one difference: **exhaustion is not an
+error but the age's next open question**, surfaced as a sentinel carrying
+kind, purpose, domain, and the witnessed candidates. `PolicyFallbackDecider`
+replays the same way but answers past the script's end with the simulator's
+own policy (an AutoDecider carried by explicit state), recording every fresh
+answer beside its candidates — proposal mode. Neither reports an RNG state
+into saved documents: a Helper world's state document carries rng `"0"`
+whichever mode wrote it, so **the two modes cannot diverge in what they
+write**. The FFI face: `jm_helper_create(config, seed, eras, script)` and
+`jm_helper_age(state, script, mode ∈ {guided, propose, replay}, policy_state)`
+return one JSON document — `status: "question"` (the sentinel plus the
+partial age's events), `"closed"` (the §6 state, the age's events, records
+consumed), or `"error"`. `jm_rng_seed` / `jm_roll` / `jm_perm` expose the §3
+RNG so no second PCG32 implementation grows in an app.
 
 ## 5. The event stream
 
@@ -619,7 +719,15 @@ the twin — but anything readable from the log runs against both.
 
 ### 9.1 Changelog
 
-* **5.2.0** — the `max_panels` dial lands engine-side (v0.9.1 part two),
+* **5.3.0** — additive, log bytes untouched (gate green, matrix identical):
+  the Helper's seam. The definitive decision taxonomy is law (§4.1), the
+  candidate witness joins the Decider (§4.2 — default-noop, exercised by no
+  shipped auto path), and the frontier machinery joins the engine and the FFI
+  (§4.3: `FrontierDecider`, `PolicyFallbackDecider`, `jm_helper_create`,
+  `jm_helper_age`, `jm_rng_seed`, `jm_roll`, `jm_perm`). A Helper world's
+  state document always carries rng `"0"`: scripted runs never had one, and
+  the proposal policy's state travels beside the response instead — guided
+  and proposal ages write byte-identical documents by construction.
   matching the twin the part-one package shipped: default 0 keeps every canon
   byte (gate green, matrix identical); at the cap an Add Panel draw takes the
   normal Stack visit and the card skips with `the map is at its edge`, so the

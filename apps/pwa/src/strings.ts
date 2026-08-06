@@ -317,6 +317,155 @@ export const STRINGS = {
   mmPersistent: "persistent",
   mmBestEffort: "best effort",
 
+  // the Helper — the interactive companion for playing on paper
+  navHelper: "Helper",
+  hpDefaultName: "My paper game",
+  hpTitle: "The Helper",
+  hpTagline: "your paper map is the truth; the Helper does the bookkeeping",
+  hpNewWorld: "New world",
+  hpWorldName: "Name",
+  hpOriginBlank: "Blank world",
+  hpOriginBlankHint: "The twelve seeding panels, era one, a fresh deck.",
+  hpOriginFork: "Fork a simulator world",
+  hpOriginForkHint:
+    "Run a seed to an age, then take over by hand. Shuffle your paper deck; the next card played marks the new cycle.",
+  hpOriginPaper: "My paper map",
+  hpOriginPaperHint:
+    "A map you have been painting without the tool: enter its skeleton in minutes, detail arrives panel by panel as it is needed.",
+  hpCreate: "Create",
+  hpSeed: "Seed",
+  hpEras: "Eras",
+  hpForkAges: "Run to age",
+  hpGeometry: "Panel size",
+  hpOpen: "Open",
+  hpDelete: "Delete",
+  hpDeleteWarn:
+    "This removes the world {name} with its whole record from this device, forever. Export it first if it matters.",
+  hpRename: "Rename",
+  hpExport: "Export world",
+  hpImport: "Import world",
+  hpImportBad: "That file is not a Helper world this app understands.",
+  hpForeignNotice:
+    "That world was recorded under rules {theirs}; this engine speaks {ours}. It is kept as it is, read-only — its record can only be replayed by the rules that wrote it.",
+  hpReadOnly: "This world is read-only under the standing lineage notice.",
+  hpNoSuchWorld: "That world is no longer on this device.",
+  hpNoStore:
+    "This browser will not let the app keep files on the device (private mode can do this). Playing works, saving does not.",
+  hpQuotaFull: "There is no room left on this device for the record.",
+  hpFailed: "The Helper hit a wall: {message}",
+  hpEmptyList:
+    "Play your physical map with the rules on your side: every open choice is yours, every consequence is computed, previewed, and explained in the book's words. Create a world to begin.",
+
+  // the table screen
+  hpEra: "era",
+  hpAge: "age",
+  hpCycle: "cards left this cycle",
+  hpModeGuided: "Guided",
+  hpModeProposal: "Proposal",
+  hpModeHint:
+    "Guided asks you every open choice. Proposal resolves the whole age as a suggestion you review, take over, or accept.",
+  hpGlance:
+    "Does this match your paper? The working panel and its Spread, as the Helper believes them. Tap any unit to fix it.",
+  hpGlanceMatch: "It matches",
+  hpWhichCard: "Which card was drawn?",
+  hpDrawForMe: "Draw for me",
+  hpForcedCard: "The marked card comes around: the cycle completes with it.",
+  hpShuffleNote: "The deck completed its cycle — shuffle your paper deck now.",
+  hpEnterPanel: "Enter panel {name}",
+  hpSpreadMissing:
+    "This age can reach into {names}. Enter what your paper shows there before playing it.",
+  hpBeyondSpread:
+    "The age reached into {name}, which is not entered yet. Enter what your paper shows there, or finish this age on paper and catch up afterwards.",
+  hpEnterNow: "Enter it now",
+  hpFinishOnPaper: "I will finish on paper",
+  hpUndo: "Undo",
+  hpCommit: "Commit the age",
+  hpReopen: "Reopen last age",
+  hpAgeClosed: "The age is closed. Commit writes it to the record and advances the calendar.",
+  hpFinished: "The run's eras are complete; the record holds a whole game.",
+
+  // questions
+  hpQuestionDie: "Roll {die} — {purpose}",
+  hpEnterRoll: "Enter my roll",
+  hpRollForMe: "Roll for me",
+  hpChooseOutcome: "Choose the outcome",
+  hpChooseHint: "The book's own word: you are free to choose instead of rolling.",
+  hpTapCandidate: "Tap a glowing unit on the map, or pick from the list.",
+  hpTapPanel: "Tap a glowing panel position on the map, or pick from the list.",
+  hpChanceQuestion: "Archive chance ({pct}%)",
+  hpChanceYes: "It happened",
+  hpChanceNo: "It did not",
+  hpPreviewTitle: "What just followed",
+  hpQuestionChip: "open decision",
+  hpBookLink: "the book on this",
+
+  // choice labels
+  hpHeadingN: "N", // compass names come from the shared DIR list below
+  hpWater: "water",
+  hpHeights: "heights",
+  hpRunLabel: "run of {n} ({cls}) on the {side} border",
+  hpSettlementLabel: "settlement of {n} units",
+  hpUnitLabel: "r{r}c{c} {panel}",
+  hpPaintBase: "paint {elevation}",
+
+  // proposal
+  hpProposalTitle: "The proposal",
+  hpProposalHint:
+    "The whole age, resolved by the simulator's own policies. Review it against your paper; tap any step to take that decision over — the age drops into guided mode from there.",
+  hpSuggestion: "suggestion",
+  hpSuggestionHint:
+    "This choice is yours by law — the mark means the simulator's taste answered, never the rules.",
+  hpAccept: "Accept the proposal",
+  hpTakeover: "take over",
+
+  // paint editor
+  hpPaintTitle: "Paint editor",
+  hpPaintHint:
+    "The paper wins: paint what your map shows. Elevation first, then people and marks on top.",
+  hpErase: "erase",
+  hpPeople: "people",
+  hpMarks: "marks",
+  hpNoPeople: "none",
+  hpSaveEdits: "Save to the record",
+  hpCancelEdits: "Cancel",
+  hpEditMap: "Edit the map",
+  hpOverrideNote: "Recorded as an override — paper won, as it should.",
+  hpStepRule:
+    "A kind note: the Step Rule likes neighbors within one elevation step, and {places} step further than that. Your paper wins — this is only mentioned.",
+
+  // skeleton entry
+  hpSkeletonTitle: "The skeleton",
+  hpSkeletonHint:
+    "Tap the grid: which coordinates hold panels, which are already full, which are archived. The twelve seeding panels are always there.",
+  hpSkeletonState0: "no panel",
+  hpSkeletonState1: "open",
+  hpSkeletonState2: "full",
+  hpSkeletonState3: "archived",
+  hpStackTitle: "Your Stack, front first",
+  hpStackHint:
+    "Tap the panels in the order your paper Stack holds them, top to bottom. Full panels stay in rotation unless archived.",
+  hpStackReset: "Start over",
+  hpCalendarTitle: "The calendar",
+  hpCalendarHint: "Where your paper game stands: the era, and its completed ages.",
+  hpDeckTitle: "The deck",
+  hpDeckFresh: "I just shuffled (or will now)",
+  hpDeckMidCycle: "Mid-cycle: tell the Helper where the deck stands",
+  hpDeckMarked: "The marked first card",
+  hpDeckPlayed: "Cards already played this cycle",
+  hpDeckNone: "none yet",
+
+  // catch-up
+  hpCatchupTitle: "Catch up",
+  hpCatchupHint:
+    "Played ages away from the tool? Advance the calendar, answer for the deck, then touch up the map with the paint editor. Recorded as a checkpoint — the record stays replayable.",
+  hpCatchupAges: "Ages played on paper",
+  hpCatchupGo: "Advance the calendar",
+  hpCheckpointNote: "checkpoint",
+
+  // record strip
+  hpRecordTitle: "This age",
+  hpLogTitle: "The record",
+
   // misc
   offlineReady: "Ready to work offline.",
 } as const;

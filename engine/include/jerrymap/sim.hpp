@@ -227,6 +227,10 @@ private:
     std::vector<StoredEvent> events_;
     std::int64_t ev_seq_ = 0;
 
+    // per-pick transient: extra context a call site attaches to the next
+    // witnessed pick (CONTRACTS §4) — set right before pick(), cleared by it
+    std::string pick_ctx_;
+
     // per-age transients (always quiescent at age boundaries)
     int step_no_ = 0;
     bool have_cur_ = false; Panel cur_panel_{};

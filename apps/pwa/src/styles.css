@@ -633,3 +633,80 @@ button.danger { background: var(--error); border-color: var(--error); color: #ff
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
   }
 }
+
+/* ===== the Helper — the companion for playing on paper =================== */
+.helper { display: flex; flex-direction: column; gap: 0.6rem; max-width: 900px; margin: 0 auto; }
+.helper .row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.helper .hint { color: var(--muted); font-size: 0.85rem; margin: 0.2rem 0 0.5rem; }
+.helper .chip { border: 1px solid var(--card-edge); border-radius: 999px; padding: 0.1rem 0.6rem; font-size: 0.8rem; }
+
+.helper-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.helper-head h2 { margin: 0; font-size: 1.05rem; }
+
+.origin-buttons { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 0.6rem; }
+button.origin { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; text-align: left; padding: 0.6rem; }
+button.origin small { color: var(--muted); font-weight: normal; }
+button.origin.active { outline: 2px solid var(--accent, #ffd54a); }
+
+.world-list { list-style: none; margin: 0.4rem 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.world-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+button.world-open { display: flex; flex-direction: column; align-items: flex-start; flex: 1; text-align: left; }
+button.world-open small { color: var(--muted); }
+.file-button { position: relative; overflow: hidden; display: inline-block; cursor: pointer; padding: 0.35rem 0.7rem; border: 1px solid var(--card-edge); border-radius: 8px; }
+.file-button input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.helper-map { position: relative; }
+.helper-map-zoom { position: absolute; right: 0.4rem; bottom: 0.4rem; display: flex; gap: 0.3rem; }
+
+.age-flow .age-header { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.4rem; }
+.age-flow .work { color: var(--muted); font-size: 0.85rem; }
+.book-link { font-size: 0.8rem; margin-left: auto; }
+.age-log { font-size: 0.78rem; line-height: 1.35; overflow-x: auto; background: rgba(127,127,127,0.08); border-radius: 6px; padding: 0.5rem; max-height: 14rem; overflow-y: auto; white-space: pre; }
+
+.picker-cards { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.4rem 0; }
+button.picker-card { display: flex; align-items: baseline; gap: 0.35rem; padding: 0.45rem 0.6rem; }
+button.picker-card .work { font-size: 0.8rem; color: var(--muted); }
+button.picker-card .count { font-size: 0.8rem; }
+button.picker-card.active { outline: 2px solid var(--accent, #ffd54a); }
+
+.dice-triplet { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.4rem 0; }
+.dice-triplet button { flex: 1 1 9rem; min-height: 2.6rem; }
+.die-faces { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.die-faces button { min-width: 2.6rem; min-height: 2.6rem; }
+
+.pick-list { display: flex; flex-direction: column; gap: 0.3rem; max-height: 15rem; overflow-y: auto; }
+.pick-list button { text-align: left; }
+
+.proposal-rows { margin: 0.4rem 0; padding-left: 1.4rem; display: flex; flex-direction: column; gap: 0.3rem; }
+button.proposal-row { display: flex; align-items: center; gap: 0.5rem; width: 100%; text-align: left; }
+button.proposal-row .takeover { margin-left: auto; font-size: 0.75rem; color: var(--muted); }
+.chip.suggestion { background: #ffd54a33; border: 1px solid #ffd54a; border-radius: 999px; padding: 0 0.5rem; font-size: 0.72rem; font-style: normal; }
+
+.paint-grid { display: grid; gap: 2px; margin: 0.5rem 0; }
+.paint-cell { position: relative; aspect-ratio: 1; min-width: 30px; border: 1px solid var(--card-edge); border-radius: 4px; padding: 0; }
+.paint-cell.preselect { outline: 2px solid var(--accent, #ffd54a); }
+.paint-people { position: absolute; inset: 22%; display: block; border-radius: 2px; }
+.paint-mark { position: absolute; right: 2px; bottom: 0; font-size: 0.65rem; font-style: normal; }
+.paint-tools { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; margin: 0.3rem 0; }
+.paint-tools .tool { width: 1.9rem; height: 1.9rem; border: 1px solid var(--card-edge); border-radius: 4px; padding: 0; }
+.paint-tools .tool.chip, .paint-tools .tool.erase { width: auto; padding: 0 0.5rem; font-size: 0.8rem; }
+.paint-tools .tool.active { outline: 2px solid var(--accent, #ffd54a); }
+
+.skeleton-grid { display: grid; gap: 3px; margin: 0.5rem 0; }
+.skeleton-cell { aspect-ratio: 5/6; min-width: 34px; font-size: 0.6rem; border: 1px dashed var(--card-edge); border-radius: 4px; padding: 0; color: var(--muted); }
+.skeleton-cell.s-open { border-style: solid; background: rgba(143,190,110,0.25); color: inherit; }
+.skeleton-cell.s-full { border-style: solid; background: rgba(143,190,110,0.6); color: inherit; }
+.skeleton-cell.s-archived { border-style: solid; background: rgba(127,127,127,0.35); text-decoration: line-through; }
+.chip.ordered { background: rgba(255,213,74,0.15); }
+
+.mode-toggle button { min-width: 6rem; }
+.card-picker h3, .age-flow h3 { margin: 0.3rem 0; font-size: 0.95rem; }
+.deck-answer h4, .skeleton-editor h4 { margin: 0.6rem 0 0.2rem; }
+button.danger { border-color: #c0392b; color: #c0392b; }
+
+@media (max-width: 620px) {
+  .helper-head { flex-direction: column; align-items: flex-start; }
+  .dice-triplet button { flex-basis: 100%; }
+}
+.helper a.book-link { color: var(--muted); text-decoration: underline; }
+.helper a.book-link:hover { color: inherit; }

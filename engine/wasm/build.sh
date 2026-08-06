@@ -27,7 +27,7 @@ if [[ "$what" == "node" || "$what" == "all" ]]; then
     -sNODERAWFS=1 -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=1 \
     -sSTACK_SIZE=2097152 -fexceptions \
     -sEXPORTED_RUNTIME_METHODS=ccall,cwrap \
-    "-sEXPORTED_FUNCTIONS=_main,_jm_version,_jm_lineage,_jm_patina,_jm_create,_jm_load,_jm_step,_jm_run,_jm_log,_jm_report,_jm_state,_jm_events,_jm_time,_jm_free,_malloc,_free"
+    "-sEXPORTED_FUNCTIONS=_main,_jm_version,_jm_lineage,_jm_patina,_jm_create,_jm_load,_jm_step,_jm_run,_jm_log,_jm_report,_jm_state,_jm_events,_jm_time,_jm_free,_jm_helper_create,_jm_helper_age,_jm_rng_seed,_jm_roll,_jm_perm,_malloc,_free"
 fi
 
 if [[ "$what" == "web" || "$what" == "all" ]]; then
@@ -40,7 +40,7 @@ if [[ "$what" == "web" || "$what" == "all" ]]; then
     -sFILESYSTEM=0 -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=2097152 -fexceptions \
     -sWASM_BIGINT=1 \
     -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,UTF8ToString,stringToUTF8,lengthBytesUTF8 \
-    "-sEXPORTED_FUNCTIONS=_jm_version,_jm_lineage,_jm_patina,_jm_create,_jm_load,_jm_step,_jm_run,_jm_log,_jm_report,_jm_state,_jm_events,_jm_time,_jm_free,_malloc,_free"
+    "-sEXPORTED_FUNCTIONS=_jm_version,_jm_lineage,_jm_patina,_jm_create,_jm_load,_jm_step,_jm_run,_jm_log,_jm_report,_jm_state,_jm_events,_jm_time,_jm_free,_jm_helper_create,_jm_helper_age,_jm_rng_seed,_jm_roll,_jm_perm,_malloc,_free"
 fi
 
 ls -la dist/ prebuilt/ 2>/dev/null || ls -la prebuilt/

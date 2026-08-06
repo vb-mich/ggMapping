@@ -10,6 +10,12 @@ export interface JmConfig {
   deck?: DeckRow[];
   addpanel_copies?: number;
   work_spread?: boolean;
+  // present in every SAVED config (§6); this lineage hard-enables the three
+  // booleans and fixes wake_era at 2, so fresh-run configs may omit them
+  wake_era?: number;
+  alive?: boolean;
+  semi?: boolean;
+  fragile?: boolean;
   work_overrides?: Record<string, number>;
   mood_overrides?: Record<string, string>;
   archive_permille?: number;
@@ -83,3 +89,67 @@ export interface JmTime {
   eras_wanted: number;
   finished: boolean;
 }
+
+// --- the Helper's seam (CONTRACTS §4.1-4.3) ---------------------------------
+
+// One decision record, §4 — what the script carries and the engine replays.
+export interface TapeRecord {
+  kind: "die" | "pick" | "chance" | "shuffle";
+  purpose: string;
+  domain: number;
+  result: number | boolean | number[];
+}
+
+// A witnessed pick candidate (§4.2): a number, a unit/panel pair, or an
+// object whose tappable unit is always under "unit".
+export type Candidate =
+  | number
+  | [number, number]
+  | {
+      unit: [number, number];
+      facing?: [number, number];
+      outside?: [number, number];
+      needs_paint?: boolean;
+      legal?: number[];
+    };
+
+// ctx rows align one for one with the candidates (extend run, living/lead city)
+export interface CandidateCtx {
+  length?: number;
+  side?: string;
+  water?: boolean;
+  units: [number, number][];
+}
+
+// The frontier sentinel: the age's next open decision (§4.3).
+export interface HelperQuestion {
+  kind: TapeRecord["kind"];
+  purpose: string;
+  domain: number;
+  cands: Candidate[] | null;
+  ctx: CandidateCtx[] | null;
+}
+
+// A proposal row: a §4 record plus the candidates the policy chose from.
+export interface FreshRecord extends TapeRecord {
+  cands: Candidate[] | null;
+  ctx: CandidateCtx[] | null;
+}
+
+export type HelperResponse =
+  | {
+      status: "question";
+      consumed: number;
+      question: HelperQuestion;
+      events: JmEvent[]; // the partial age so far
+    }
+  | {
+      status: "closed";
+      consumed: number;
+      finished: boolean;
+      state: WorldState;
+      events: JmEvent[];
+      fresh?: FreshRecord[]; // propose mode: the policy's answers
+      policy_state?: string; // propose mode: the advanced §3 state
+    }
+  | { status: "error"; message: string };

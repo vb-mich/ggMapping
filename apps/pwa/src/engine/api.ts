@@ -3,7 +3,14 @@
 import initModule from "@engine/jerrymap.mjs";
 import wasmUrl from "@engine/jerrymap.wasm?url";
 
-import type { JmConfig, JmEvent, JmTime, WorldState } from "../contracts/schema";
+import type {
+  HelperResponse,
+  JmConfig,
+  JmEvent,
+  JmTime,
+  TapeRecord,
+  WorldState,
+} from "../contracts/schema";
 
 interface EmModule {
   _jm_version(): number;
@@ -19,6 +26,11 @@ interface EmModule {
   _jm_events(h: number): number;
   _jm_time(h: number): number;
   _jm_free(h: number): void;
+  _jm_helper_create(cfg: number, seed: bigint, eras: number, script: number): number;
+  _jm_helper_age(state: number, script: number, mode: number, policyState: number): number;
+  _jm_rng_seed(seed: bigint): number;
+  _jm_roll(n: number, state: number): number;
+  _jm_perm(len: number, state: number): number;
   _malloc(n: number): number;
   _free(p: number): void;
   UTF8ToString(p: number): string;
@@ -107,5 +119,67 @@ export class Engine {
   }
   free(h: number): void {
     this.m._jm_free(h);
+  }
+
+  // --- the Helper's seam (CONTRACTS §4.3) -----------------------------------
+  // Stateless calls: a state document in, a decision script in, one age out.
+  // The script travels as §4 JSONL; responses are one JSON document.
+
+  private static scriptText(tape: TapeRecord[]): string {
+    return tape.length
+      ? tape.map((r, i) => JSON.stringify({ i, ...r })).join("\n") + "\n"
+      : "";
+  }
+
+  helperCreate(
+    config: JmConfig,
+    seed: number,
+    eras: number,
+    tape: TapeRecord[],
+  ): HelperResponse {
+    return JSON.parse(
+      this.withCStr(JSON.stringify(config), (cfg) =>
+        this.withCStr(Engine.scriptText(tape), (script) =>
+          this.m.UTF8ToString(
+            this.m._jm_helper_create(cfg, BigInt(seed), eras, script),
+          ),
+        ),
+      ),
+    ) as HelperResponse;
+  }
+
+  helperAge(
+    stateJson: string,
+    tape: TapeRecord[],
+    mode: "guided" | "propose" | "replay",
+    policyState = "",
+  ): HelperResponse {
+    const modeNo = mode === "propose" ? 1 : mode === "replay" ? 2 : 0;
+    return JSON.parse(
+      this.withCStr(stateJson, (state) =>
+        this.withCStr(Engine.scriptText(tape), (script) =>
+          this.withCStr(policyState, (ps) =>
+            this.m.UTF8ToString(this.m._jm_helper_age(state, script, modeNo, ps)),
+          ),
+        ),
+      ),
+    ) as HelperResponse;
+  }
+
+  // The §3 RNG, one implementation — the engine's (CONTRACTS §4.3).
+  rngSeed(seed: number): string {
+    return this.m.UTF8ToString(this.m._jm_rng_seed(BigInt(seed)));
+  }
+
+  roll(n: number, rngState: string): { value: number; state: string } {
+    return JSON.parse(
+      this.withCStr(rngState, (p) => this.m.UTF8ToString(this.m._jm_roll(n, p))),
+    ) as { value: number; state: string };
+  }
+
+  perm(len: number, rngState: string): { perm: number[]; state: string } {
+    return JSON.parse(
+      this.withCStr(rngState, (p) => this.m.UTF8ToString(this.m._jm_perm(len, p))),
+    ) as { perm: number[]; state: string };
   }
 }

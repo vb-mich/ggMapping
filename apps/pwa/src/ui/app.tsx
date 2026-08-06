@@ -48,6 +48,24 @@ function RulebookLazy({ route: r }: { route: Route }) {
   const R = RulebookLoaded;
   return <R route={r} />;
 }
+
+// The Helper too: the engine face, the session, and the table screens ride
+// in their own chunk, paid for only when the tab opens.
+let HelperLoaded: typeof import("../helper/ui/HelperScreen").HelperScreen | null = null;
+function HelperLazy({ route: r }: { route: Route }) {
+  const ready = useSignal(HelperLoaded !== null);
+  useEffect(() => {
+    if (!HelperLoaded)
+      void import("../helper/ui/HelperScreen").then((m) => {
+        HelperLoaded = m.HelperScreen;
+        ready.value = true;
+      });
+  }, []);
+  if (!ready.value || !HelperLoaded)
+    return <main class="helper loading">{STRINGS.rbLoading}…</main>;
+  const H = HelperLoaded;
+  return <H route={r} />;
+}
 import { ProfileScreen } from "../digitalizer/ui/ProfileScreen";
 import { ConfigPanel } from "./ConfigPanel";
 import { DeckEditor } from "./DeckEditor";
@@ -133,14 +151,28 @@ export function App() {
             {STRINGS.navSimulator}
           </button>
           <button
+            class={route.value.screen.startsWith("helper") ? "tab active" : "tab"}
+            data-testid="tab-helper"
+            aria-current={
+              route.value.screen.startsWith("helper") ? "page" : undefined
+            }
+            onClick={() => go("#/helper")}
+          >
+            {STRINGS.navHelper}
+          </button>
+          <button
             class={
-              route.value.screen === "sim" || route.value.screen === "rules"
+              route.value.screen === "sim" ||
+              route.value.screen === "rules" ||
+              route.value.screen.startsWith("helper")
                 ? "tab"
                 : "tab active"
             }
             data-testid="tab-mymap"
             aria-current={
-              route.value.screen !== "sim" && route.value.screen !== "rules"
+              route.value.screen !== "sim" &&
+              route.value.screen !== "rules" &&
+              !route.value.screen.startsWith("helper")
                 ? "page"
                 : undefined
             }
@@ -240,6 +272,8 @@ export function App() {
         </>
       ) : route.value.screen === "rules" ? (
         <RulebookLazy route={route.value} />
+      ) : route.value.screen.startsWith("helper") ? (
+        <HelperLazy route={route.value} />
       ) : route.value.screen.startsWith("profile") ? (
         <ProfileScreen route={route.value} />
       ) : (

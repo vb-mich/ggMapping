@@ -12,6 +12,8 @@ export type Route =
   | { screen: "profile" }
   | { screen: "profile-playback" }
   | { screen: "profile-maps" }
+  | { screen: "helper" }
+  | { screen: "helper-world"; id: string }
   | { screen: "rules"; book: string | null; anchor: string | null };
 
 export function parseRoute(hash: string): Route {
@@ -20,6 +22,12 @@ export function parseRoute(hash: string): Route {
     if (parts[1] === "playback") return { screen: "profile-playback" };
     if (parts[1] === "maps") return { screen: "profile-maps" };
     return { screen: "profile" };
+  }
+  if (parts[0] === "helper") {
+    // #/helper/world/<id> is a sub-route so the phone's back button walks
+    // out of a world and back to the list naturally
+    if (parts[1] === "world" && parts[2]) return { screen: "helper-world", id: parts[2] };
+    return { screen: "helper" };
   }
   if (parts[0] === "rules") {
     // #/rules/book/<id>[/<anchor>] names a book of the library; a bare
@@ -59,7 +67,12 @@ if (typeof window !== "undefined") {
       route.value.screen.startsWith("profile") &&
       !prev.screen.startsWith("profile")
     ) {
-      beforeProfile.value = prev.screen === "sim" ? "#/" : "#/map";
+      beforeProfile.value =
+        prev.screen === "sim"
+          ? "#/"
+          : prev.screen.startsWith("helper")
+            ? "#/helper"
+            : "#/map";
     }
   });
 }
@@ -69,6 +82,7 @@ export function go(hash: string): void {
 }
 
 export const panelHash = (tx: number, ty: number) => `#/map/panel/${tx}/${ty}`;
+export const helperWorldHash = (id: string) => `#/helper/world/${id}`;
 export const rulesHash = (slug?: string, book?: string) =>
   book
     ? `#/rules/book/${book}${slug ? `/${slug}` : ""}`
