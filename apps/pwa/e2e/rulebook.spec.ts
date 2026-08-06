@@ -165,12 +165,22 @@ test("the library: two books, one selector, both link dialects", async ({ page }
   await page.getByTestId("book-select").selectOption("handbook");
   await expect(page.getByTestId("book-title")).toContainText("Player's Handbook");
 
-  // an explicit book deep link lands inside the handbook
-  await page.goto("/#/rules/book/handbook/4-the-cards");
-  const ch4 = page.locator('[id="4-the-cards"]');
-  await expect(ch4).toBeVisible();
+  // an explicit book deep link lands inside the handbook. The cards
+  // chapter's number moved once already (4 to 5 in a revision), so the test
+  // takes the chapter's own link from the outline and arrives by URL alone.
+  if (isNarrow(page)) await page.getByTestId("book-drawer-toggle").click();
+  const cardsHref = await page
+    .locator("[data-testid='book-outline'] a", { hasText: /the cards/i })
+    .first()
+    .getAttribute("href");
+  expect(cardsHref).toMatch(/#\/rules\/book\/handbook\/\d+-/);
+  await page.goto("/" + cardsHref);
+  const cards = page
+    .locator("[data-testid='book-page'] h1", { hasText: /the cards/i })
+    .first();
+  await expect(cards).toBeVisible();
   await expect
-    .poll(async () => landedAt(page, (await ch4.boundingBox())!.y))
+    .poll(async () => landedAt(page, (await cards.boundingBox())!.y))
     .toBe(true);
 
   // a pre-library link still opens the Master Manual, where it was minted
