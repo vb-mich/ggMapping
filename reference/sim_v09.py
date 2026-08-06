@@ -125,9 +125,9 @@ def spread_work(avg, n, on):
 class Sim:
     def __init__(self, seed, eras, cfg=None):
         self.cfg = dict(deck=DEFAULT_DECK, wake_era=2, alive=True, fragile=True,
-                        tile_w=5, tile_h=6, addpanel=None, semi=True,
+                        panel_w=5, panel_h=6, addpanel=None, semi=True,
                         work_spread=True, work=None, mood=None,
-                        archive_chance=0,
+                        archive_chance=0, max_panels=0,
                         stroke_die=4, stroke_add=1,
                         greatridge_die=None, greatridge_add=0,
                         extend_cap=4)
@@ -984,7 +984,12 @@ class Sim:
         return None
 
     # ------------------------------------------------ add a tile
-    def card_addpanel(self, t):
+    def card_addpanel(self, t, free=False):
+        if (not free and self.cfg["max_panels"]
+                and len(self.tiles) >= self.cfg["max_panels"]):
+            self._work_tile = None
+            self.skip("addpanel", "the map is at its edge")
+            return None
         cands = set()
         for tk in self.tiles:
             tx, ty = tk
@@ -1056,7 +1061,7 @@ class Sim:
 
 
     def run(self):
-        set_geometry(self.cfg["tile_w"], self.cfg["tile_h"])
+        set_geometry(self.cfg["panel_w"], self.cfg["panel_h"])
         # genesis
         if (TILE_W, TILE_H) == (5, 6):
             layout = [(-1, 2), (1, 2),
@@ -1088,8 +1093,8 @@ class Sim:
             if not self.stack:
                 self.M["free_tiles"] += 1
                 self.log(f"[e{self.era}] stack empty: a panel is added for free")
-                self.card_addpanel(None)
-            if card == "addpanel":
+                self.card_addpanel(None, free=True)
+            if card == "addpanel" and not (self.cfg["max_panels"] and len(self.tiles) >= self.cfg["max_panels"]):
                 self.visit_no += 1
                 era_visits += 1
                 self.log(f"[e{self.era} a{era_visits:02d}] the new panel | ADDPANEL")
@@ -1351,10 +1356,13 @@ def main():
     ap.add_argument("--snapshots", action="store_true")
     ap.add_argument("--alive", action="store_true",
                     help="the Living Map: no Atlas, full panels rework, cities live")
-    ap.add_argument("--tile", default="5x6",
-                    help="tile geometry WxH: 5x6 mini-map (canon), 8x10 full-map, or any")
+    ap.add_argument("--max-panels", type=int, default=0,
+                    help="cap the map at this many panels; 0 means unbounded. "
+                         "At the cap, Add Panel days become rework days")
+    ap.add_argument("--panel", default="5x6",
+                    help="panel geometry WxH: 5x6 mini-map (canon), 8x10 full-map, or any")
     ap.add_argument("--addpanel", type=int, default=None,
-                    help="Add a Tile copies at the wake (full-map recipe: 2)")
+                    help="Add Panel copies joining at the wake (default 2)")
     ap.add_argument("--archive-chance", type=float, default=0,
                     help="percent chance a panel is archived upon completion")
     ap.add_argument("--stroke-die", type=int, default=4)
@@ -1389,14 +1397,14 @@ def main():
     args = ap.parse_args()
     seed = args.seed if args.seed is not None else random.SystemRandom().randint(1, 10**7)
     os.makedirs(args.out, exist_ok=True)
-    tw, th = (int(v) for v in args.tile.lower().split("x"))
+    tw, th = (int(v) for v in args.panel.lower().split("x"))
     sim = Sim(seed, args.eras, dict(alive=True, semi=True,
-                                    archive_chance=args.archive_chance,
+                                    archive_chance=args.archive_chance, max_panels=args.max_panels,
                                     stroke_die=args.stroke_die, stroke_add=args.stroke_add,
                                     greatridge_die=args.greatridge_die,
                                     greatridge_add=args.greatridge_add,
                                     extend_cap=args.extend_cap, fragile=True,
-                                    tile_w=tw, tile_h=th, addpanel=args.addpanel,
+                                    panel_w=tw, panel_h=th, addpanel=args.addpanel,
                                     ld_retire=args.ld_retire,
                                     ld_shuffle=args.ld_shuffle,
                                     ld_floor=args.ld_floor,

@@ -34,6 +34,20 @@ To start your map you don't need much, just paper, some pencils, colors and a st
 
 Jerrymapping is a very affordable, yet immersive experience!
 
+## Words of the game
+
+| Word | Meaning |
+|---|---|
+| Unit | One small square of a panel |
+| Panel | One sheet of the map, a matrix of units |
+| Base | A unit's ground: its elevation |
+| Overlay | Anything drawn on top of the base |
+| Stack | The pile of panels waiting for work |
+| Spread | The current panel with its map neighbors laid around it |
+| Work number | How many units a card fills |
+| Rework | Decorating filled units without changing their elevation |
+| Age, Era | One card is one age; 25 ages are one era |
+
 # 2. The panels
 
 The panel is the base of your map. 
@@ -99,7 +113,10 @@ Sometimes a card asks for a random unit in a panel. In that case you need to rol
 
 **DO I REALLY NEED TO ROLL DICE?**
 No, you can totally "vibe painting" based on your instinct!
-Just mind that humans are generally good randomizers, with dice you're guaranteed to have a balanced result.
+Just mind that humans are generally poor randomizers, with dice you're guaranteed to have a balanced result.
+
+**WILL YOU ADD JERRY'S SUITS, EPICENTERS, OR THE VOID?**
+Jerry's own map grew those systems slowly, over decades, and they belong to his map. ggMapping is a simplified, independent ruleset inspired by the idea of jerrymapping, not a copy of his rules. The deck is yours to extend, chapter 10 shows how, and some of those ideas may inspire expansions one day.
 ## The map time
 The map evolution follows a calendar based on the number of cards you draw and execute.
 
@@ -109,7 +126,7 @@ The map evolution follows a calendar based on the number of cards you draw and e
 You're encouraged to mark both the map time and the real date on the back of each panel after each visit. 
 
 ![[map-dial.png]]
-Here is an example of a decorated Map Time Dial
+Here is an example of a decorated Map Time Dial: a paper dial of three disks joined by a pin. The middle disk's window points at the current era, the top disk's window at the current age. Turn the age window one step after each visit; every 25 ages, turn the era window one step and bring the age back to 1. The dial is optional: any note on paper does the same job. A printable dial is available with the game's tools.
 
 ## Colors
 In the manual, no standard colors are suggested for the various levels of terrain and features, the player is strongly invited to come up with their own palette. 
@@ -193,6 +210,8 @@ Examples of rework:
 
 NOTE: Blank units cannot be reworked.
 
+**Two words from the simulator's records.** The records call every rework step an **embellish**: the same thing by another name. And when a Settlement finds no legal home on mostly blank ground, the records say it leaves a **waymark**: a small sign of the visit, a flourish that belongs to the whole panel rather than to one unit. On the rendered map such panel flourishes are shown on painted ground, the most worked units first; on your paper map, you choose where they go.
+
 ![[Nudge-example.png]]
 
 # 5. Starting your first map
@@ -210,7 +229,7 @@ Here below is the list of cards of your very first deck, a total of 20 cards to 
 | 3      | 6, 7, 8             | Settle   | Basin       |
 | 1      | 7                   | Rise     | Ridge       |
 | 1      | 7                   | Rise     | Great Ridge |
-| 7      | 5, 6, 6, 6, 6, 6, 7 | Level    | -           |
+| 7      | 5, 6, 6, 6, 6, 6, 7 | Level    | Calm (no instruction) |
 | 2      | 6, 8                | Settle   | Free Stroke |
 | 4      | 6, 7, 7, 8          | Settle   | Settlement  |
 | 1      | 7                   | Rise     | Anomaly     |
@@ -243,6 +262,7 @@ NOTE:
 1. When your map reaches an impressive dimension, let's 100+ panels, you might find sequential work kinda boring and you want to move though panels faster. In that case, you're allowed to pass over an amount of panels equal to the card's work number + 1d20. Mind that passed panels keep their places at the front.
 2. If you chose to archive panes, and you find yourself with no panels left on the working stack, you automatically add one panel as executing an "Add panel" card
 3. If you pick an "Add Panel" card, skip step 2: the new panel you place is your current working panel for this turn. You work on one panel and one Spread, always.
+4. A panel is **full** when every one of its units is painted. Overlays, people and marks do not matter for fullness: only the base does.
 
 # 7. Filling units
 
@@ -266,7 +286,7 @@ No die. The mood is printed on the card you drew, and it colors every unit of th
 | **Rise**   | dominant elevation step, one step away from plain |
 
 ### Step 3. Find the dominant elevation. 
-Look at the filled side neighbors of the chosen unit (across borders too). The most common elevation among them is dominant. Remember: overlays count as their base; anomaly units are not counted at all. If two elevation step tie, roll a die between them.
+Look at the filled side neighbors of the chosen unit (across borders too). The most common elevation among them is dominant. Remember: overlays count as their base; anomaly units are not counted at all. If two elevation step tie, roll a die between them. Both this step and Step 1 look across panel borders in the same way. One nuance: an anomaly unit counts as a filled neighbor when choosing where (Step 1), but never counts here: it has no elevation voice.
 
 * Special case: if the chosen unit has no countable side neighbors (none is filled, or the filled ones are all anomaly units), skip the dominant step. Instead, **you choose** or roll d6 on the **First Elevation table** and go to Step 5:
 
@@ -302,6 +322,8 @@ Look at the filled side neighbors of the chosen unit (across borders too). The m
 
 ### Step 5. Check the Step Rule. 
 The result must sit within one elevation step of every filled side neighbor. If it does not, move it to the nearest elevation step that does. If no step works, use the Cliff exception.
+
+> **The Cliff exception.** When no elevation step satisfies every neighbor, satisfy the lowest neighbor and paint one step above it. The high side will jump more than one elevation step: that jump is a cliff. Cliffs are not mistakes.
 
 **Step 6. Color the unit.** If the panel is now full, stop filling: the rest of the work becomes **rework** on this panel, on units of your choice.
 

@@ -75,7 +75,7 @@ int run_cli(int argc, char** argv) {
         if (a == "--eras") o.eras = std::atoi(val().c_str());
         else if (a == "--seed") o.seed = std::atoll(val().c_str());
         else if (a == "--out") o.out = val();
-        else if (a == "--tile") o.tile = val();
+        else if (a == "--panel") o.tile = val();
         else if (a == "--addpanel") o.addpanel = std::atoi(val().c_str());
         else if (a == "--archive-chance") o.archive_chance = val();
         else if (a == "--stroke-die") o.stroke_die = std::atoi(val().c_str());
@@ -141,7 +141,7 @@ int run_cli(int argc, char** argv) {
             std::size_t x = o.tile.find('x');
             if (x == std::string::npos) x = o.tile.find('X');
             if (x == std::string::npos)
-                throw std::runtime_error("bad --tile: " + o.tile);
+                throw std::runtime_error("bad --panel: " + o.tile);
             tw = std::atoi(o.tile.substr(0, x).c_str());
             th = std::atoi(o.tile.substr(x + 1).c_str());
         }

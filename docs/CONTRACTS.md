@@ -1,6 +1,6 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **5.0.0** · State schema: **1** · Event schema: **3** · World lineage: **v0.9**
+Contract version: **5.1.0** · State schema: **1** · Event schema: **3** · World lineage: **v0.9**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
@@ -28,8 +28,10 @@ from every rendered output: every log line, the metrics footer, and every UI str
 CI enforces this over every rendered log of the matrix and over the app's string
 tables. The ban governs **output text** and, since event schema 3, the event
 payload keys (`era_summary.elevation_counts`, `paint.elevation` — renamed at
-5.0.0 with no consumer, closing the rename ledger's schema side):
-the `--tile` CLI flag and code identifiers keep their historical names, exactly as
+5.0.0 with no consumer, closing the rename ledger's schema side). The CLI flag
+became `--panel` at 5.1.0, when the v0.9.1 package shipped the twin speaking
+it — the condition this section set. **The rename ledger is closed.** Only
+code identifiers keep their historical names, exactly as
 the twin itself does. The card that grows the map is **addpanel** end to end: config
 key, CLI flag, engine identifier, log text.
 
@@ -487,7 +489,7 @@ embellishment totals, city firsts + reworks + crumbles. Byte-frozen by the gate.
 reference's defaults:
 
 ```
---eras N (8)  --seed N (random 1..10^7)  --out DIR (runs)  --tile WxH (5x6)
+--eras N (8)  --seed N (random 1..10^7)  --out DIR (runs)  --panel WxH (5x6)
 --addpanel N (2 in this lineage)  --archive-chance P (0, percent, one decimal)
 --stroke-die N (4)  --stroke-add N (1)
 --greatridge-die N (unset)  --greatridge-add N (0)  --extend-cap N (4)
@@ -615,6 +617,12 @@ the twin — but anything readable from the log runs against both.
 
 ### 9.1 Changelog
 
+* **5.1.0** — surface only, log bytes untouched (gate green, matrix identical):
+  the CLI's `--tile` becomes `--panel` in both implementations at once — the
+  v0.9.1 package shipped the twin speaking `--panel`, which is the arrival §1
+  required, and the **rename ledger closes** with it. The twin also carries the
+  `max_panels` dial (default 0, off — byte-identical, gate-proven); the engine
+  lands it in the batch's part two, and §7 lists the flag then.
 * **5.0.0** — a rules increment, lineage `v0.8 → v0.9` (major: renderer text and
   rules changed), **event schema 2 → 3**. **The community's deck is the starting
   deck** (handbook ch. 5): Extend 1, Basin 3, Ridge 1, Great Ridge 1,
