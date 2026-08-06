@@ -439,7 +439,7 @@ test("screenshots at mobile and desktop widths", async ({ page }) => {
     .getByTestId("stats-strip")
     .screenshot({ path: "e2e-artifacts/elevation-shares.png" });
   const topRow = (await page.getByTestId("legend").boundingBox())!;
-  const bottomRow = (await page.getByTestId("legend-people").boundingBox())!;
+  const bottomRow = (await page.getByTestId("legend-marks").boundingBox())!;
   await page.screenshot({
     path: "e2e-artifacts/legend.png",
     clip: {
