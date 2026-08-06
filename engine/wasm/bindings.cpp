@@ -54,6 +54,7 @@ Config config_from_json(const std::string& text) {
     geti("greatridge_die", cfg.greatridge_die);
     geti("greatridge_add", cfg.greatridge_add);
     geti("extend_cap", cfg.extend_cap);
+    geti("max_panels", cfg.max_panels);
     // "exp_fields" from the dial era is ignored: those rules are canon now.
     if (j.has("work_spread")) cfg.work_spread = j.at("work_spread").as_bool();
     if (j.has("work_overrides"))

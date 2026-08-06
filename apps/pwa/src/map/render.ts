@@ -282,7 +282,7 @@ export function draw(
   }
 }
 
-function drawMark(
+export function drawMark(
   ctx: CanvasRenderingContext2D,
   mark: string,
   x: number,

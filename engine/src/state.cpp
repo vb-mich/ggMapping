@@ -74,6 +74,7 @@ Json Sim::save_state() const {
     jc.set("greatridge_die", Json::of(cfg.greatridge_die));
     jc.set("greatridge_add", Json::of(cfg.greatridge_add));
     jc.set("extend_cap", Json::of(cfg.extend_cap));
+    jc.set("max_panels", Json::of(cfg.max_panels));
     root.set("config", std::move(jc));
 
     {
@@ -265,6 +266,9 @@ Sim::Sim(const Json& st, Decider& dec) : dec_(&dec) {
     cfg.greatridge_die = static_cast<int>(jc.at("greatridge_die").as_int());
     cfg.greatridge_add = static_cast<int>(jc.at("greatridge_add").as_int());
     cfg.extend_cap = static_cast<int>(jc.at("extend_cap").as_int());
+    // additive since v0.9.1: worlds saved earlier lack the key, meaning 0
+    if (jc.has("max_panels"))
+        cfg.max_panels = static_cast<int>(jc.at("max_panels").as_int());
     // A document from the dial era may still carry "exp_fields"; it is simply
     // ignored — the rules it selected are canon now and cannot be turned off.
     geo.W = cfg.panel_w;

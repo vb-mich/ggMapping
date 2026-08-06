@@ -17,6 +17,16 @@ export const STRINGS = {
   panelSize: "Panel size",
   panelSizeMini: "5×6 mini-map",
   panelSizeFull: "8×10 full-map",
+  panelSizeCustom: "Custom size",
+  customW: "Width",
+  customH: "Height",
+  mapCap: "Map cap",
+  mapCapHint: "0 = unbounded",
+  statsAtCap: "at the cap",
+  legendAnomalies: "Anomalies",
+  legendSunken: "sunken",
+  statsAtCapTitle:
+    "The map holds as many panels as its cap allows; Add Panel draws now rework the front panel.",
   dialsTitle: "Dials",
   archiveChance: "Archive chance (%)",
   strokeDie: "Stroke die",
@@ -164,6 +174,8 @@ export const STRINGS = {
     "Panel geometry in units. 5×6 is the handbook's standard mini-map; 8×10 is the original full-map.",
   tipArchiveChance:
     "Percent chance (one decimal allowed) that a panel is archived when it first becomes complete. Archived panels leave the rotation but stay part of the world. 0 keeps every panel in play.",
+  tipMapCap:
+    "Cap the map at this many panels. At the cap, Add Panel draws become rework days on the front panel; the free panel when the Stack empties ignores the cap.",
   tipExtendCap:
     "Runs of this length or more count the same in Extend's border contest; 0 removes the cap and the true longest run wins.",
   tipStrokeDie:

@@ -1340,7 +1340,16 @@ bool Sim::loose_end(Panel tk) const {
     return false;
 }
 
-void Sim::card_addpanel() {
+void Sim::card_addpanel(bool free) {
+    // v0.9.1: at the cap the card places nothing and the day becomes rework
+    // on the current panel ("the map is at its edge"); the free panel when
+    // the Stack empties bypasses the cap, so the game always has a panel.
+    if (!free && cfg.max_panels &&
+        static_cast<int>(panels.size()) >= cfg.max_panels) {
+        has_work_panel_ = false;
+        skip_card("addpanel", "the map is at its edge");
+        return;
+    }
     std::set<Panel> cset;
     static const int SDX[4] = {0, 0, 1, -1};
     static const int SDY[4] = {1, -1, 0, 0};
@@ -1418,6 +1427,8 @@ static void validate(const Config& c, int eras) {
     if (c.greatridge_add < 0 || c.greatridge_add > 100)
         bad("great ridge bonus must be 0..100");
     if (c.extend_cap < 0 || c.extend_cap > 1000) bad("extend cap must be 0..1000");
+    if (c.max_panels < 0 || c.max_panels > 100000)
+        bad("map cap must be 0 (unbounded) .. 100000");
     if (c.archive_permille < 0 || c.archive_permille > 1000)
         bad("archive chance must be 0..100 percent");
     if (c.addpanel_copies > 1000) bad("too many Add Panel copies");
@@ -1468,14 +1479,16 @@ bool Sim::step() {
         M.free_panels += 1;
         Event e; e.kind = Ev::FreePanel; e.a = era;
         emit(std::move(e));
-        card_addpanel();
+        card_addpanel(true); // the safety net ignores the cap
     }
     auto set_mood = [&] {
         auto mo = cfg.mood_overrides.find(c.kind);
         mood_ = mo != cfg.mood_overrides.end() ? mo->second : mood_of(c.kind);
     };
 
-    if (c.kind == "addpanel") {
+    const bool at_cap = cfg.max_panels &&
+        static_cast<int>(panels.size()) >= cfg.max_panels;
+    if (c.kind == "addpanel" && !at_cap) {
         // v0.7, handbook ch. 6 note 3: step 2 is skipped — the panel this card
         // places IS the working panel. The front of the Stack is not popped,
         // not cycled, and is visited next age; the new panel entered the back
@@ -1525,6 +1538,7 @@ bool Sim::step() {
         else if (c.kind == "calm") card_calm(t);
         else if (c.kind == "anomaly") card_anomaly(t);
         else if (c.kind == "freestroke") card_free(t);
+        else if (c.kind == "addpanel") card_addpanel(); // capped: skips, reworks
         else throw std::runtime_error("unknown card kind: " + c.kind);
         int quota = c.work;
         note(Ev::Work, mood_, "", "", quota);

@@ -1,6 +1,6 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **5.1.0** · State schema: **1** · Event schema: **3** · World lineage: **v0.9**
+Contract version: **5.2.0** · State schema: **1** · Event schema: **3** · World lineage: **v0.9**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
@@ -382,7 +382,8 @@ byte-identical to never having stopped (log continuation included). Save points 
     "archive_permille": 0,
     "stroke_die": 4, "stroke_add": 1,
     "greatridge_die": 0, "greatridge_add": 0,
-    "extend_cap": 4
+    "extend_cap": 4,
+    "max_panels": 0
   },
 
   "rng": { "algo": "pcg32/stream54", "state": "18446744073709551615" },
@@ -493,6 +494,7 @@ reference's defaults:
 --addpanel N (2 in this lineage)  --archive-chance P (0, percent, one decimal)
 --stroke-die N (4)  --stroke-add N (1)
 --greatridge-die N (unset)  --greatridge-add N (0)  --extend-cap N (4)
+--max-panels N (0 = unbounded; at the cap, Add Panel draws rework the front panel)
 --work k=v,…  --mood k=v,…
 --snapshots --alive --semi --no-patina --no-render --flat-work --fragile
 --living-deck --ld-start --ld-add --ld-retire --ld-shuffle --ld-floor --ld-ceiling
@@ -617,6 +619,16 @@ the twin — but anything readable from the log runs against both.
 
 ### 9.1 Changelog
 
+* **5.2.0** — the `max_panels` dial lands engine-side (v0.9.1 part two),
+  matching the twin the part-one package shipped: default 0 keeps every canon
+  byte (gate green, matrix identical); at the cap an Add Panel draw takes the
+  normal Stack visit and the card skips with `the map is at its edge`, so the
+  day reworks the front panel; the free panel when the Stack empties ignores
+  the cap. `--max-panels` joins §7; `max_panels` joins the §6 config (additive
+  — older documents lack the key and mean 0). Conformance carries the dial's
+  citation against FORK_NOTES §v0.9.1, including a capped twin-vs-engine
+  byte-agreement check; the proofs hold the cap at exactly 20 and read the
+  edge line.
 * **5.1.0** — surface only, log bytes untouched (gate green, matrix identical):
   the CLI's `--tile` becomes `--panel` in both implementations at once — the
   v0.9.1 package shipped the twin speaking `--panel`, which is the arrival §1

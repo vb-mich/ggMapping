@@ -222,8 +222,10 @@ export function App() {
           <main>
             <div class="col-side">
               <ConfigPanel />
-              <DeckEditor />
               <FilesBar />
+            </div>
+            <div class="col-deck">
+              <DeckEditor />
             </div>
             <div class="col-main">
               <div class="now-nav">

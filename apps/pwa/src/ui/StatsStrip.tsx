@@ -49,6 +49,10 @@ export function StatsStrip() {
       embellish: m.embellish ?? 0,
       firsts: firsts || STRINGS.statNone,
       deckCards: w.deck.order.length,
+      // v0.9.1: the map holds as many panels as its cap allows
+      atCap:
+        (w.config.max_panels ?? 0) > 0 &&
+        w.world.panels.length >= (w.config.max_panels ?? 0),
     };
   });
 
@@ -58,6 +62,11 @@ export function StatsStrip() {
     <section class="card stats" data-testid="stats-strip">
       <div class="stats-head">
         <h2>{STRINGS.statsHeading}</h2>
+        {s.atCap && (
+          <span class="chip" data-testid="at-cap-chip" title={STRINGS.statsAtCapTitle}>
+            {STRINGS.statsAtCap}
+          </span>
+        )}
       </div>
       <div class="stats-rungs">
         {(

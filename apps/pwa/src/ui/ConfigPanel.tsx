@@ -9,6 +9,9 @@ import {
   grDie,
   grMode,
   panelSize,
+  customW,
+  customH,
+  maxPanels,
   percentToPermille,
   randomSeed,
   seed,
@@ -64,13 +67,27 @@ export function ConfigPanel() {
           <select
             value={panelSize.value}
             data-testid="select-panel-size"
-            onChange={(e) => (panelSize.value = (e.target as HTMLSelectElement).value as "5x6" | "8x10")}
+            onChange={(e) =>
+              (panelSize.value = (e.target as HTMLSelectElement)
+                .value as "5x6" | "8x10" | "custom")
+            }
           >
             <option value="5x6">{STRINGS.panelSizeMini}</option>
             <option value="8x10">{STRINGS.panelSizeFull}</option>
+            <option value="custom">{STRINGS.panelSizeCustom}</option>
           </select>
         </label>
       </div>
+      {panelSize.value === "custom" && (
+        <div class="field-row">
+          <SpinField label={STRINGS.customW} value={customW.value} min={2} max={12}
+            onChange={(v) => (customW.value = v)} testid="input-custom-w"
+            tip={STRINGS.tipPanelSize} />
+          <SpinField label={STRINGS.customH} value={customH.value} min={2} max={12}
+            onChange={(v) => (customH.value = v)} testid="input-custom-h"
+            tip={STRINGS.tipPanelSize} />
+        </div>
+      )}
 
       <h3>{STRINGS.dialsTitle}</h3>
       <div class="field-row">
@@ -87,6 +104,10 @@ export function ConfigPanel() {
         <SpinField label={STRINGS.extendCap} value={extendCap.value} min={0} max={20}
           onChange={(v) => (extendCap.value = v)} hint={STRINGS.extendCapHint}
           offCanon={extendCap.value !== 4} tip={STRINGS.tipExtendCap} />
+        <SpinField label={STRINGS.mapCap} value={maxPanels.value} min={0} max={1000}
+          onChange={(v) => (maxPanels.value = v)} hint={STRINGS.mapCapHint}
+          offCanon={maxPanels.value !== 0} tip={STRINGS.tipMapCap}
+          testid="input-max-panels" />
       </div>
       <div class="field-row">
         <SpinField label={STRINGS.strokeDie} value={strokeDie.value} min={2} max={20}

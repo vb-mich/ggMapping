@@ -40,6 +40,10 @@ struct Config {
     int greatridge_die = 0;          // 0 = unset (the length stays chosen)
     int greatridge_add = 0;
     int extend_cap = 4;              // 0 = uncapped
+    // v0.9.1 (FORK_NOTES): cap the map at this many panels; 0 = unbounded.
+    // At the cap an Add Panel draw becomes a rework day on the front panel;
+    // the free panel when the Stack empties ignores the cap.
+    int max_panels = 0;
 };
 
 struct Card {
@@ -210,7 +214,7 @@ private:
     void card_free(Panel t);
     void card_settlement(Panel t);
     void card_anomaly(Panel t);
-    void card_addpanel();
+    void card_addpanel(bool free = false);
     bool panel_touches(Panel tk) const;
     bool loose_end(Panel tk) const;
 
@@ -246,6 +250,7 @@ struct CliOptions {
     int stroke_die = 4, stroke_add = 1;
     int greatridge_die = 0, greatridge_add = 0;
     int extend_cap = 4;
+    int max_panels = 0;
     bool flat_work = false;
     std::string work, mood;      // k=v,... overrides
     std::string save_path, load_path, record_path, replay_path, patina_path;

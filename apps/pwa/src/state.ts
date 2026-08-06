@@ -21,7 +21,13 @@ export function applyTheme(t: Theme): void {
 // --- configuration ----------------------------------------------------------
 export const seed = signal(randomSeed());
 export const eras = signal(8);
-export const panelSize = signal<"5x6" | "8x10">("5x6");
+export const panelSize = signal<"5x6" | "8x10" | "custom">("5x6");
+// custom geometry (the tester's poker-card case): any WxH the engine accepts,
+// app bounds 2..12 per side
+export const customW = signal(5);
+export const customH = signal(6);
+// the map cap (v0.9.1 dial): 0 = unbounded
+export const maxPanels = signal(0);
 export const archiveChance = signal("0"); // percent, one decimal allowed
 export const strokeDie = signal(4);
 export const strokeAdd = signal(1);
@@ -68,7 +74,10 @@ export const deckEdit = computed<DeckEdit>(() => ({
 export const warnings = computed(() => deckWarnings(deckEdit.value));
 
 export function buildConfig(): JmConfig {
-  const [w, h] = panelSize.value === "5x6" ? [5, 6] : [8, 10];
+  const [w, h] =
+    panelSize.value === "5x6" ? [5, 6]
+    : panelSize.value === "8x10" ? [8, 10]
+    : [customW.value, customH.value];
   const cfg: JmConfig = {
     panel_w: w,
     panel_h: h,
@@ -80,6 +89,7 @@ export function buildConfig(): JmConfig {
     greatridge_die: grMode.value === "rolled" ? grDie.value : 0,
     greatridge_add: grMode.value === "rolled" ? grAdd.value : 0,
     extend_cap: extendCap.value,
+    max_panels: maxPanels.value,
   };
   if (flatWork.value) cfg.work_spread = false;
   const wo = Object.fromEntries(
@@ -125,7 +135,10 @@ export function loadConfigJson(json: string): boolean {
   noteRetired(cfg);
   seed.value = c.seed;
   eras.value = c.eras;
-  panelSize.value = cfg.panel_w === 8 ? "8x10" : "5x6";
+  const gw = cfg.panel_w ?? 5, gh = cfg.panel_h ?? 6;
+  panelSize.value = gw === 5 && gh === 6 ? "5x6" : gw === 8 && gh === 10 ? "8x10" : "custom";
+  if (panelSize.value === "custom") { customW.value = gw; customH.value = gh; }
+  maxPanels.value = cfg.max_panels ?? 0;
   archiveChance.value = String((cfg.archive_permille ?? 0) / 10);
   strokeDie.value = cfg.stroke_die ?? 4;
   strokeAdd.value = cfg.stroke_add ?? 1;
@@ -180,6 +193,9 @@ export function deckExportJson(): string {
 // The handbook's defaults for deck and dials; seed and eras stay.
 export function backToCanon(): void {
   panelSize.value = "5x6";
+  customW.value = 5;
+  customH.value = 6;
+  maxPanels.value = 0;
   archiveChance.value = "0";
   strokeDie.value = 4;
   strokeAdd.value = 1;

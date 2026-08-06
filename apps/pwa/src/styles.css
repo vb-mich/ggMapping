@@ -45,7 +45,7 @@ body {
   font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-#app { max-width: 1280px; margin: 0 auto; padding: 0.5rem; }
+#app { max-width: 1560px; margin: 0 auto; padding: 0.5rem; }
 
 /* wraps on narrow screens: chips and buttons must never stack ON TOP of
    each other and swallow taps */
@@ -85,9 +85,25 @@ header small { color: var(--muted); font-weight: normal; }
 
 main { display: block; }
 @media (min-width: 900px) {
-  main { display: grid; grid-template-columns: 360px 1fr; gap: 0.75rem; align-items: start; }
+  /* two columns: the deck stays under the config on the left */
+  main {
+    display: grid; gap: 0.75rem; align-items: start;
+    grid-template-columns: 360px minmax(0, 1fr);
+    grid-template-areas: "side main" "deck main";
+  }
+  .col-side { grid-area: side; }
+  .col-deck { grid-area: deck; }
+  .col-main { grid-area: main; }
   .now-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; align-items: start; }
   .now-nav > * { min-width: 0; }
+}
+@media (min-width: 1280px) {
+  /* three columns: the deck sits beside the map, so following play needs
+     no scrolling — config left, the map's column center, deck right */
+  main {
+    grid-template-columns: 320px minmax(0, 1fr) 340px;
+    grid-template-areas: "side main deck";
+  }
 }
 
 .runbar { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
@@ -262,7 +278,17 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
 
 .now-line { margin: 0 0 0.2rem; }
 .now-headline { margin: 0 0 0.4rem; color: var(--muted); }
-.now-excerpt { max-height: 13rem; }
+/* the Now box grows: the whole age fits without hunting */
+.now-excerpt { max-height: 26rem; overflow-y: auto; }
+.now-split { display: block; }
+.now-split pre { margin: 0; }
+/* the card's instruction phase, visually apart from the fill work */
+.now-instruction {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.5rem;
+  margin-bottom: 0.35rem !important;
+}
+.now-fill { border-top: 1px dashed var(--card-edge); padding-top: 0.35rem; }
 
 .nav-transport { display: flex; gap: 0.3rem; justify-content: center; margin-bottom: 0.3rem; }
 .nav-transport button { min-width: 2.2rem; }

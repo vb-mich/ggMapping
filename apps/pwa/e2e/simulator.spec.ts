@@ -339,6 +339,38 @@ test("work numbers mark the age's worked units on the map", async ({ page }) => 
   });
 });
 
+test("a capped run holds its cap and says so", async ({ page }) => {
+  await page.goto("/");
+  await setRun(page, 42, 4);
+  // cap 13: genesis seeds 12, the first Add Panel reaches the cap
+  await page.getByTestId("input-max-panels").fill("13");
+  await page.getByTestId("input-max-panels").blur();
+  await runToDone(page);
+  await expect(page.getByTestId("at-cap-chip")).toBeVisible();
+  // the dial travels with the config
+  const cfg = JSON.parse(await downloadText(page, "btn-save-config"));
+  expect(cfg.config.max_panels).toBe(13);
+  await page.getByTestId("btn-canon").click();
+});
+
+test("custom geometry: the tester's poker-card case runs 3x4", async ({ page }) => {
+  await page.goto("/");
+  await setRun(page, 42, 3);
+  await page.getByTestId("select-panel-size").selectOption("custom");
+  await page.getByTestId("input-custom-w").fill("3");
+  await page.getByTestId("input-custom-w").blur();
+  await page.getByTestId("input-custom-h").fill("4");
+  await page.getByTestId("input-custom-h").blur();
+  await runToDone(page);
+  // the run completed on 3x4 panels, and the config carries the geometry
+  const cfg = JSON.parse(await downloadText(page, "btn-save-config"));
+  expect(cfg.config.panel_w).toBe(3);
+  expect(cfg.config.panel_h).toBe(4);
+  const world = JSON.parse(await downloadText(page, "btn-save"));
+  expect(world.config.panel_w).toBe(3);
+  await page.getByTestId("btn-canon").click();
+});
+
 test("the theme defaults to dark and switches", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");

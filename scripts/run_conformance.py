@@ -479,6 +479,32 @@ def main():
           f" (sweep of seeds {','.join(WITNESS_SEEDS)})",
           witnesses > 0, "no witness at any swept seed")
 
+    # v0.9.1, the max panels dial (FORK_NOTES §v0.9.1): "A capped map turns
+    # Add Panel days into rework days on the front panel, logged 'the map is
+    # at its edge'. The free-panel safety net when the Stack empties IGNORES
+    # the cap ... cap 20 holds exactly 20 panels over 20 eras, deterministic."
+    # Both implementations run capped; their logs must agree to the byte.
+    cap_native = os.path.join(work, "cap", "native")
+    run([os.path.abspath(args.native), "--out", cap_native, "--seed", "42",
+         "--eras", "20", "--max-panels", "20"], cap_native)
+    cap_log = read_log(cap_native, "42")
+    panels_line = next((l for l in cap_log if l.startswith("total units ")), "")
+    check("v0.9.1", "capped native: cap 20 holds exactly 20 panels",
+          "| panels 20 " in panels_line, panels_line)
+    check("v0.9.1", "capped native: the edge-rework line appears",
+          any("addpanel: the map is at its edge" in l for l in cap_log))
+    check("v0.9.1", "capped native: the cap is never exceeded mid-run",
+          not any(re.search(r"done \d+/(\d+) panels", l) and
+                  int(re.search(r"done \d+/(\d+) panels", l).group(1)) > 20
+                  for l in cap_log))
+    if args.twin and args.twin.lower() != "none":
+        cap_twin = os.path.join(work, "cap", "twin")
+        run([sys.executable, os.path.abspath(args.twin), "--out", cap_twin,
+             "--seed", "42", "--eras", "20", "--max-panels", "20",
+             "--no-render"], cap_twin)
+        check("v0.9.1", "capped: twin and engine agree to the byte",
+              read_log(cap_twin, "42") == cap_log)
+
     if args.twin and args.twin.lower() != "none":
         d = os.path.join(work, "twin")
         run([sys.executable, os.path.abspath(args.twin), "--out", d,

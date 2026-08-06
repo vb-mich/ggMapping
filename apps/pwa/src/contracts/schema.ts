@@ -17,7 +17,8 @@ export interface JmConfig {
   stroke_add?: number;
   greatridge_die?: number; // 0 = unset: the length stays chosen
   greatridge_add?: number;
-  extend_cap?: number; // 0 = uncapped
+  extend_cap?: number;
+  max_panels?: number; // v0.9.1 dial: 0 = unbounded // 0 = uncapped
   // a document may still carry the retired `exp_fields` key; it is ignored
   // and noticed once (CONTRACTS §6.3), never typed back into the config
 }

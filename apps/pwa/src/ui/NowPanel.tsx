@@ -47,9 +47,24 @@ export function NowPanel() {
         </b>
       </p>
       <p class="now-headline">{headline}</p>
-      <pre class="now-excerpt" data-testid="now-excerpt">
-        {ageEvents.value.flatMap((a) => a.text).join("\n")}
-      </pre>
+      {(() => {
+        // the "work N, mood M" note is the age's hinge: before it, the card's
+        // instruction plays out; from it on, the fill work runs. Split there
+        // so the eye finds each phase; ages without the note stay one block.
+        const evs = ageEvents.value;
+        const hinge = evs.findIndex((a) => a.kind === "work");
+        const lines = (xs: typeof evs) => xs.flatMap((a) => a.text).join("\n");
+        if (hinge <= 0)
+          return (
+            <pre class="now-excerpt" data-testid="now-excerpt">{lines(evs)}</pre>
+          );
+        return (
+          <div class="now-excerpt now-split" data-testid="now-excerpt">
+            <pre class="now-instruction">{lines(evs.slice(0, hinge))}</pre>
+            <pre class="now-fill">{lines(evs.slice(hinge))}</pre>
+          </div>
+        );
+      })()}
     </section>
   );
 }

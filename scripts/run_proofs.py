@@ -100,7 +100,19 @@ def main():
     check("canon deepens fields (ch. 9 growth d6 1-2)",
           b"the field deepens at " in base)
 
-    # -- 5. vocabulary (canon and dialed logs alike) ------------------------
+    # -- 5. the map cap (v0.9.1, FORK_NOTES): a capped map holds its cap ----
+    run([exe, "--seed", "42", "--eras", "20", "--out", d("cap20"),
+         "--max-panels", "20"])
+    capped = read(d("cap20", "seed42_log.txt"))
+    logs.append(capped)
+    check("dial live: max-panels 20 diverges from baseline", capped != base)
+    check("a capped run holds exactly the cap",
+          b"total units 600 | panels 20 " in capped
+          or b"| panels 20 (" in capped.split(b"FINAL METRICS")[-1])
+    check("at the cap, an Add Panel draw becomes a rework day (the edge line)",
+          b"addpanel: the map is at its edge" in capped)
+
+    # -- 6. vocabulary (canon and dialed logs alike) ------------------------
     check("vocabulary law: no 'tile', no 'visit', no 'rung', any case",
           not any(FORBIDDEN.search(l) for l in logs))
 

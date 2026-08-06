@@ -83,6 +83,7 @@ int run_cli(int argc, char** argv) {
         else if (a == "--greatridge-die") o.greatridge_die = std::atoi(val().c_str());
         else if (a == "--greatridge-add") o.greatridge_add = std::atoi(val().c_str());
         else if (a == "--extend-cap") o.extend_cap = std::atoi(val().c_str());
+        else if (a == "--max-panels") o.max_panels = std::atoi(val().c_str());
         else if (a == "--flat-work") o.flat_work = true;
         else if (a == "--work") o.work = val();
         else if (a == "--mood") o.mood = val();
@@ -157,6 +158,7 @@ int run_cli(int argc, char** argv) {
         cfg.greatridge_die = o.greatridge_die;
         cfg.greatridge_add = o.greatridge_add;
         cfg.extend_cap = o.extend_cap;
+        cfg.max_panels = o.max_panels;
         cfg.work_spread = !o.flat_work;
         if (!o.work.empty())
             for (auto& kv : parse_kv(o.work))
