@@ -15,13 +15,14 @@ import {
   renderBook,
 } from "../src/rulebook/book";
 
-// each book's authority file on disk, by its library id
+// each book's authority file on disk, by its library id (docs/books is the
+// books' own shelf — the rest of docs/ is the repo's internal law)
 const BOOK_FILES: Record<string, string> = {
-  handbook: "ggMapping-Players-Handbook.md",
+  handbook: "0-ggMapping-Players-Handbook.md",
   master: "0-Jerrymapping-the-game.md",
 };
 
-const DOCS_DIR = join(__dirname, "..", "..", "..", "docs");
+const DOCS_DIR = join(__dirname, "..", "..", "..", "docs", "books");
 const sha = (s: string | Buffer) => createHash("sha256").update(s).digest("hex");
 
 describe("the rulebook's single source", () => {

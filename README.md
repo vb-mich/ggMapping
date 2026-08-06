@@ -1,7 +1,7 @@
 # jerrymapping-app
 
 The Jerrymapping mono-repo: a byte-exact digital lineage of the vbDeck system
-(`docs/0-Jerrymapping-the-game.md`, beta 0.1).
+(`docs/books/0-Jerrymapping-the-game.md`, beta 0.1).
 
 **The law of this repo is [docs/CONTRACTS.md](docs/CONTRACTS.md).** Every component —
 engine, apps, tools — conforms to it: the state schema, the Decider interface, the
@@ -29,11 +29,11 @@ succession is enacted, tagged `v0.4-succession`:
 
 | path | what |
 |---|---|
-| `docs/` | the handbook, the fork notes, and **CONTRACTS.md** |
+| `docs/` | the fork notes, **CONTRACTS.md**, and the books under `docs/books/` |
 | `reference/` | the frozen Python v0.4 founding document (`sim.py`) and its seed-42 sample log — history; the oracle role passed to `/engine` at succession |
 | `engine/` | the C++20 headless engine, its CLI, and tests (no floats, no globals) |
 | `engine/wasm/` | Emscripten bindings, the Node identity harness, and `prebuilt/` — the **committed** web-flavor engine the app ships, so static hosts build without emsdk (CI asserts it matches the sources) |
-| `apps/pwa/` | the PWA shell (`jm-pwa`): the Simulator (config, deck editor, worker-run engine, canvas map, record, local files), My map (the digitalizer), and the Rulebook — a library of the game's books (the distilled Player's Handbook, default, and the Master Manual the simulator is built from), each rendered from its own file in `docs/` imported at build time, so the deployed app ships the exact books this repo carries. Books are listed explicitly in `src/rulebook/book.ts` — never globbed — so an internal document can't leak into the player app; adding a book is one import and one entry, and per-book identity/outline/figure tests cover it automatically. Parser: `marked` (+`github-slugger` for GitHub-identical anchors) — ~12.6 KB gzip of the reader's lazy chunk (30.7 KB gzip total with the book text and screen); chosen over `markdown-it` (~3× the gzip) since GFM tables are core in both and the sanitization edge is moot for a trusted build-time import. The reader chunk loads only on the Rulebook route; the shell bundle stays book-free (asserted in `tests/bundle.test.ts`), ~39.4 KB gzip. The book's figures ship from `docs/img/` (Obsidian `![[name\|width]]` embeds resolved at build time; `tests/book-images.test.ts` fails CI on a reference without its file), ~2.3 MB of images emitted with the reader's assets and precached for offline reading. |
+| `apps/pwa/` | the PWA shell (`jm-pwa`): the Simulator (config, deck editor, worker-run engine, canvas map, record, local files), My map (the digitalizer), and the Rulebook — a library of the game's books (the distilled Player's Handbook, default, and the Master Manual the simulator is built from), each rendered from its own file in `docs/books/` imported at build time, so the deployed app ships the exact books this repo carries. Books are listed explicitly in `src/rulebook/book.ts` — never globbed — so an internal document can't leak into the player app; adding a book is one import and one entry, and per-book identity/outline/figure tests cover it automatically. Parser: `marked` (+`github-slugger` for GitHub-identical anchors) — ~12.6 KB gzip of the reader's lazy chunk (30.7 KB gzip total with the book text and screen); chosen over `markdown-it` (~3× the gzip) since GFM tables are core in both and the sanitization edge is moot for a trusted build-time import. The reader chunk loads only on the Rulebook route; the shell bundle stays book-free (asserted in `tests/bundle.test.ts`), ~39.4 KB gzip. The book's figures ship from `docs/books/img/` (Obsidian `![[name\|width]]` embeds resolved at build time; `tests/book-images.test.ts` fails CI on a reference without its file), ~2.3 MB of images emitted with the reader's assets and precached for offline reading. |
 | `tools/dice/` | the dice roller (stub — future conversation) |
 | `tools/helper/` | the helper tool: decision records and re-rolls (stub — future conversation) |
 | `tools/digitalizer/` | the map digitalizer (stub — future conversation) |

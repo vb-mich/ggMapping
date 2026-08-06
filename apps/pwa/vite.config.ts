@@ -76,7 +76,7 @@ export default defineConfig({
         find: /^@book\?raw$/,
         replacement:
           path
-            .resolve(here, "../../docs/0-Jerrymapping-the-game.md")
+            .resolve(here, "../../docs/books/0-Jerrymapping-the-game.md")
             .split(path.sep)
             .join("/") + "?raw",
       },

@@ -11,7 +11,7 @@ import GithubSlugger from "github-slugger";
 import { marked, type Token, type Tokens } from "marked";
 
 import MASTER_SOURCE from "@book?raw";
-import HANDBOOK_SOURCE from "../../../../docs/ggMapping-Players-Handbook.md?raw";
+import HANDBOOK_SOURCE from "../../../../docs/books/0-ggMapping-Players-Handbook.md?raw";
 
 /** The Master Manual's source — kept under its historic name for the
  *  source-identity test and the figure tooling. */
@@ -142,12 +142,12 @@ export function findHeading(slug: string, book: Book = bookById("master")!): Sec
 
 // --- the books' figures ------------------------------------------------------
 // Authored in Obsidian, whose image embeds are wiki-style: ![[file.png]] and
-// ![[file.png|width]]. Every figure ships from docs/img (bundled below, one
-// pool for all books); the integrity test keeps reference and file in
+// ![[file.png|width]]. Every figure ships from docs/books/img (bundled below,
+// one pool for all books); the integrity test keeps reference and file in
 // lockstep across the whole library.
 const BOOK_IMAGES: Record<string, string> = Object.fromEntries(
   Object.entries(
-    import.meta.glob("../../../../docs/img/*", {
+    import.meta.glob("../../../../docs/books/img/*", {
       eager: true,
       query: "?url",
       import: "default",

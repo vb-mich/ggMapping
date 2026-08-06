@@ -22,6 +22,7 @@ import {
   bump,
   busy,
   closeWorld,
+  confirmGlance,
   engine,
   exportActive,
   importFile,
@@ -301,7 +302,6 @@ function WorldScreen(props: { id: string }) {
 function WorldBody(props: { meta: NonNullable<typeof activeMeta.value>; s: HelperSession }) {
   void bump.value;
   const { meta, s } = props;
-  const glanceForAge = useSignal(-1);
   const editing = useSignal<{ panel: [number, number]; preselect: [number, number] | null } | null>(null);
   const showCatchup = useSignal(false);
   const patina = useSignal<Map<string, number>>(new Map());
@@ -372,7 +372,7 @@ function WorldBody(props: { meta: NonNullable<typeof activeMeta.value>; s: Helpe
       (view!.events.find((e) => e.kind === "new_panel")?.panel ?? null))
     : (s.current().world.stack[0] ?? null);
   const needs = s.spreadNeeds();
-  const glanceOk = glanceForAge.value === s.entries.length || s.open !== null;
+  const glanceOk = s.glanceDone || s.open !== null;
   const beyond = beyondSpread.value;
 
   return (
@@ -512,7 +512,7 @@ function WorldBody(props: { meta: NonNullable<typeof activeMeta.value>; s: Helpe
           mode={meta.modePref}
           readOnly={readOnly.value}
           glanceOk={glanceOk}
-          onGlanceOk={() => (glanceForAge.value = s.entries.length)}
+          onGlanceOk={() => void confirmGlance()}
           missingSpread={needs.missing}
           onEnterPanel={(panel) => (editing.value = { panel, preselect: null })}
         />

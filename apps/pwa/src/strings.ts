@@ -445,6 +445,8 @@ export const STRINGS = {
   hpStackHint:
     "Tap the panels in the order your paper Stack holds them, top to bottom. Full panels stay in rotation unless archived.",
   hpStackReset: "Start over",
+  hpSkeletonWaiting:
+    "Create unlocks when every panel in rotation has its place in the Stack order above.",
   hpCalendarTitle: "The calendar",
   hpCalendarHint: "Where your paper game stands: the era, and its completed ages.",
   hpDeckTitle: "The deck",

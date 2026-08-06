@@ -51,6 +51,13 @@ export const beyondSpread = signal<[number, number][]>([]);
 let session: HelperSession | null = null;
 export const sessionOf = (): HelperSession | null => session;
 
+// A read-only debug handle for tests and the console; never used by the UI.
+if (typeof globalThis !== "undefined") {
+  (globalThis as { __jmHelper?: unknown }).__jmHelper = {
+    session: () => session,
+  };
+}
+
 function fail(e: unknown): void {
   if (e instanceof db.HelperStoreError && e.kind === "unavailable") {
     storeDead.value = true;
@@ -423,23 +430,35 @@ export async function importFile(text: string): Promise<string | null> {
 
 // --- play operations --------------------------------------------------------
 
+// A table tool lives with stray double-taps: an action whose moment has
+// already passed (an age already open, a commit already taken) is dropped
+// silently rather than barked about.
 export const beginAge = (card: { kind: string; work: number }, mode: "guided" | "proposal") =>
-  op(() => session!.beginAge(card, mode));
-export const drawForMe = (mode: "guided" | "proposal") => op(() => session!.drawForMe(mode));
+  op(() => (session!.open ? undefined : session!.beginAge(card, mode)));
+export const drawForMe = (mode: "guided" | "proposal") =>
+  op(() => (session!.open ? undefined : session!.drawForMe(mode)));
 export const answer = (result: number | boolean | number[], source: RowSource) =>
-  op(() => session!.answer(result, source));
-export const rollForMe = () => op(() => session!.autoAnswer());
+  op(() =>
+    session!.view?.kind === "question" ? session!.answer(result, source) : undefined,
+  );
+export const rollForMe = () =>
+  op(() => (session!.view?.kind === "question" ? session!.autoAnswer() : undefined));
 export const undo = () => op(() => session!.undo());
-export const commitAge = () => op(() => session!.commitAge());
-export const reopenLast = () => op(() => session!.reopenLast());
-export const takeover = (i: number) => op(() => session!.takeover(i));
-export const acceptProposal = () => op(() => session!.acceptProposal());
+export const commitAge = () =>
+  op(() => (session!.view?.kind === "closed" ? session!.commitAge() : undefined));
+export const reopenLast = () =>
+  op(() => (session!.open ? undefined : session!.reopenLast()));
+export const takeover = (i: number) =>
+  op(() => (session!.open?.proposal ? session!.takeover(i) : undefined));
+export const acceptProposal = () =>
+  op(() => (session!.open?.proposal ? session!.acceptProposal() : undefined));
 export const addOverride = (edits: OverrideEdit[], note?: string) =>
   op(() => session!.addOverride(edits, note));
 export const addCatchup = (ages: number, deck: DeckAnswer, note?: string) =>
   op(() => session!.addCatchup(ages, deck, note));
 export const markEntered = (panel: [number, number]) => op(() => session!.markEntered(panel));
 export const abandonAge = () => op(() => session!.abandonAge());
+export const confirmGlance = () => op(() => session!.confirmGlance());
 
 // The deck's printed cards for a config (engine-derived; skeleton and
 // catch-up flows list them).

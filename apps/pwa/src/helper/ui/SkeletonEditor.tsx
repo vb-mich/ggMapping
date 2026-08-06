@@ -304,6 +304,11 @@ export function SkeletonEditor(props: {
         <button class="ghost" onClick={props.onCancel}>
           {STRINGS.hpCancelEdits}
         </button>
+        {!ready && (
+          <span class="hint" data-testid="skeleton-waiting">
+            {STRINGS.hpSkeletonWaiting}
+          </span>
+        )}
       </div>
     </div>
   );

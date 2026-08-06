@@ -7,7 +7,7 @@ engine, the WASM build, the PWA, the dice roller, the helper tool, and the digit
 Nothing in `/engine`, `/apps`, or `/tools` may contradict it. Changes here bump the
 contract version and must state their migration story.
 
-Authority chain: `docs/0-Jerrymapping-the-game.md` (the handbook, beta 0.1, amended by
+Authority chain: `docs/books/0-Jerrymapping-the-game.md` (the handbook, beta 0.1, amended by
 the v0.5 depth erratum, the v0.7 amendments, the v0.8 fields promotion and the
 v0.9 community deck) defines the game;
 `docs/FORK_NOTES.md` defines this lineage's deltas and dials; the **C++ engine is the

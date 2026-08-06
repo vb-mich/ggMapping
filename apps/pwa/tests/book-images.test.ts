@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import { resolveWikiEmbeds, WIKI_EMBED } from "../src/rulebook/book";
 
-const DOCS = join(__dirname, "..", "..", "..", "docs");
+const DOCS = join(__dirname, "..", "..", "..", "docs", "books");
 const URLS = { "map-dial.png": "/a/map-dial.hash.png",
                "with space.png": "/a/with-space.hash.png" };
 

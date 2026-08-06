@@ -65,6 +65,12 @@ export class HelperSession {
   private lastEventCount = 0;
   view: AgeView | null = null;
 
+  // The age-start glance: ONE question before each age — "does this match
+  // your paper?". The session owns the answer; every calendar movement
+  // re-asks. (Component state was the wrong home: remounts and persistence
+  // races made the glance flicker or vanish.)
+  glanceDone = false;
+
   constructor(
     private eng: Engine,
     data: SessionData,
@@ -181,6 +187,11 @@ export class HelperSession {
 
   cycle() {
     return cycleInfo(this.entries, this.origin);
+  }
+
+  // The player confirmed the glance: the map matches the paper.
+  confirmGlance(): void {
+    this.glanceDone = true;
   }
 
   // --- the age loop ---------------------------------------------------------
@@ -394,6 +405,7 @@ export class HelperSession {
     this.open = null;
     this.view = null;
     this.lastEventCount = 0;
+    this.glanceDone = false; // a new age, a new "does this match your paper?"
   }
 
   // Walk away from the open age without committing (the player finishes it
@@ -448,6 +460,7 @@ export class HelperSession {
     const entry: HelperEntry = { type: "checkpoint", state, agesAdvanced, note };
     this.entries = [...this.entries, entry];
     this.states = [...this.states, { entry, state }];
+    this.glanceDone = false; // the world moved while the tool was away
   }
 
   // Mark a panel's units as entered (detail-on-demand bookkeeping).

@@ -32,7 +32,7 @@ describe("naming policy", () => {
     // filename is exempt — a rename of the product still touches exactly one
     // display constant, and a renamed handbook file fails right here.
     const AUTHORITY_FILE = "0-Jerrymapping-the-game.md";
-    expect(existsSync(join(APP, "..", "..", "docs", AUTHORITY_FILE))).toBe(true);
+    expect(existsSync(join(APP, "..", "..", "docs", "books", AUTHORITY_FILE))).toBe(true);
     let count = 0;
     const where: string[] = [];
     for (const f of files) {
