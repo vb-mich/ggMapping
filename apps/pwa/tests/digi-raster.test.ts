@@ -7,6 +7,7 @@ import type { Quad } from "../src/digitalizer/geometry";
 import {
   applyLut,
   applyLuts,
+  autoFix,
   autoLevels,
   buildLut,
   buildLuts,
@@ -175,6 +176,76 @@ describe("the adjustment pair", () => {
     const out = applyLut(r, buildLut({ lo: 0, hi: 255, exposure: 100, contrast: 0 }));
     expect(px(out, 0, 0).every((c, i) => c > [10, 20, 30][i])).toBe(true);
     expect(out.data[3]).toBe(255);
+  });
+});
+
+describe("auto-fix: the scanner look", () => {
+  // paper under a warm gradient (yellow evening light, brighter at top),
+  // with a dark blue ink stroke — the field case in miniature
+  function eveningPage(): Raster {
+    const r = makeRaster(240, 320);
+    for (let y = 0; y < 320; y++) {
+      const light = 0.55 + 0.45 * (1 - y / 319); // dimmer toward the bottom
+      for (let x = 0; x < 240; x++) {
+        const i = (y * 240 + x) * 4;
+        // warm cast: red rich, blue starved
+        r.data[i] = Math.round(235 * light);
+        r.data[i + 1] = Math.round(215 * light);
+        r.data[i + 2] = Math.round(160 * light);
+        r.data[i + 3] = 255;
+      }
+    }
+    // the ink: a thick vertical stroke
+    for (let y = 60; y < 260; y++)
+      for (let x = 112; x < 122; x++) {
+        const i = (y * 240 + x) * 4;
+        r.data[i] = 30;
+        r.data[i + 1] = 50;
+        r.data[i + 2] = 140;
+        r.data[i + 3] = 255;
+      }
+    return r;
+  }
+  const patchMean = (r: Raster, x0: number, y0: number, w0: number, h0: number) => {
+    let cr = 0, cg = 0, cb = 0, n = 0;
+    for (let y = y0; y < y0 + h0; y++)
+      for (let x = x0; x < x0 + w0; x++) {
+        const i = (y * r.width + x) * 4;
+        cr += r.data[i];
+        cg += r.data[i + 1];
+        cb += r.data[i + 2];
+        n++;
+      }
+    return [cr / n, cg / n, cb / n];
+  };
+
+  it("the paper defines white: cast and shading flatten away", () => {
+    const out = autoFix(eveningPage());
+    // paper near the top and near the bottom, away from the stroke
+    const top = patchMean(out, 20, 20, 60, 40);
+    const bottom = patchMean(out, 20, 260, 60, 40);
+    for (const p of [top, bottom]) {
+      expect(Math.min(...p)).toBeGreaterThan(215); // bright
+      expect(Math.max(...p) - Math.min(...p)).toBeLessThan(10); // neutral
+    }
+    // and the vertical light gradient is gone
+    expect(Math.abs(top[0] - bottom[0])).toBeLessThan(8);
+  });
+
+  it("ink survives, dark and still blue-dominant", () => {
+    const out = autoFix(eveningPage());
+    const ink = patchMean(out, 114, 140, 6, 60);
+    expect(ink[2]).toBeGreaterThan(ink[0]); // blue above red
+    expect(ink[0]).toBeLessThan(140); // still visibly dark against paper
+  });
+
+  it("stays finite and clamped on hostile input", () => {
+    const dark = makeRaster(40, 40); // all black
+    const out = autoFix(dark);
+    for (let i = 0; i < out.data.length; i += 4) {
+      expect(out.data[i]).toBeLessThanOrEqual(255);
+      expect(Number.isFinite(out.data[i])).toBe(true);
+    }
   });
 });
 

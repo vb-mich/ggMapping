@@ -149,6 +149,61 @@ export function applyLuts(r: Raster, luts: ChannelLuts): Raster {
   return out;
 }
 
+// AUTO-FIX — the scanner look. Estimate the slowly-varying illumination per
+// channel (the paper, the light, the color cast: everything that changes
+// gently across the frame) and divide it out, so THE PAPER ITSELF DEFINES
+// WHITE. A yellow evening, a shadow band, a vignette — all flatten in one
+// move, and ink keeps its color because ink differs from its LOCAL
+// background. This is what document scanners do behind their one button.
+export function autoFix(r: Raster): Raster {
+  const { width: w, height: h } = r;
+  // the illumination field: a heavy blur, cheaply — shrink, blur, grow
+  const smallW = Math.max(8, Math.round(w / 24));
+  const smallH = Math.max(8, Math.round(h / 24));
+  let field = resize(r, smallW, smallH);
+  field = blur3(blur3(field));
+  const up = resize(field, w, h);
+  const out = makeRaster(w, h);
+  const TARGET = 235; // paper lands just under pure white
+  const FLOOR = 24; // never divide by darkness
+  const s = r.data;
+  const f = up.data;
+  const d = out.data;
+  for (let i = 0; i < s.length; i += 4) {
+    d[i] = Math.min(255, Math.round((s[i] * TARGET) / Math.max(FLOOR, f[i])));
+    d[i + 1] = Math.min(255, Math.round((s[i + 1] * TARGET) / Math.max(FLOOR, f[i + 1])));
+    d[i + 2] = Math.min(255, Math.round((s[i + 2] * TARGET) / Math.max(FLOOR, f[i + 2])));
+    d[i + 3] = s[i + 3];
+  }
+  return out;
+}
+
+function blur3(r: Raster): Raster {
+  const { width: w, height: h, data } = r;
+  const out = makeRaster(w, h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sr = 0, sg = 0, sb = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        const yy = Math.min(h - 1, Math.max(0, y + dy));
+        for (let dx = -1; dx <= 1; dx++) {
+          const xx = Math.min(w - 1, Math.max(0, x + dx));
+          const i = (yy * w + xx) * 4;
+          sr += data[i];
+          sg += data[i + 1];
+          sb += data[i + 2];
+        }
+      }
+      const o = (y * w + x) * 4;
+      out.data[o] = sr / 9;
+      out.data[o + 1] = sg / 9;
+      out.data[o + 2] = sb / 9;
+      out.data[o + 3] = 255;
+    }
+  }
+  return out;
+}
+
 // Rotate a quarter turn clockwise: a sideways photo becomes an upright one.
 export function rotate90(r: Raster): Raster {
   const { width: w, height: h, data } = r;

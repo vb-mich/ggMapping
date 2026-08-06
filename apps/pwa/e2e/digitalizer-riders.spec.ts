@@ -161,6 +161,108 @@ test("the temperature slider round-trips into the saved scan", async ({ page }) 
   expect(means.b).toBeGreaterThan(means.r); // cooled past the paper's warmth
 });
 
+test("auto-fix gives the scanner look and the toggle undoes it", async ({ page }) => {
+  await page.goto("/#/map");
+  await page.getByTestId("btn-scan").click();
+  // the helpers' fixture already wears a warm paper, wood, and a shade band
+  const t = await makeFixture(page);
+  await feedFixture(page, t);
+  await expect(page.getByTestId("scan-flow")).toHaveAttribute("data-stage", "crop");
+  await page.getByTestId("btn-straighten").click();
+  await expect(page.getByTestId("scan-flow")).toHaveAttribute("data-stage", "adjust", {
+    timeout: 20_000,
+  });
+
+  const paper = () =>
+    page.getByTestId("adjust-canvas").evaluate((c) => {
+      const cv = c as HTMLCanvasElement;
+      const g = cv.getContext("2d")!;
+      const grab = (fx: number, fy: number) => {
+        const d = g.getImageData(
+          Math.round(cv.width * fx),
+          Math.round(cv.height * fy),
+          6,
+          6,
+        ).data;
+        const m = [0, 0, 0];
+        for (let i = 0; i < d.length; i += 4) {
+          m[0] += d[i];
+          m[1] += d[i + 1];
+          m[2] += d[i + 2];
+        }
+        return m.map((v) => v / 36);
+      };
+      return { a: grab(0.3, 0.2), b: grab(0.7, 0.8) };
+    });
+
+  const before = await paper();
+  await page.getByTestId("btn-auto-fix").click();
+  await expect(page.getByTestId("btn-auto-fix")).toHaveClass(/active/, { timeout: 20_000 });
+  const after = await paper();
+  // bright, neutral, and uniform — in both corners of the sheet
+  for (const p of [after.a, after.b]) {
+    expect(Math.min(...p)).toBeGreaterThan(210);
+    expect(Math.max(...p) - Math.min(...p)).toBeLessThan(14);
+  }
+  // and it genuinely changed something the warm original could not show
+  expect(Math.max(...before.a) - Math.min(...before.a)).toBeGreaterThan(14);
+
+  // off again: the original returns
+  await page.getByTestId("btn-auto-fix").click();
+  await expect(page.getByTestId("btn-auto-fix")).not.toHaveClass(/active/);
+  const undone = await paper();
+  expect(Math.round(undone.a[0])).toBe(Math.round(before.a[0]));
+
+  // save WITH the fix: the stored scan carries the scanner look
+  await page.getByTestId("btn-auto-fix").click();
+  await expect(page.getByTestId("btn-auto-fix")).toHaveClass(/active/);
+  if (test.info().project.name === "mobile") {
+    await page.screenshot({ path: "e2e-artifacts/rider-auto-fix.png" });
+  }
+  await page.getByTestId("btn-to-file").click();
+  await saveScan(page);
+  const stored = await page.evaluate(async () => {
+    const open = indexedDB.open("jm-digitalizer");
+    const db = await new Promise<IDBDatabase>((res, rej) => {
+      open.onsuccess = () => res(open.result);
+      open.onerror = () => rej(open.error);
+    });
+    const scans = await new Promise<{ created: number; image: Blob }[]>((res, rej) => {
+      const r = db.transaction("scans", "readonly").objectStore("scans").getAll();
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    db.close();
+    const newest = scans.sort((a, b) => b.created - a.created)[0];
+    const img = new Image();
+    await new Promise((res, rej) => {
+      img.onload = res;
+      img.onerror = rej;
+      img.src = URL.createObjectURL(newest.image);
+    });
+    const cv = document.createElement("canvas");
+    cv.width = img.naturalWidth;
+    cv.height = img.naturalHeight;
+    const g = cv.getContext("2d")!;
+    g.drawImage(img, 0, 0);
+    const d = g.getImageData(
+      Math.round(cv.width * 0.3),
+      Math.round(cv.height * 0.2),
+      8,
+      8,
+    ).data;
+    const m = [0, 0, 0];
+    for (let i = 0; i < d.length; i += 4) {
+      m[0] += d[i];
+      m[1] += d[i + 1];
+      m[2] += d[i + 2];
+    }
+    return m.map((v) => v / 64);
+  });
+  expect(Math.min(...stored)).toBeGreaterThan(200);
+  expect(Math.max(...stored) - Math.min(...stored)).toBeLessThan(16);
+});
+
 test("a panel's history moves to another coordinate; an occupied target asks to merge", async ({
   page,
 }) => {

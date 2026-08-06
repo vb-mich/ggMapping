@@ -188,6 +188,14 @@ panel's whole history moves to another coordinate from its detail view, all
 versions together in one transaction; an occupied target asks whether the
 two histories should become one, ordered by time.
 
+The Light stage also carries **Auto-fix** — the scanner look, one button,
+never automatic without it. It estimates the slowly-varying illumination per
+channel (shrink → blur → grow: the paper, the light, the cast) and divides
+it out, so the paper itself defines white: a yellow evening, a shadow band,
+and a vignette flatten in one move while ink keeps its color, because ink
+differs from its local background. The sliders stack on top of the fixed
+image; toggling off returns the original exactly.
+
 ### The profile
 
 The header's `≡` opens the profile — the app's general menu and the future

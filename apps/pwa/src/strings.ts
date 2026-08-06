@@ -239,6 +239,7 @@ export const STRINGS = {
   mmExposure: "Exposure",
   mmContrast: "Contrast",
   mmTemperature: "Temperature",
+  mmAutoFix: "Auto-fix",
   mmImportAsIs: "Import as is",
   mmImportAsIsHint:
     "The picture is filed unchanged: no corners, no straightening, no light changes. For maps that are already scans.",

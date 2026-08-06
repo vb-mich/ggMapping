@@ -7,7 +7,15 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { STRINGS } from "../../strings";
 import { go } from "../../router";
 import { orderQuad, rotateQuadCW, type Quad } from "../geometry";
-import { autoLevels, applyLuts, buildLuts, resize, rotate90, type Raster } from "../raster";
+import {
+  autoFix,
+  autoLevels,
+  applyLuts,
+  buildLuts,
+  resize,
+  rotate90,
+  type Raster,
+} from "../raster";
 import {
   decodeToRaster,
   encodeScan,
@@ -38,6 +46,7 @@ export function ScanFlow() {
   const [exposure, setExposure] = useState(0);
   const [contrast, setContrast] = useState(0);
   const [temperature, setTemperature] = useState(0);
+  const [fixed, setFixed] = useState(false); // the auto-fix toggle
   const [asIs, setAsIs] = useState(false);
   const [coord, setCoord] = useState<{ tx: number; ty: number } | null>(null);
   const [note, setNote] = useState("");
@@ -48,6 +57,10 @@ export function ScanFlow() {
   const asIsEncoded = useRef<(Encoded & { verbatim: boolean }) | null>(null);
   const levels = useRef({ lo: 0, hi: 255 });
   const preview = useRef<Raster | null>(null);
+  // the auto-fixed variants, computed once per toggle
+  const fixedFull = useRef<Raster | null>(null);
+  const fixedPreview = useRef<Raster | null>(null);
+  const fixedLevels = useRef({ lo: 0, hi: 255 });
   const adjustCanvas = useRef<HTMLCanvasElement>(null);
 
   const onFile = async (e: Event) => {
@@ -107,7 +120,43 @@ export function ScanFlow() {
       setExposure(0);
       setContrast(0);
       setTemperature(0);
+      setFixed(false);
+      fixedFull.current = null;
+      fixedPreview.current = null;
       setStage("adjust");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // the one-button scanner look: on first use compute the fixed image and
+  // its own levels; the sliders stack on top; off returns the original
+  const onAutoFix = async () => {
+    if (fixed) {
+      setFixed(false);
+      setExposure(0);
+      setContrast(0);
+      setTemperature(0);
+      return;
+    }
+    if (!rect.current) return;
+    setBusy(true);
+    await breathe();
+    try {
+      if (!fixedFull.current) {
+        fixedFull.current = autoFix(rect.current.raster);
+        fixedLevels.current = autoLevels(fixedFull.current);
+        const f = fixedFull.current;
+        const scale = Math.min(1, 480 / Math.max(f.width, f.height));
+        fixedPreview.current =
+          scale < 1
+            ? resize(f, Math.round(f.width * scale), Math.round(f.height * scale))
+            : f;
+      }
+      setExposure(0);
+      setContrast(0);
+      setTemperature(0);
+      setFixed(true);
     } finally {
       setBusy(false);
     }
@@ -115,14 +164,16 @@ export function ScanFlow() {
 
   // live adjust preview
   useEffect(() => {
-    if (stage !== "adjust" || !preview.current || !adjustCanvas.current) return;
-    const luts = buildLuts({ ...levels.current, exposure, contrast, temperature });
-    const shown = applyLuts(preview.current, luts);
+    const base = fixed ? fixedPreview.current : preview.current;
+    if (stage !== "adjust" || !base || !adjustCanvas.current) return;
+    const lo = fixed ? fixedLevels.current : levels.current;
+    const luts = buildLuts({ ...lo, exposure, contrast, temperature });
+    const shown = applyLuts(base, luts);
     const cv = adjustCanvas.current;
     cv.width = shown.width;
     cv.height = shown.height;
     cv.getContext("2d")!.putImageData(toImageData(shown), 0, 0);
-  }, [stage, exposure, contrast, temperature]);
+  }, [stage, exposure, contrast, temperature, fixed]);
 
   const onToFile = () => {
     setCoord(presetCoord.value ?? defaultCoord(scans.value));
@@ -139,8 +190,10 @@ export function ScanFlow() {
       if (asIsEncoded.current) {
         enc = asIsEncoded.current;
       } else {
-        const luts = buildLuts({ ...levels.current, exposure, contrast, temperature });
-        const full = applyLuts(rect.current!.raster, luts);
+        const base = fixed && fixedFull.current ? fixedFull.current : rect.current!.raster;
+        const lo = fixed ? fixedLevels.current : levels.current;
+        const luts = buildLuts({ ...lo, exposure, contrast, temperature });
+        const full = applyLuts(base, luts);
         enc = await encodeScan(full);
       }
       const ok = await saveScan({ ...coord, note: note.trim(), ...enc });
@@ -228,6 +281,14 @@ export function ScanFlow() {
       {stage === "adjust" && rect.current && (
         <>
           <h2>{STRINGS.mmAdjustTitle}</h2>
+          <button
+            class={fixed ? "auto-fix active" : "auto-fix"}
+            data-testid="btn-auto-fix"
+            aria-pressed={fixed}
+            onClick={onAutoFix}
+          >
+            ✨ {STRINGS.mmAutoFix}
+          </button>
           <canvas ref={adjustCanvas} class="adjust-canvas" data-testid="adjust-canvas" />
           <span
             data-testid="rect-facts"
