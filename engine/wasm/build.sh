@@ -21,7 +21,7 @@ CORE=$(ls ../src/*.cpp | grep -v '/cli\.cpp$' | tr '\n' ' ')
 
 if [[ "$what" == "node" || "$what" == "all" ]]; then
   mkdir -p dist
-  emcc -std=c++20 -O3 -Wall -I../include \
+  em++ -std=c++20 -O3 -Wall -I../include \
     ../cli/main.cpp ../src/cli.cpp $CORE bindings.cpp \
     -o dist/jerrymap.js \
     -sNODERAWFS=1 -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=1 \
@@ -32,7 +32,7 @@ fi
 
 if [[ "$what" == "web" || "$what" == "all" ]]; then
   mkdir -p prebuilt
-  emcc -std=c++20 -O3 -Wall -I../include \
+  em++ -std=c++20 -O3 -Wall -I../include \
     $CORE bindings.cpp \
     -o prebuilt/jerrymap.mjs \
     --no-entry \
