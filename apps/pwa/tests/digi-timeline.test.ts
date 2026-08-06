@@ -48,6 +48,48 @@ describe("the derived timeline rule (mapAt)", () => {
   });
 });
 
+describe("import as is: when the file itself is the scan", () => {
+  it("stores byte-verbatim up to the display ceiling, else downscales", async () => {
+    const { verbatimPlan, AS_IS_MAX_EDGE, VERBATIM_MAX_EDGE } = await import(
+      "../src/digitalizer/pipeline"
+    );
+    expect(AS_IS_MAX_EDGE).toBe(1600);
+    expect(VERBATIM_MAX_EDGE).toBe(4096);
+    expect(verbatimPlan(4096, 3000, "image/png")).toBe(true);
+    expect(verbatimPlan(2000, 2400, "image/jpeg")).toBe(true);
+    expect(verbatimPlan(1024, 768, "image/webp")).toBe(true);
+    expect(verbatimPlan(4097, 900, "image/png")).toBe(false); // oversized
+    expect(verbatimPlan(900, 4097, "image/png")).toBe(false);
+    expect(verbatimPlan(800, 600, "image/gif")).toBe(false); // exotic type
+    expect(verbatimPlan(800, 600, "")).toBe(false);
+  });
+});
+
+describe("the encoder looks before it chooses (compression review)", () => {
+  it("flatRatio tells a drawn export from a photograph", async () => {
+    const { flatRatio, SCAN_QUALITY } = await import("../src/digitalizer/pipeline");
+    const { makeRaster } = await import("../src/digitalizer/raster");
+    expect(SCAN_QUALITY.webpPhoto).toBe(0.82);
+    // a drawn export: flat runs with a few strokes
+    const flat = makeRaster(200, 200);
+    for (let i = 0; i < flat.data.length; i += 4) {
+      const x = (i / 4) % 200;
+      const v = x > 90 && x < 96 ? 40 : 230; // a stroke through paper
+      flat.data[i] = v; flat.data[i + 1] = v; flat.data[i + 2] = v; flat.data[i + 3] = 255;
+    }
+    expect(flatRatio(flat)).toBeGreaterThan(SCAN_QUALITY.flatForLossless);
+    // a photograph: per-pixel grain
+    const photo = makeRaster(200, 200);
+    let seed = 7;
+    for (let i = 0; i < photo.data.length; i += 4) {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      const v = 180 + (seed % 13) - 6;
+      photo.data[i] = v; photo.data[i + 1] = v; photo.data[i + 2] = v; photo.data[i + 3] = 255;
+    }
+    expect(flatRatio(photo)).toBeLessThan(0.15);
+  });
+});
+
 describe("the timeline's stops: one per update, equally spaced", () => {
   const scans = [
     meta(1, 1, 3000, "c"),

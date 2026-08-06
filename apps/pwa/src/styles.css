@@ -518,6 +518,14 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
 .map-files .backup-row { margin-top: 0.6rem; }
 .note-edit { margin: 0.2rem 0 0.5rem; display: inline-flex; }
 
+/* the move flow */
+.move-panel {
+  border: 1px solid var(--card-edge); border-radius: 6px;
+  padding: 0.5rem 0.6rem; margin: 0.4rem 0;
+}
+.move-panel .flow-buttons { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
+.move-panel .flow-buttons .primary { margin-left: auto; }
+
 /* the panel detail */
 .panel-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .panel-head h2 { margin: 0; flex: 1; }

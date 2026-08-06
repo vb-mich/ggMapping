@@ -179,6 +179,25 @@ export function versionsOf(tx: number, ty: number): db.ScanMeta[] {
     .sort((a, b) => b.created - a.created);
 }
 
+// Move a panel's whole history to another coordinate (rider: the tester
+// mis-filed their first panel and had no recourse but deletion).
+export async function movePanel(
+  from: { tx: number; ty: number },
+  to: { tx: number; ty: number },
+  allowMerge: boolean,
+): Promise<boolean> {
+  const m = activeMap.value;
+  if (!m) return false;
+  try {
+    await db.retagPanel(m.id, from, to, allowMerge);
+  } catch (e) {
+    fail(e);
+    return false;
+  }
+  await refresh();
+  return true;
+}
+
 // The one after-save edit a scan allows: its note.
 export async function editNote(id: string, note: string): Promise<boolean> {
   try {

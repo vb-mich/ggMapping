@@ -5,21 +5,23 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 
 import { STRINGS } from "../../strings";
-import { panelName } from "../../contracts/geometry";
 import { go } from "../../router";
 import { orderQuad, rotateQuadCW, type Quad } from "../geometry";
-import { autoLevels, applyLut, buildLut, resize, rotate90, type Raster } from "../raster";
+import { autoLevels, applyLuts, buildLuts, resize, rotate90, type Raster } from "../raster";
 import {
   decodeToRaster,
   encodeScan,
   findQuad,
+  importAsIs,
   rectify,
   toImageData,
   PipelineError,
+  type Encoded,
   type Rectified,
 } from "../pipeline";
-import { defaultCoord, stepCoord } from "../db";
+import { defaultCoord } from "../db";
 import { presetCoord, saveScan, scans, storeDead, versionsOf } from "../store";
+import { CoordPicker } from "./CoordPicker";
 import { QuadEditor } from "./QuadEditor";
 
 type Stage = "pick" | "crop" | "adjust" | "file";
@@ -35,11 +37,15 @@ export function ScanFlow() {
   const [detected, setDetected] = useState(false);
   const [exposure, setExposure] = useState(0);
   const [contrast, setContrast] = useState(0);
+  const [temperature, setTemperature] = useState(0);
+  const [asIs, setAsIs] = useState(false);
   const [coord, setCoord] = useState<{ tx: number; ty: number } | null>(null);
   const [note, setNote] = useState("");
 
   const src = useRef<Raster | null>(null);
   const rect = useRef<Rectified | null>(null);
+  // the import-as-is path encodes at pick time and skips every stage between
+  const asIsEncoded = useRef<(Encoded & { verbatim: boolean }) | null>(null);
   const levels = useRef({ lo: 0, hi: 255 });
   const preview = useRef<Raster | null>(null);
   const adjustCanvas = useRef<HTMLCanvasElement>(null);
@@ -52,6 +58,15 @@ export function ScanFlow() {
     setFlowError("");
     setBusy(true);
     try {
+      if (asIs) {
+        // no corners, no straightening, no light: the file IS the scan
+        asIsEncoded.current = await importAsIs(file);
+        setCoord(presetCoord.value ?? defaultCoord(scans.value));
+        presetCoord.value = null;
+        setStage("file");
+        return;
+      }
+      asIsEncoded.current = null;
       src.current = await decodeToRaster(file);
       const found = await findQuad(src.current);
       setQuad(found.quad);
@@ -91,6 +106,7 @@ export function ScanFlow() {
           : r;
       setExposure(0);
       setContrast(0);
+      setTemperature(0);
       setStage("adjust");
     } finally {
       setBusy(false);
@@ -100,13 +116,13 @@ export function ScanFlow() {
   // live adjust preview
   useEffect(() => {
     if (stage !== "adjust" || !preview.current || !adjustCanvas.current) return;
-    const lut = buildLut({ ...levels.current, exposure, contrast });
-    const shown = applyLut(preview.current, lut);
+    const luts = buildLuts({ ...levels.current, exposure, contrast, temperature });
+    const shown = applyLuts(preview.current, luts);
     const cv = adjustCanvas.current;
     cv.width = shown.width;
     cv.height = shown.height;
     cv.getContext("2d")!.putImageData(toImageData(shown), 0, 0);
-  }, [stage, exposure, contrast]);
+  }, [stage, exposure, contrast, temperature]);
 
   const onToFile = () => {
     setCoord(presetCoord.value ?? defaultCoord(scans.value));
@@ -115,13 +131,18 @@ export function ScanFlow() {
   };
 
   const onSave = async () => {
-    if (!rect.current || !coord) return;
+    if (!coord || (!rect.current && !asIsEncoded.current)) return;
     setBusy(true);
     await breathe();
     try {
-      const lut = buildLut({ ...levels.current, exposure, contrast });
-      const full = applyLut(rect.current.raster, lut);
-      const enc = await encodeScan(full);
+      let enc: Encoded;
+      if (asIsEncoded.current) {
+        enc = asIsEncoded.current;
+      } else {
+        const luts = buildLuts({ ...levels.current, exposure, contrast, temperature });
+        const full = applyLuts(rect.current!.raster, luts);
+        enc = await encodeScan(full);
+      }
       const ok = await saveScan({ ...coord, note: note.trim(), ...enc });
       if (ok) go("#/map");
     } catch (err) {
@@ -148,6 +169,16 @@ export function ScanFlow() {
         <>
           <h2>{STRINGS.mmScanButton}</h2>
           <p class="note">{STRINGS.mmPickHint}</p>
+          <label class="toggle">
+            <input
+              type="checkbox"
+              data-testid="toggle-as-is"
+              checked={asIs}
+              onChange={(e) => setAsIs((e.currentTarget as HTMLInputElement).checked)}
+            />
+            {STRINGS.mmImportAsIs}
+          </label>
+          {asIs && <p class="note">{STRINGS.mmImportAsIsHint}</p>}
           <div class="files-row">
             <label class="file-button primary-file">
               {STRINGS.mmCamera}
@@ -243,6 +274,27 @@ export function ScanFlow() {
               onInput={(e) => setContrast(Number((e.currentTarget as HTMLInputElement).value))}
             />
           </div>
+          <div class="field">
+            <span class="adj-label">
+              {STRINGS.mmTemperature}
+              <b
+                class={temperature !== 0 ? "adj-value off" : "adj-value"}
+                data-testid="temperature-value"
+              >
+                {temperature > 0 ? `+${temperature}` : temperature}
+              </b>
+            </span>
+            <input
+              type="range"
+              min={-100}
+              max={100}
+              value={temperature}
+              data-testid="slider-temperature"
+              onInput={(e) =>
+                setTemperature(Number((e.currentTarget as HTMLInputElement).value))
+              }
+            />
+          </div>
           <div class="flow-buttons">
             <button data-testid="btn-adjust-back" onClick={() => setStage("crop")}>
               {STRINGS.mmBack}
@@ -273,7 +325,10 @@ export function ScanFlow() {
             />
           </div>
           <div class="flow-buttons">
-            <button data-testid="btn-file-back" onClick={() => setStage("adjust")}>
+            <button
+              data-testid="btn-file-back"
+              onClick={() => setStage(asIsEncoded.current ? "pick" : "adjust")}
+            >
               {STRINGS.mmBack}
             </button>
             <button
@@ -302,57 +357,3 @@ export function ScanFlow() {
   );
 }
 
-function CoordPicker({
-  coord,
-  onChange,
-}: {
-  coord: { tx: number; ty: number };
-  onChange: (c: { tx: number; ty: number }) => void;
-}) {
-  const { tx, ty } = coord;
-  const ns = ty > 0 ? `N${ty}` : `S${-ty}`;
-  const ew = tx > 0 ? `E${tx}` : `W${-tx}`;
-  return (
-    <div class="coord-picker" data-testid="coord-picker" data-tx={tx} data-ty={ty}>
-      <div class="coord-name" data-testid="coord-name">
-        {panelName(tx, ty)}
-      </div>
-      <div class="coord-axes">
-        <span class="spin">
-          <button
-            class="spin-btn"
-            data-testid="coord-n-down"
-            onClick={() => onChange({ tx, ty: stepCoord(ty, -1) })}
-          >
-            ▼
-          </button>
-          <b>{ns}</b>
-          <button
-            class="spin-btn"
-            data-testid="coord-n-up"
-            onClick={() => onChange({ tx, ty: stepCoord(ty, 1) })}
-          >
-            ▲
-          </button>
-        </span>
-        <span class="spin">
-          <button
-            class="spin-btn"
-            data-testid="coord-e-down"
-            onClick={() => onChange({ tx: stepCoord(tx, -1), ty })}
-          >
-            ◀
-          </button>
-          <b>{ew}</b>
-          <button
-            class="spin-btn"
-            data-testid="coord-e-up"
-            onClick={() => onChange({ tx: stepCoord(tx, 1), ty })}
-          >
-            ▶
-          </button>
-        </span>
-      </div>
-    </div>
-  );
-}

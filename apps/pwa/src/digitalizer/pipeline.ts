@@ -114,6 +114,50 @@ export function toImageData(r: Raster): ImageData {
   return new ImageData(new Uint8ClampedArray(r.data), r.width, r.height);
 }
 
+// IMPORT AS IS — for pictures that are already scans: digital mapmaking
+// exports whose borders are the image borders. No corners, no
+// rectification, no adjustment. Within limits the FILE ITSELF is stored,
+// byte for byte; an oversized or exotic input still goes through the
+// pipeline's downscale and encoding. Only the thumbnail is ever derived.
+export const AS_IS_MAX_EDGE = 1600; // the downscale target when verbatim is off the table
+// Verbatim reaches to the mobile canvas ceiling: a drawn export downscaled
+// loses exactly the crispness the tester imported it for, so the file is
+// kept untouched as far as devices can display it.
+export const VERBATIM_MAX_EDGE = 4096;
+const VERBATIM_MIMES = new Set(["image/png", "image/jpeg", "image/webp"]);
+
+export function verbatimPlan(width: number, height: number, mime: string): boolean {
+  return Math.max(width, height) <= VERBATIM_MAX_EDGE && VERBATIM_MIMES.has(mime);
+}
+
+export async function importAsIs(file: Blob): Promise<Encoded & { verbatim: boolean }> {
+  let w = 0;
+  let h = 0;
+  try {
+    if (typeof createImageBitmap === "function") {
+      const bmp = await createImageBitmap(file);
+      w = bmp.width;
+      h = bmp.height;
+      bmp.close();
+    } else {
+      const img = await decodeViaImg(file);
+      w = img.naturalWidth;
+      h = img.naturalHeight;
+    }
+  } catch (e) {
+    throw new PipelineError("decode", String(e));
+  }
+  if (!w || !h) throw new PipelineError("decode", "empty image");
+  if (verbatimPlan(w, h, file.type)) {
+    const small = await decodeToRaster(file, 512);
+    const { thumb } = await encodeScan(small);
+    return { image: file, thumb, mime: file.type, width: w, height: h, verbatim: true };
+  }
+  const raster = await decodeToRaster(file, AS_IS_MAX_EDGE);
+  const enc = await encodeScan(raster);
+  return { ...enc, verbatim: false };
+}
+
 // Encode the canonical scan: WebP where the canvas can produce it, JPEG
 // where it cannot (Safari), plus the atlas thumbnail.
 export interface Encoded {
@@ -124,14 +168,64 @@ export interface Encoded {
   height: number;
 }
 
+// The compression review's ruling (measured on fixtures, numbers in the
+// README): within LOSSY webp, raising quality from 0.82 toward 0.95 pays
+// 2.4–3.6× the bytes and barely touches the visible artifacts — ink-stroke
+// fringing and gradient banding come from chroma subsampling, not the
+// quality knob. But content where that loss is VISIBLE — flat, drawn,
+// digital — compresses losslessly at comparable size. So the encoder looks
+// before it chooses: flat content goes lossless (webp q=1.0), photographs
+// keep 0.82.
+export const SCAN_QUALITY = {
+  webpPhoto: 0.82,
+  jpeg: 0.85,
+  thumb: 0.7,
+  flatForLossless: 0.3,
+} as const;
+
+// The fraction of pixels identical to their right neighbor: a drawn export
+// is mostly flat runs, a photograph almost never is.
+export function flatRatio(r: Raster): number {
+  const { width: w, height: h, data } = r;
+  let same = 0;
+  let total = 0;
+  for (let y = 0; y < h; y += 2) {
+    for (let x = 0; x < w - 1; x++) {
+      const i = (y * w + x) * 4;
+      if (
+        data[i] === data[i + 4] &&
+        data[i + 1] === data[i + 5] &&
+        data[i + 2] === data[i + 6]
+      ) {
+        same++;
+      }
+      total++;
+    }
+  }
+  return total ? same / total : 0;
+}
+
 export async function encodeScan(r: Raster): Promise<Encoded> {
-  const image = await encodeRaster(r, 0.82);
+  let image: Blob;
+  if (flatRatio(r) >= SCAN_QUALITY.flatForLossless) {
+    // flat content: try lossless, keep it only while it stays affordable
+    // (resampling can smear flatness and make lossless dear)
+    const lossless = await encodeRaster(r, 1.0);
+    if (lossless.type === "image/webp") {
+      const lossy = await encodeRaster(r, SCAN_QUALITY.webpPhoto);
+      image = lossless.size <= lossy.size * 2 ? lossless : lossy;
+    } else {
+      image = lossless; // jpeg fallback platform: no lossless exists
+    }
+  } else {
+    image = await encodeRaster(r, SCAN_QUALITY.webpPhoto);
+  }
   const scale = 256 / Math.max(r.width, r.height);
   const thumb =
     scale < 1
       ? await encodeRaster(
           resize(r, Math.max(1, Math.round(r.width * scale)), Math.max(1, Math.round(r.height * scale))),
-          0.7,
+          SCAN_QUALITY.thumb,
         )
       : image;
   return { image, thumb, mime: image.type, width: r.width, height: r.height };
@@ -144,7 +238,7 @@ async function encodeRaster(r: Raster, quality: number): Promise<Blob> {
   canvas.getContext("2d")!.putImageData(toImageData(r), 0, 0);
   const webp = await toBlob(canvas, "image/webp", quality);
   if (webp && webp.type === "image/webp") return webp;
-  const jpeg = await toBlob(canvas, "image/jpeg", Math.min(1, quality + 0.03));
+  const jpeg = await toBlob(canvas, "image/jpeg", SCAN_QUALITY.jpeg);
   if (jpeg && jpeg.type === "image/jpeg") return jpeg;
   throw new PipelineError("encode", "the canvas could not encode the scan");
 }

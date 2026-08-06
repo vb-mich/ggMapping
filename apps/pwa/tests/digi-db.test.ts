@@ -306,6 +306,70 @@ describe("the v1 → v2 upgrade", () => {
   });
 });
 
+describe("re-tag: a panel's history moves to another coordinate", () => {
+  it("moves every version together, order intact, other panels untouched", async () => {
+    const map = await db.currentMap("m");
+    const a = await db.addScan(newScan(map.id, 1, 1, "first"));
+    const b = await db.addScan(newScan(map.id, 1, 1, "second"));
+    await db.addScan(newScan(map.id, 2, 1, "neighbor"));
+
+    const r = await db.retagPanel(map.id, { tx: 1, ty: 1 }, { tx: 3, ty: -2 }, false);
+    expect(r).toEqual({ moved: 2, merged: false });
+    expect(await db.listVersions(map.id, 1, 1)).toHaveLength(0);
+    const moved = await db.listVersions(map.id, 3, -2);
+    expect(moved.map((v) => v.id)).toEqual([b.id, a.id]); // newest first, intact
+    expect(moved.map((v) => v.note)).toEqual(["second", "first"]);
+    expect(await db.listVersions(map.id, 2, 1)).toHaveLength(1); // untouched
+  });
+
+  it("refuses an occupied target unless the merge was asked for — atomically", async () => {
+    const map = await db.currentMap("m");
+    await db.addScan(newScan(map.id, 1, 1, "mover"));
+    await db.addScan(newScan(map.id, 2, 1, "resident"));
+    await expect(
+      db.retagPanel(map.id, { tx: 1, ty: 1 }, { tx: 2, ty: 1 }, false),
+    ).rejects.toBeInstanceOf(db.StoreError);
+    // nothing moved on refusal
+    expect(await db.listVersions(map.id, 1, 1)).toHaveLength(1);
+    expect(await db.listVersions(map.id, 2, 1)).toHaveLength(1);
+
+    const r = await db.retagPanel(map.id, { tx: 1, ty: 1 }, { tx: 2, ty: 1 }, true);
+    expect(r).toEqual({ moved: 1, merged: true });
+    const merged = await db.listVersions(map.id, 2, 1);
+    expect(merged).toHaveLength(2); // one history now, ordered by time
+    expect(merged[0].created).toBeGreaterThan(merged[1].created);
+  });
+
+  it("rejects the zero row, the zero column, and moving in place", async () => {
+    const map = await db.currentMap("m");
+    await db.addScan(newScan(map.id, 1, 1));
+    for (const to of [{ tx: 0, ty: 1 }, { tx: 1, ty: 0 }, { tx: 1, ty: 1 }]) {
+      await expect(
+        db.retagPanel(map.id, { tx: 1, ty: 1 }, to, true),
+      ).rejects.toBeInstanceOf(db.StoreError);
+    }
+    await expect(
+      db.retagPanel(map.id, { tx: 5, ty: 5 }, { tx: 6, ty: 6 }, false),
+    ).rejects.toBeInstanceOf(db.StoreError); // nothing filed at the source
+  });
+});
+
+describe("the storage interface act two is reviewed against", () => {
+  it("keeps its seam: every act-one export still present, additive only", async () => {
+    const seam = [
+      "currentMap", "listMaps", "createMap", "renameMap", "deleteMap", "setCurrentMap",
+      "addScan", "listScans", "listVersions", "latestPerPanel", "getScan", "deleteScan",
+      "updateScanNote", "retagPanel", "mapAt", "timelineStops", "stopIndexAt",
+      "listBookmarks", "addBookmark", "deleteBookmark",
+      "exportArchive", "restoreArchive", "storageFacts", "requestPersistence",
+      "defaultCoord", "stepCoord", "scanCounts", "getSetting", "putSetting",
+    ];
+    for (const name of seam) {
+      expect(typeof (db as Record<string, unknown>)[name], name).toBe("function");
+    }
+  });
+});
+
 describe("the default coordinate rule (E, S, W, N)", () => {
   const meta = (tx: number, ty: number, created: number) =>
     ({ tx, ty, created }) as import("../src/digitalizer/db").ScanMeta;

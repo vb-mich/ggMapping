@@ -238,6 +238,10 @@ export const STRINGS = {
   mmAdjustTitle: "Light",
   mmExposure: "Exposure",
   mmContrast: "Contrast",
+  mmTemperature: "Temperature",
+  mmImportAsIs: "Import as is",
+  mmImportAsIsHint:
+    "The picture is filed unchanged: no corners, no straightening, no light changes. For maps that are already scans.",
   mmContinue: "Continue",
   mmFileTitle: "File the scan",
   mmNote: "Note (optional)",
@@ -249,6 +253,12 @@ export const STRINGS = {
   mmHistoryTitle: "History",
   mmNewestFirst: "newest first",
   mmScanAgain: "Scan a new version",
+  mmMovePanel: "Move to another coordinate",
+  mmMoveHint: "All {n} scan(s) of this panel move together; the atlas follows.",
+  mmMoveGo: "Move",
+  mmMergeWarn:
+    "{name} already holds {n} scan(s). Moving here makes the two histories one, ordered by time.",
+  mmMergeGo: "Merge histories",
   mmNoScansHere: "Nothing is filed at this coordinate yet.",
   mmDelete: "Delete",
   mmDeleteWarn: "This removes the scan from this device, forever. There is no copy anywhere else.",

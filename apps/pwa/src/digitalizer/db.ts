@@ -362,6 +362,47 @@ export function getScan(id: string): Promise<ScanRecord | undefined> {
   );
 }
 
+// RE-TAG: move every scan of a panel to another coordinate, all versions
+// together, in ONE transaction. A mis-filed panel deserves better than
+// deletion. If the target already holds scans the histories become one,
+// ordered by time — but only when the caller passed allowMerge (the UI asks
+// the user first; the occupancy is re-checked here so a race cannot merge
+// silently).
+export function retagPanel(
+  mapId: string,
+  from: { tx: number; ty: number },
+  to: { tx: number; ty: number },
+  allowMerge: boolean,
+): Promise<{ moved: number; merged: boolean }> {
+  const bad = (v: number) => !Number.isInteger(v) || v === 0;
+  if (bad(to.tx) || bad(to.ty)) {
+    return Promise.reject(new StoreError("failure", "no zero row or column"));
+  }
+  if (from.tx === to.tx && from.ty === to.ty) {
+    return Promise.reject(new StoreError("failure", "already there"));
+  }
+  return tx("scans", "readwrite", async (t) => {
+    const store = t.objectStore("scans");
+    const index = store.index("byPanel");
+    const source = (await reqAsPromise(
+      index.getAll([mapId, from.tx, from.ty]),
+    )) as ScanRecord[];
+    if (!source.length) throw new StoreError("failure", "nothing is filed there");
+    const occupied = (await reqAsPromise(
+      index.count([mapId, to.tx, to.ty]),
+    )) as number;
+    if (occupied > 0 && !allowMerge) {
+      throw new StoreError("failure", "the target already holds scans");
+    }
+    for (const s of source) {
+      s.tx = to.tx;
+      s.ty = to.ty;
+      store.put(s);
+    }
+    return { moved: source.length, merged: occupied > 0 };
+  });
+}
+
 // Local and final in act one: no tombstone, nothing to reconcile. (Act two:
 // enqueue a delete op in the outbox in the same transaction.)
 export function deleteScan(id: string): Promise<void> {

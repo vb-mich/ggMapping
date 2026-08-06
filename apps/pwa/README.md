@@ -119,9 +119,27 @@ rectangle are recovered from the photo itself (Zhang–He whiteboard-scanning
 estimation: principal point at the image center, focal length from the two
 vanishing points; exact affine ratio for parallelograms; a naive side-length
 fallback when the estimate degenerates). The rectified output's longest edge
-lands near 1600 px (never upscaled far beyond the photo), encoded WebP q0.82
-with a JPEG fallback where the canvas cannot encode WebP, plus a ~256 px
+lands near 1600 px (never upscaled far beyond the photo), plus a ~256 px
 thumbnail for the atlas — a few hundred KB per scan at phone resolutions.
+
+### Encoding, after the compression review (act 1.6)
+
+Measured on fixtures (a smooth gradient beside saturated ink on paper, and
+the same with camera grain): within LOSSY WebP, raising quality 0.82 → 0.95
+pays 2.4–3.6× the bytes on a photo (170 → 400 → 609 KB at 1333×1600) while
+the visible artifacts barely move — ink-stroke fringing (max channel error
+~91/255) and mild gradient banding (213/249 preserved transitions) come from
+chroma subsampling, which no lossy quality removes. Lossless WebP (q=1.0) is
+pixel-perfect and, on FLAT drawn content, comparably small (32 KB on the
+fixture) — but explodes on photographs (1.6 MB). So the encoder looks before
+it chooses: content whose flat-pixel ratio passes 0.3 tries lossless and
+keeps it while it costs at most 2× the lossy encoding; photographs stay at
+q0.82; JPEG 0.85 remains the fallback where the canvas cannot encode WebP.
+**Import as is** (a capture-step checkbox, for exports whose borders are
+already the image borders) bypasses the pipeline entirely: up to a 4096 px
+longest edge (the mobile canvas display ceiling) the file is stored BYTE
+FOR BYTE — the true zero-loss path for digital mapmaking exports; beyond
+it, the downscale-and-encode pipeline takes over.
 
 ### The storage interface (what act two is reviewed against)
 
@@ -163,7 +181,12 @@ their stop, chips beneath it, tap to seek; deleting one deletes a name,
 never a scan. Notes stay editable after save (the one after-save mutation a
 scan allows). Rotate joined the Corners stage: a repeatable quarter turn of
 the working image, the quad riding along. Tapping an empty panel on the
-atlas opens the scan flow with that coordinate preset.
+atlas opens the scan flow with that coordinate preset. Act 1.6 added the
+Light stage's third slider — **temperature**, a plain opposed red/blue shift
+that rescues yellow evening light, no auto magic — and **re-tagging**: a
+panel's whole history moves to another coordinate from its detail view, all
+versions together in one transaction; an occupied target asks whether the
+two histories should become one, ordered by time.
 
 ### The profile
 

@@ -1,0 +1,246 @@
+// Act 1.6, the tester's four riders, end to end: import-as-is stores the
+// file byte for byte; the temperature slider round-trips into the saved
+// scan; a panel's whole history re-tags to another coordinate (an occupied
+// target asks before histories merge); and the encoder keeps drawn content
+// lossless through the pipeline.
+import { createHash } from "node:crypto";
+
+import { expect, test, type Page } from "@playwright/test";
+
+import { STRINGS } from "../src/strings";
+import { feedFixture, makeFixture, saveScan, scanToFile } from "./mymap-helpers";
+
+// a small drawn PNG made in-page; returns its bytes for byte-comparison
+async function drawnPng(page: Page, w: number, h: number): Promise<Buffer> {
+  const dataUrl = await page.evaluate(
+    ({ w, h }) => {
+      const cv = document.createElement("canvas");
+      cv.width = w;
+      cv.height = h;
+      const g = cv.getContext("2d")!;
+      g.fillStyle = "#e8f0e2";
+      g.fillRect(0, 0, w, h);
+      g.strokeStyle = "#20469b";
+      g.lineWidth = 4;
+      for (let k = 1; k < 6; k++) {
+        g.beginPath();
+        g.moveTo(0, (h / 6) * k);
+        g.lineTo(w, (h / 6) * k - 12);
+        g.stroke();
+      }
+      g.fillStyle = "#1a3fbf";
+      g.fillRect(w / 2 - 60, h / 2 - 60, 120, 120);
+      return cv.toDataURL("image/png");
+    },
+    { w, h },
+  );
+  return Buffer.from(dataUrl.split(",")[1], "base64");
+}
+
+const sha256OfStored = (page: Page) =>
+  page.evaluate(async () => {
+    const open = indexedDB.open("jm-digitalizer");
+    const db = await new Promise<IDBDatabase>((res, rej) => {
+      open.onsuccess = () => res(open.result);
+      open.onerror = () => rej(open.error);
+    });
+    const scans = await new Promise<{ created: number; mime: string; image: Blob; width: number; height: number; bytes: number }[]>(
+      (res, rej) => {
+        const r = db.transaction("scans", "readonly").objectStore("scans").getAll();
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      },
+    );
+    db.close();
+    const newest = scans.sort((a, b) => b.created - a.created)[0];
+    const digest = await crypto.subtle.digest("SHA-256", await newest.image.arrayBuffer());
+    return {
+      sha: [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join(""),
+      mime: newest.mime,
+      width: newest.width,
+      height: newest.height,
+      bytes: newest.bytes,
+    };
+  });
+
+test("import as is: the file is the scan, byte for byte", async ({ page }) => {
+  await page.goto("/#/map");
+  await page.getByTestId("btn-scan").click();
+  await page.getByTestId("toggle-as-is").check();
+  await expect(page.getByText(STRINGS.mmImportAsIsHint)).toBeVisible();
+  if (test.info().project.name === "mobile") {
+    await page.screenshot({ path: "e2e-artifacts/rider-as-is.png" });
+  }
+
+  // the tester's real case: a mapmaking export larger than the photo cap,
+  // whose borders are already the image borders
+  const png = await drawnPng(page, 2000, 2400);
+  await page.setInputFiles('[data-testid="input-scan-gallery"]', {
+    name: "export.png",
+    mimeType: "image/png",
+    buffer: png,
+  });
+  // no corners, no light: straight to the filing stage
+  await expect(page.getByTestId("scan-flow")).toHaveAttribute("data-stage", "file", {
+    timeout: 20_000,
+  });
+  await expect(page.getByTestId("coord-name")).toHaveText("N1/E1");
+  await saveScan(page);
+  await expect(page.getByTestId("atlas-cell-1,1")).toBeVisible();
+
+  const stored = await sha256OfStored(page);
+  const wanted = createHash("sha256").update(png).digest("hex");
+  expect(stored.sha).toBe(wanted); // byte-identical: nothing touched it
+  expect(stored.mime).toBe("image/png");
+  expect(stored.width).toBe(2000);
+  expect(stored.height).toBe(2400);
+});
+
+test("the temperature slider round-trips into the saved scan", async ({ page }) => {
+  await page.goto("/#/map");
+  await page.getByTestId("btn-scan").click();
+  const t = await makeFixture(page);
+  await feedFixture(page, t);
+  await expect(page.getByTestId("scan-flow")).toHaveAttribute("data-stage", "crop");
+  await page.getByTestId("btn-straighten").click();
+  await expect(page.getByTestId("scan-flow")).toHaveAttribute("data-stage", "adjust", {
+    timeout: 20_000,
+  });
+
+  await expect(page.getByTestId("temperature-value")).toHaveText("0");
+  const shot = () =>
+    page.getByTestId("adjust-canvas").evaluate((c) => (c as HTMLCanvasElement).toDataURL());
+  const before = await shot();
+  await page.getByTestId("slider-temperature").fill("-100");
+  await expect(page.getByTestId("temperature-value")).toHaveText("-100");
+  await expect.poll(shot).not.toBe(before);
+  if (test.info().project.name === "mobile") {
+    await page.screenshot({ path: "e2e-artifacts/rider-temperature.png" });
+  }
+  await page.getByTestId("slider-temperature").fill("0");
+  await expect(page.getByTestId("temperature-value")).toHaveText("0");
+  await page.getByTestId("slider-temperature").fill("-100");
+
+  await page.getByTestId("btn-to-file").click();
+  await saveScan(page);
+
+  // the stored pixels went cool: blue above red on a fixture that is warm
+  const means = await page.evaluate(async () => {
+    const open = indexedDB.open("jm-digitalizer");
+    const db = await new Promise<IDBDatabase>((res, rej) => {
+      open.onsuccess = () => res(open.result);
+      open.onerror = () => rej(open.error);
+    });
+    const scans = await new Promise<{ created: number; image: Blob }[]>((res, rej) => {
+      const r = db.transaction("scans", "readonly").objectStore("scans").getAll();
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    db.close();
+    const newest = scans.sort((a, b) => b.created - a.created)[0];
+    const img = new Image();
+    await new Promise((res, rej) => {
+      img.onload = res;
+      img.onerror = rej;
+      img.src = URL.createObjectURL(newest.image);
+    });
+    const cv = document.createElement("canvas");
+    cv.width = img.naturalWidth;
+    cv.height = img.naturalHeight;
+    const g = cv.getContext("2d")!;
+    g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, cv.width, cv.height).data;
+    let r = 0, b = 0, n = 0;
+    for (let i = 0; i < d.length; i += 40) {
+      r += d[i];
+      b += d[i + 2];
+      n++;
+    }
+    return { r: r / n, b: b / n };
+  });
+  expect(means.b).toBeGreaterThan(means.r); // cooled past the paper's warmth
+});
+
+test("a panel's history moves to another coordinate; an occupied target asks to merge", async ({
+  page,
+}) => {
+  await page.goto("/#/map");
+  // two versions at N1/E1
+  await page.getByTestId("btn-scan").click();
+  await scanToFile(page, await makeFixture(page));
+  await saveScan(page);
+  await page.getByTestId("btn-scan").click();
+  await scanToFile(page, await makeFixture(page, { paper: "#b8c8ee" }));
+  await page.getByTestId("coord-e-down").click();
+  await page.getByTestId("input-scan-note").fill("the blue rework");
+  await saveScan(page);
+  // one resident at N1/E2
+  await page.getByTestId("btn-scan").click();
+  await scanToFile(page, await makeFixture(page));
+  await expect(page.getByTestId("coord-name")).toHaveText("N1/E2");
+  await page.getByTestId("input-scan-note").fill("the resident");
+  await saveScan(page);
+
+  // move N1/E1 → N1/E3 (empty): all versions travel together
+  await page.getByTestId("atlas-cell-1,1").click();
+  await page.getByTestId("btn-move-panel").click();
+  await page.getByTestId("coord-e-up").click();
+  await page.getByTestId("coord-e-up").click();
+  await expect(page.getByTestId("coord-name")).toHaveText("N1/E3");
+  await page.getByTestId("btn-move-go").click();
+  await expect(page).toHaveURL(/#\/map\/panel\/3\/1$/);
+  await expect(page.getByTestId("version-list").locator("li")).toHaveCount(2);
+  await expect(page.getByTestId("panel-meta")).toContainText("the blue rework");
+  await page.getByTestId("btn-back-atlas").click();
+  await expect(page.getByTestId("atlas-cell-3,1")).toBeVisible();
+  await expect(page.getByTestId("atlas-cell-1,1")).toHaveCount(0); // the old spot emptied
+
+  // move N1/E3 → N1/E2 (occupied): the question, then one history
+  await page.getByTestId("atlas-cell-3,1").click();
+  await page.getByTestId("btn-move-panel").click();
+  await page.getByTestId("coord-e-down").click();
+  await expect(page.getByTestId("coord-name")).toHaveText("N1/E2");
+  await page.getByTestId("btn-move-go").click();
+  const note = page.getByTestId("merge-note");
+  await expect(note).toBeVisible();
+  await expect(note).toContainText("N1/E2");
+  await expect(note).toContainText("histories one");
+  await expect(page.getByTestId("btn-move-go")).toHaveText(STRINGS.mmMergeGo);
+  if (test.info().project.name === "mobile") {
+    await page.screenshot({ path: "e2e-artifacts/rider-move-merge.png" });
+  }
+  await page.getByTestId("btn-move-go").click();
+  await expect(page).toHaveURL(/#\/map\/panel\/2\/1$/);
+  await expect(page.getByTestId("version-list").locator("li")).toHaveCount(3);
+  // newest first across the merged histories
+  await expect(page.getByTestId("version-row-0")).toContainText("the resident");
+  await expect(page.getByTestId("version-row-1")).toContainText("the blue rework");
+  await page.getByTestId("btn-back-atlas").click();
+  await expect(page.getByTestId("atlas-cell-2,1")).toBeVisible();
+  await expect(page.getByTestId("mm-footer")).toContainText("3 scans");
+});
+
+test("beyond the display ceiling the pipeline still downscales within budget", async ({
+  page,
+}) => {
+  await page.goto("/#/map");
+  await page.getByTestId("btn-scan").click();
+  await page.getByTestId("toggle-as-is").check();
+  // past even the verbatim ceiling: the encoder must take over, and the
+  // cost guard must keep the result inside the per-scan budget
+  const png = await drawnPng(page, 4200, 5040);
+  await page.setInputFiles('[data-testid="input-scan-gallery"]', {
+    name: "huge-export.png",
+    mimeType: "image/png",
+    buffer: png,
+  });
+  await expect(page.getByTestId("scan-flow")).toHaveAttribute("data-stage", "file", {
+    timeout: 30_000,
+  });
+  await saveScan(page);
+
+  const stored = await sha256OfStored(page);
+  expect(stored.mime).toBe("image/webp");
+  expect(Math.max(stored.width, stored.height)).toBeLessThanOrEqual(1600);
+  expect(stored.bytes).toBeLessThan(300 * 1024); // the budget holds
+});

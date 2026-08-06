@@ -5,9 +5,17 @@ import { useEffect, useState } from "preact/hooks";
 
 import { panelName } from "../../contracts/geometry";
 import { STRINGS } from "../../strings";
-import { go } from "../../router";
+import { go, panelHash } from "../../router";
 import { getScan, type ScanMeta } from "../db";
-import { activeMap, editNote, presetCoord, removeScan, versionsOf } from "../store";
+import {
+  activeMap,
+  editNote,
+  movePanel,
+  presetCoord,
+  removeScan,
+  versionsOf,
+} from "../store";
+import { CoordPicker } from "./CoordPicker";
 
 export function PanelDetail({ tx, ty }: { tx: number; ty: number }) {
   const versions = versionsOf(tx, ty);
@@ -65,6 +73,8 @@ export function PanelDetail({ tx, ty }: { tx: number; ty: number }) {
         </button>
       </div>
 
+      {versions.length > 0 && <MovePanel tx={tx} ty={ty} count={versions.length} />}
+
       {!versions.length && (
         <p class="note" data-testid="panel-empty">
           {STRINGS.mmNoScansHere}
@@ -100,6 +110,78 @@ export function PanelDetail({ tx, ty }: { tx: number; ty: number }) {
           </ul>
         </>
       )}
+    </div>
+  );
+}
+
+// RE-TAG: the whole panel — every version — moves to another coordinate.
+// A mis-filed panel deserves better than deletion. An occupied target asks
+// whether the histories should become one, ordered by time.
+function MovePanel({ tx, ty, count }: { tx: number; ty: number; count: number }) {
+  const [moving, setMoving] = useState(false);
+  const [target, setTarget] = useState({ tx, ty });
+  const [askMerge, setAskMerge] = useState(false);
+
+  const close = () => {
+    setMoving(false);
+    setAskMerge(false);
+    setTarget({ tx, ty });
+  };
+
+  const onMove = async () => {
+    if (target.tx === tx && target.ty === ty) {
+      close();
+      return;
+    }
+    const occupied = versionsOf(target.tx, target.ty).length;
+    if (occupied > 0 && !askMerge) {
+      setAskMerge(true); // the question, not the deed
+      return;
+    }
+    if (await movePanel({ tx, ty }, target, occupied > 0)) {
+      go(panelHash(target.tx, target.ty));
+      close();
+    }
+  };
+
+  if (!moving) {
+    return (
+      <button class="ghost" data-testid="btn-move-panel" onClick={() => setMoving(true)}>
+        {STRINGS.mmMovePanel}
+      </button>
+    );
+  }
+  const occupied = versionsOf(target.tx, target.ty).length;
+  return (
+    <div class="move-panel" data-testid="move-panel">
+      <p class="note">{STRINGS.mmMoveHint.replace("{n}", String(count))}</p>
+      <CoordPicker
+        coord={target}
+        onChange={(c) => {
+          setTarget(c);
+          setAskMerge(false);
+        }}
+      />
+      {askMerge && (
+        <p class="note" data-testid="merge-note" role="status">
+          {STRINGS.mmMergeWarn
+            .replace("{name}", panelName(target.tx, target.ty))
+            .replace("{n}", String(occupied))}
+        </p>
+      )}
+      <div class="flow-buttons">
+        <button class="ghost" data-testid="btn-move-cancel" onClick={close}>
+          {STRINGS.cancel}
+        </button>
+        <button
+          class="primary"
+          data-testid="btn-move-go"
+          disabled={target.tx === tx && target.ty === ty}
+          onClick={onMove}
+        >
+          {askMerge ? STRINGS.mmMergeGo : STRINGS.mmMoveGo}
+        </button>
+      </div>
     </div>
   );
 }

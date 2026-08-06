@@ -93,6 +93,7 @@ export interface Adjust {
   hi: number; // levels white point (auto)
   exposure: number; // -100..100, manual
   contrast: number; // -100..100, manual
+  temperature?: number; // -100..100, manual: negative cools, positive warms
 }
 
 // One 256-entry LUT: levels stretch, then exposure shift, then a contrast
@@ -110,13 +111,39 @@ export function buildLut(a: Adjust): Uint8ClampedArray {
   return lut;
 }
 
+// Per-channel LUTs: the shared curve above, plus WHITE BALANCE — a plain
+// opposed shift of red and blue (no auto magic, per the field ruling).
+// Negative temperature cools a yellow-evening photo; positive warms.
+export interface ChannelLuts {
+  r: Uint8ClampedArray;
+  g: Uint8ClampedArray;
+  b: Uint8ClampedArray;
+}
+
+export function buildLuts(a: Adjust): ChannelLuts {
+  const g = buildLut(a);
+  const t = ((a.temperature ?? 0) / 100) * 0.18; // ±18% of full scale
+  const shift = Math.round(t * 255);
+  const r = new Uint8ClampedArray(256);
+  const b = new Uint8ClampedArray(256);
+  for (let v = 0; v < 256; v++) {
+    r[v] = clampi(g[v] + shift, 0, 255);
+    b[v] = clampi(g[v] - shift, 0, 255);
+  }
+  return { r, g, b };
+}
+
 export function applyLut(r: Raster, lut: Uint8ClampedArray): Raster {
+  return applyLuts(r, { r: lut, g: lut, b: lut });
+}
+
+export function applyLuts(r: Raster, luts: ChannelLuts): Raster {
   const out = makeRaster(r.width, r.height);
   const s = r.data, d = out.data;
   for (let i = 0; i < s.length; i += 4) {
-    d[i] = lut[s[i]];
-    d[i + 1] = lut[s[i + 1]];
-    d[i + 2] = lut[s[i + 2]];
+    d[i] = luts.r[s[i]];
+    d[i + 1] = luts.g[s[i + 1]];
+    d[i + 2] = luts.b[s[i + 2]];
     d[i + 3] = s[i + 3];
   }
   return out;

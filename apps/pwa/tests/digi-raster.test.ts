@@ -6,8 +6,10 @@ import { describe, expect, it } from "vitest";
 import type { Quad } from "../src/digitalizer/geometry";
 import {
   applyLut,
+  applyLuts,
   autoLevels,
   buildLut,
+  buildLuts,
   makeRaster,
   resize,
   warpPerspective,
@@ -136,6 +138,37 @@ describe("the adjustment pair", () => {
     const flat = buildLut({ ...neutral, contrast: -100 });
     for (const v of [0, 255]) expect(flat[v]).toBe(128);
   });
+  it("temperature at zero leaves all three channels on the shared curve", () => {
+    const luts = buildLuts({ ...neutral, temperature: 0 });
+    const base = buildLut(neutral);
+    for (const v of [0, 64, 128, 200, 255]) {
+      expect(luts.r[v]).toBe(base[v]);
+      expect(luts.g[v]).toBe(base[v]);
+      expect(luts.b[v]).toBe(base[v]);
+    }
+  });
+  it("warming lifts red and sinks blue; cooling mirrors; both clamp", () => {
+    const warm = buildLuts({ ...neutral, temperature: 100 });
+    expect(warm.r[128]).toBeGreaterThan(128);
+    expect(warm.b[128]).toBeLessThan(128);
+    expect(warm.g[128]).toBe(128);
+    expect(warm.r[255]).toBe(255); // clamped, not wrapped
+    expect(warm.b[0]).toBe(0);
+    const cool = buildLuts({ ...neutral, temperature: -100 });
+    expect(cool.r[128]).toBeLessThan(128);
+    expect(cool.b[128]).toBeGreaterThan(128);
+    // the shift is symmetric: what warming adds to red, cooling adds to blue
+    expect(warm.r[128] - 128).toBe(cool.b[128] - 128);
+  });
+  it("applyLuts drives each channel by its own table", () => {
+    const r = makeRaster(1, 1);
+    fill(r, 0, 0, 1, 1, [100, 100, 100]);
+    const out = applyLuts(r, buildLuts({ ...neutral, temperature: 50 }));
+    expect(out.data[0]).toBeGreaterThan(out.data[1]); // r above g
+    expect(out.data[2]).toBeLessThan(out.data[1]); // b below g
+    expect(out.data[3]).toBe(255);
+  });
+
   it("applyLut touches RGB and preserves alpha", () => {
     const r = makeRaster(2, 1);
     fill(r, 0, 0, 2, 1, [10, 20, 30]);
