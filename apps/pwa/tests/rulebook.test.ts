@@ -6,53 +6,80 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  BOOKS,
   BOOK_SOURCE,
+  bookById,
   chapterByNumber,
   findHeading,
   outline,
   renderBook,
 } from "../src/rulebook/book";
 
-const DOCS = join(__dirname, "..", "..", "..", "docs", "0-Jerrymapping-the-game.md");
+// each book's authority file on disk, by its library id
+const BOOK_FILES: Record<string, string> = {
+  handbook: "ggMapping-Players-Handbook.md",
+  master: "0-Jerrymapping-the-game.md",
+};
+
+const DOCS_DIR = join(__dirname, "..", "..", "..", "docs");
 const sha = (s: string | Buffer) => createHash("sha256").update(s).digest("hex");
 
 describe("the rulebook's single source", () => {
-  it("renders content byte-derived from docs/0-Jerrymapping-the-game.md", () => {
-    // A copied or stale book fails here: the reader's build-time import must
-    // hash identically to the authority file in docs/. (Both sides are LF by
-    // .gitattributes; normalize anyway so a Windows checkout quirk cannot
-    // masquerade as a content difference.)
-    const disk = readFileSync(DOCS, "utf8").replace(/\r\n/g, "\n");
-    const imported = BOOK_SOURCE.replace(/\r\n/g, "\n");
-    expect(sha(imported)).toBe(sha(disk));
+  it("renders every book byte-derived from its authority file in docs/", () => {
+    // A copied or stale book fails here: each build-time import must hash
+    // identically to its file. (Both sides are LF by .gitattributes;
+    // normalize anyway so a Windows checkout quirk cannot masquerade as a
+    // content difference.)
+    expect(Object.keys(BOOK_FILES).sort()).toEqual(
+      BOOKS.map((b) => b.id).sort(), // a new book must register here too
+    );
+    for (const b of BOOKS) {
+      const disk = readFileSync(join(DOCS_DIR, BOOK_FILES[b.id]), "utf8")
+        .replace(/\r\n/g, "\n");
+      expect(sha(b.source.replace(/\r\n/g, "\n")), b.id).toBe(sha(disk));
+    }
+    // the exported master source is the master book's, verbatim
+    expect(BOOK_SOURCE).toBe(bookById("master")!.source);
+    // and the default the tab opens is the player's book
+    expect(BOOKS[0].id).toBe("handbook");
   });
 
-  it("builds the outline from the file's actual headings, count and text", () => {
-    // Independent census: the raw file, not the module's parser. The book has
-    // no code fences (asserted), so line-anchored heading regexes are exact.
-    const disk = readFileSync(DOCS, "utf8").replace(/\r\n/g, "\n");
-    expect(disk).not.toMatch(/^```/m); // fences would break the census below
-    const lines = disk.split("\n");
-    const h1 = lines.filter((l) => /^# /.test(l)).map((l) => l.slice(2).trim());
-    const h2 = lines.filter((l) => /^## /.test(l)).map((l) => l.slice(3).trim());
+  it("builds each outline from its file's actual headings, count and text", () => {
+    // Independent census: the raw files, not the module's parser. The books
+    // have no code fences (asserted), so line-anchored regexes are exact.
+    for (const b of BOOKS) {
+      const disk = readFileSync(join(DOCS_DIR, BOOK_FILES[b.id]), "utf8")
+        .replace(/\r\n/g, "\n");
+      expect(disk, b.id).not.toMatch(/^```/m);
+      const lines = disk.split("\n");
+      const h1 = lines.filter((l) => /^# /.test(l)).map((l) => l.slice(2).trim());
+      const h2 = lines.filter((l) => /^## /.test(l)).map((l) => l.slice(3).trim());
 
-    expect(outline.chapters.map((c) => c.text)).toEqual(h1);
-    // the first ## precedes every chapter: it is the book naming itself
-    expect(outline.title).toBe(h2[0]);
-    expect(outline.title.length).toBeGreaterThan(0);
-    const sections = outline.chapters.flatMap((c) => c.sections.map((s) => s.text));
-    expect(sections).toEqual(h2.slice(1));
-    expect(outline.chapters.length + sections.length + 1).toBe(h1.length + h2.length);
+      expect(b.outline.chapters.map((c) => c.text), b.id).toEqual(h1);
+      // the first ## precedes every chapter: it is the book naming itself
+      expect(b.outline.title, b.id).toBe(h2[0]);
+      expect(b.outline.title.length, b.id).toBeGreaterThan(0);
+      const sections = b.outline.chapters.flatMap((c) => c.sections.map((s) => s.text));
+      expect(sections, b.id).toEqual(h2.slice(1));
+    }
+    // the outline export still names the master's chapters (tooling contract)
+    expect(outline.title).toContain("Master");
+    // the two books introduce themselves apart: a selector needs real names
+    expect(bookById("handbook")!.outline.title).not.toBe(
+      bookById("master")!.outline.title,
+    );
   });
 
   it("gives every heading a unique slug the rendered HTML carries", () => {
-    const slugs = [
-      ...outline.chapters.map((c) => c.slug),
-      ...outline.chapters.flatMap((c) => c.sections.map((s) => s.slug)),
-    ];
-    expect(new Set(slugs).size).toBe(slugs.length);
-    const html = renderBook();
-    for (const slug of slugs) expect(html).toContain(`id="${slug}"`);
+    for (const b of BOOKS) {
+      const slugs = [
+        ...b.outline.chapters.map((c) => c.slug),
+        ...b.outline.chapters.flatMap((c) => c.sections.map((s) => s.slug)),
+      ];
+      expect(new Set(slugs).size, b.id).toBe(slugs.length);
+      const html = renderBook(b);
+      for (const slug of slugs) expect(html, b.id).toContain(`id="${slug}"`);
+    }
   });
 
   it("renders chapter 5's deck table as a real table with its 9 card rows", () => {

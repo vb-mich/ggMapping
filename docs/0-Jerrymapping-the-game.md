@@ -1,4 +1,4 @@
-## ggMapping Player's Handbook
+## ggMapping Master Manual
 Version: beta 0.1
 
 ---

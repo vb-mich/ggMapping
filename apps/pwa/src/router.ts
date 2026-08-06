@@ -12,7 +12,7 @@ export type Route =
   | { screen: "profile" }
   | { screen: "profile-playback" }
   | { screen: "profile-maps" }
-  | { screen: "rules"; anchor: string | null };
+  | { screen: "rules"; book: string | null; anchor: string | null };
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
@@ -22,9 +22,15 @@ export function parseRoute(hash: string): Route {
     return { screen: "profile" };
   }
   if (parts[0] === "rules") {
-    // #/rules/<slug-of-heading>, or #/rules/ch/<n> to survive a retitle
+    // #/rules/book/<id>[/<anchor>] names a book of the library; a bare
+    // #/rules/<anchor> (or ch/<n>) predates the library and resolves in the
+    // Master Manual, the only book that existed when such links were minted.
+    if (parts[1] === "book" && parts[2]) {
+      const anchor = parts.slice(3).join("/");
+      return { screen: "rules", book: parts[2], anchor: anchor || null };
+    }
     const anchor = parts.slice(1).join("/");
-    return { screen: "rules", anchor: anchor || null };
+    return { screen: "rules", book: null, anchor: anchor || null };
   }
   if (parts[0] !== "map") return { screen: "sim" };
   if (parts[1] === "scan") return { screen: "scan" };
@@ -63,4 +69,9 @@ export function go(hash: string): void {
 }
 
 export const panelHash = (tx: number, ty: number) => `#/map/panel/${tx}/${ty}`;
-export const rulesHash = (slug?: string) => (slug ? `#/rules/${slug}` : "#/rules");
+export const rulesHash = (slug?: string, book?: string) =>
+  book
+    ? `#/rules/book/${book}${slug ? `/${slug}` : ""}`
+    : slug
+      ? `#/rules/${slug}`
+      : "#/rules";

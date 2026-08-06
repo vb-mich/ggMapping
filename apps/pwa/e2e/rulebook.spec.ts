@@ -47,7 +47,7 @@ test("the Rulebook tab opens the reader: title, badge, and a real outline", asyn
     await expect(page.getByTestId("book-side")).toBeHidden(); // 2: the backdrop
     await toggle.click();
     await page.getByTestId("book-side").getByRole("link", { name: /^5\./ }).click();
-    await expect(page).toHaveURL(/#\/rules\/5-/);
+    await expect(page).toHaveURL(/#\/rules\/book\/handbook\/5-/);
     await expect(page.getByTestId("book-side")).toBeHidden(); // 3: navigating
     // the bar carries the reading controls: theme and profile stay reachable
     await expect(bar.getByTestId("book-theme")).toBeVisible();
@@ -58,7 +58,7 @@ test("the Rulebook tab opens the reader: title, badge, and a real outline", asyn
     const chapters = page.locator(
       "[data-testid='book-outline'] > ul > li > a",
     );
-    expect(await chapters.count()).toBeGreaterThanOrEqual(10);
+    expect(await chapters.count()).toBeGreaterThanOrEqual(8);
     await page.screenshot({ path: "e2e-artifacts/rulebook-desktop.png" });
   }
 });
@@ -103,7 +103,7 @@ test("the deck editor's warnings link into the book at chapter 10", async ({
   await page.getByTestId("deck-inc-addpanel").click();
   await expect(page.getByTestId("deck-warnings")).toBeVisible();
   await page.getByTestId("link-ch10").click();
-  await expect(page).toHaveURL(/#\/rules\/ch\/10$/);
+  await expect(page).toHaveURL(/#\/rules\/book\/master\/ch\/10$/);
   const ch10 = page.locator("[data-testid='book-page'] h1", { hasText: /^10\./ });
   await expect(ch10).toBeVisible();
   await expect
@@ -151,10 +151,38 @@ test("the book's figures render inside the reading column", async ({ page }, tes
   await page.screenshot({ path: `e2e-artifacts/rulebook-ch7-${testInfo.project.name}.png` });
 });
 
+test("the library: two books, one selector, both link dialects", async ({ page }) => {
+  // the tab opens the player's book; the selector swaps to the law and back
+  await page.goto("/#/rules");
+  await expect(page.getByTestId("book-title")).toContainText("Player's Handbook");
+  await page.getByTestId("book-select").selectOption("master");
+  await expect(page).toHaveURL(/#\/rules\/book\/master$/);
+  await expect(page.getByTestId("book-title")).toContainText("Master Manual");
+  if (isNarrow(page)) await page.getByTestId("book-drawer-toggle").click();
+  const masterChapters = page.locator("[data-testid='book-outline'] > ul > li > a");
+  expect(await masterChapters.count()).toBeGreaterThanOrEqual(10);
+  if (isNarrow(page)) await page.keyboard.press("Escape");
+  await page.getByTestId("book-select").selectOption("handbook");
+  await expect(page.getByTestId("book-title")).toContainText("Player's Handbook");
+
+  // an explicit book deep link lands inside the handbook
+  await page.goto("/#/rules/book/handbook/4-the-cards");
+  const ch4 = page.locator('[id="4-the-cards"]');
+  await expect(ch4).toBeVisible();
+  await expect
+    .poll(async () => landedAt(page, (await ch4.boundingBox())!.y))
+    .toBe(true);
+
+  // a pre-library link still opens the Master Manual, where it was minted
+  await page.goto("/#/rules/your-first-deck");
+  await expect(page.getByTestId("book-title")).toContainText("Master Manual");
+  await expect(page.locator("#your-first-deck")).toBeVisible();
+});
+
 test("search finds a rule and navigates to its section", async ({ page }) => {
   await page.goto("/#/rules");
   if (isNarrow(page)) await page.getByTestId("book-drawer-toggle").click();
-  await page.getByTestId("book-search").fill("farmland");
+  await page.getByTestId("book-search").fill("panel");
   const hits = page.getByTestId("book-hits").getByRole("link");
   expect(await hits.count()).toBeGreaterThan(0);
   await hits.first().click();

@@ -163,7 +163,7 @@ export function DeckEditor() {
           ))}
           <li class="warnings-source">
             {/* by chapter NUMBER, not slug: the link survives a retitle */}
-            <a href={rulesHash("ch/10")} data-testid="link-ch10">
+            <a href={rulesHash("ch/10", "master")} data-testid="link-ch10">
               {STRINGS.deckWarnSeeChapter}
             </a>
           </li>

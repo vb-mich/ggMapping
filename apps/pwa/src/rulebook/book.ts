@@ -1,15 +1,21 @@
-// The Rulebook's single source: docs/0-Jerrymapping-the-game.md, THE authority
-// file, imported at build time. Never a copied second file, never a fetch —
-// the deployed app ships the exact book its engine obeys, so badge, engine,
-// and handbook are one sealed unit per lineage. When a package replaces the
-// docs, the reader updates by rebuild with zero extra process. The
-// source-identity test hashes this import against the file on disk.
+// The Rulebook's library: every book the reader offers, each rendered from
+// its single source in /docs, imported at build time. Never a copied second
+// file, never a fetch — the deployed app ships the exact books this repo
+// carries, and the source-identity tests hash each import against its file.
+//
+// The books are LISTED, not globbed, on purpose: /docs also holds the repo's
+// internal law (CONTRACTS, FORK_NOTES), and a glob would ship a new internal
+// document to players by accident. Adding a book is one import and one entry;
+// everything else — title, outline, anchors, search — derives from its text.
 import GithubSlugger from "github-slugger";
 import { marked, type Token, type Tokens } from "marked";
 
-import BOOK_SOURCE from "@book?raw";
+import MASTER_SOURCE from "@book?raw";
+import HANDBOOK_SOURCE from "../../../../docs/ggMapping-Players-Handbook.md?raw";
 
-export { BOOK_SOURCE };
+/** The Master Manual's source — kept under its historic name for the
+ *  source-identity test and the figure tooling. */
+export { MASTER_SOURCE as BOOK_SOURCE };
 
 export interface Section {
   slug: string;
@@ -25,9 +31,15 @@ export interface Chapter extends Section {
 }
 
 export interface Outline {
-  /** the leading ## before any chapter — the handbook names itself there */
+  /** the leading ## before any chapter — a book names itself there */
   title: string;
   chapters: Chapter[];
+}
+
+export interface Book {
+  id: string;
+  source: string;
+  outline: Outline;
 }
 
 // One slugger pass for the outline, one for the renderer, reset in lockstep:
@@ -48,7 +60,7 @@ function plainText(tokens: Token[]): string {
     .trim();
 }
 
-function buildOutline(src: string): Outline {
+export function buildOutline(src: string): Outline {
   const slugger = new GithubSlugger();
   const tokens = marked.lexer(src);
   const outline: Outline = { title: "", chapters: [] };
@@ -95,27 +107,44 @@ function buildOutline(src: string): Outline {
   return outline;
 }
 
-export const outline: Outline = buildOutline(BOOK_SOURCE);
+// --- the library -------------------------------------------------------------
+// First entry is the reader's default: the distilled Player's Handbook. The
+// Master Manual is the law the simulator is built from; links minted before
+// the library existed (bare #/rules/<anchor>) resolve there, because it was
+// the only book when they were written.
+export const BOOKS: Book[] = [
+  { id: "handbook", source: HANDBOOK_SOURCE, outline: buildOutline(HANDBOOK_SOURCE) },
+  { id: "master", source: MASTER_SOURCE, outline: buildOutline(MASTER_SOURCE) },
+];
+export const DEFAULT_BOOK = BOOKS[0];
+export const LEGACY_BOOK_ID = "master";
 
-/** Chapter lookup by the book's own numbering ("# 10. Adding new cards"),
- *  for links that must survive a retitle (the deck editor's ch. 10 rider). */
-export function chapterByNumber(n: number): Chapter | undefined {
-  return outline.chapters.find((c) => c.number === n);
+export function bookById(id: string | null | undefined): Book | undefined {
+  return BOOKS.find((b) => b.id === id);
 }
 
-export function findHeading(slug: string): Section | undefined {
-  for (const c of outline.chapters) {
+/** Back-compat for the Master Manual's outline (tests, tools). */
+export const outline: Outline = bookById("master")!.outline;
+
+/** Chapter lookup by a book's own numbering ("# 10. Adding new cards"),
+ *  for links that must survive a retitle (the deck editor's ch. 10 rider). */
+export function chapterByNumber(n: number, book: Book = bookById("master")!): Chapter | undefined {
+  return book.outline.chapters.find((c) => c.number === n);
+}
+
+export function findHeading(slug: string, book: Book = bookById("master")!): Section | undefined {
+  for (const c of book.outline.chapters) {
     if (c.slug === slug) return c;
     for (const s of c.sections) if (s.slug === slug) return s;
   }
   return undefined;
 }
 
-// --- the handbook's figures --------------------------------------------------
-// The book is authored in Obsidian, whose image embeds are wiki-style:
-// ![[file.png]] and ![[file.png|width]]. Every figure ships from docs/img
-// (bundled below, so the deployed app carries the book's own pictures); the
-// integrity test keeps reference and file in lockstep.
+// --- the books' figures ------------------------------------------------------
+// Authored in Obsidian, whose image embeds are wiki-style: ![[file.png]] and
+// ![[file.png|width]]. Every figure ships from docs/img (bundled below, one
+// pool for all books); the integrity test keeps reference and file in
+// lockstep across the whole library.
 const BOOK_IMAGES: Record<string, string> = Object.fromEntries(
   Object.entries(
     import.meta.glob("../../../../docs/img/*", {
@@ -158,10 +187,10 @@ export function resolveWikiEmbeds(
     .replace(WIKI_EMBED, (_, name: string, width?: string) => tag(name, width));
 }
 
-// The rendered book. Headings carry the same slugs as the outline; wiki
-// embeds resolve to the bundled figures. The SOURCE stays byte-identical —
-// this is rendering only.
-export function renderBook(): string {
+// A rendered book. Headings carry the same slugs as its outline; wiki embeds
+// resolve to the bundled figures. The SOURCES stay byte-identical — this is
+// rendering only.
+export function renderBook(book: Book = bookById("master")!): string {
   const slugger = new GithubSlugger();
   const renderer = new marked.Renderer();
   renderer.heading = ({ tokens, depth }: Tokens.Heading): string => {
@@ -178,7 +207,7 @@ export function renderBook(): string {
     const url = BOOK_IMAGES[name] ?? href;
     return `<img src="${url}" alt="${text}" loading="lazy">`;
   };
-  return marked.parse(resolveWikiEmbeds(BOOK_SOURCE, BOOK_IMAGES), {
+  return marked.parse(resolveWikiEmbeds(book.source, BOOK_IMAGES), {
     renderer,
     async: false,
   });

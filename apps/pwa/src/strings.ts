@@ -58,7 +58,7 @@ export const STRINGS = {
     "The handbook suggests a mood mix near the starting deck's: about 12× settle, 7× level, 3× rise in the 22 cards.",
   deckWarnAddpanelGrowth:
     "The handbook pairs extra Add Panel copies with heavy archiving; otherwise the map risks scattering into many half-empty panels.",
-  deckWarnSeeChapter: "The guidance in full: handbook chapter 10",
+  deckWarnSeeChapter: "The guidance in full: Master Manual chapter 10",
   deckNoteAddpanel:
     "The Add Panel card sleeps outside the deck during era one, then joins the back of the deck; it is a base card and cannot be retired.",
   deckNoteRemoveCard:
@@ -218,6 +218,7 @@ export const STRINGS = {
   rbNoHits: "No matches",
   rbLoading: "Opening the book",
   rbTextSize: "Text size",
+  rbBookSelect: "Choose a book",
 
   // My map — the digitalizer screen (act one: local only)
   mmDefaultMapName: "My first map",

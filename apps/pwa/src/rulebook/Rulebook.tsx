@@ -7,7 +7,17 @@ import { useEffect, useMemo, useRef } from "preact/hooks";
 import { applyTheme, engineLineage, theme } from "../state";
 import { go, rulesHash, type Route } from "../router";
 import { STRINGS } from "../strings";
-import { chapterByNumber, findHeading, outline, renderBook, type Section } from "./book";
+import {
+  BOOKS,
+  DEFAULT_BOOK,
+  LEGACY_BOOK_ID,
+  bookById,
+  chapterByNumber,
+  findHeading,
+  renderBook,
+  type Book,
+  type Section,
+} from "./book";
 
 // --- reading comfort ---------------------------------------------------------
 // Three classic sizes, persisted; the class scales the whole page (em-based).
@@ -50,7 +60,7 @@ interface Hit {
   count: number;
 }
 
-function searchBook(query: string): Hit[] {
+function searchBook(book: Book, query: string): Hit[] {
   const q = query.trim().toLowerCase();
   if (q.length < 2) return [];
   const hits: Hit[] = [];
@@ -60,7 +70,7 @@ function searchBook(query: string): Hit[] {
     for (let i = h.indexOf(q); i !== -1; i = h.indexOf(q, i + q.length)) n++;
     return n;
   };
-  for (const c of outline.chapters) {
+  for (const c of book.outline.chapters) {
     const own = count(c.body) + count(c.text);
     if (own) hits.push({ slug: c.slug, where: c.text, count: own });
     for (const s of c.sections) {
@@ -72,22 +82,29 @@ function searchBook(query: string): Hit[] {
 }
 
 /** The anchor a route names: a heading slug, or ch/<n> by book numbering. */
-function resolveAnchor(anchor: string | null): Section | null {
+function resolveAnchor(book: Book, anchor: string | null): Section | null {
   if (!anchor) return null;
   const byNumber = /^ch\/(\d+)$/.exec(anchor);
-  if (byNumber) return chapterByNumber(Number(byNumber[1])) ?? null;
-  return findHeading(anchor) ?? null;
+  if (byNumber) return chapterByNumber(Number(byNumber[1]), book) ?? null;
+  return findHeading(anchor, book) ?? null;
 }
 
 export function Rulebook({ route }: { route: Route }) {
-  const html = useMemo(renderBook, []);
+  // Which book the route opens: an explicit book segment wins; a bare anchor
+  // is a pre-library link and resolves in the Master Manual; the tab's plain
+  // #/rules opens the Player's Handbook, the reader's default.
+  const routeBook = route.screen === "rules" ? route.book : null;
+  const anchor = route.screen === "rules" ? route.anchor : null;
+  const book =
+    bookById(routeBook) ??
+    (anchor ? bookById(LEGACY_BOOK_ID)! : DEFAULT_BOOK);
+
+  const html = useMemo(() => renderBook(book), [book.id]);
   const article = useRef<HTMLElement>(null);
   const active = useSignal<string>("");
   const drawerOpen = useSignal(false);
   const query = useSignal("");
-  const hits = useComputed(() => searchBook(query.value));
-
-  const anchor = route.screen === "rules" ? route.anchor : null;
+  const hits = useComputed(() => searchBook(book, query.value));
 
   // ESC closes the drawer wherever focus sits
   useEffect(() => {
@@ -100,7 +117,7 @@ export function Rulebook({ route }: { route: Route }) {
 
   // land on the routed heading — desktop and mobile alike
   useEffect(() => {
-    const target = resolveAnchor(anchor);
+    const target = resolveAnchor(book, anchor);
     drawerOpen.value = false;
     if (!target) {
       article.current?.closest(".rulebook")?.scrollTo?.(0, 0);
@@ -109,7 +126,7 @@ export function Rulebook({ route }: { route: Route }) {
     }
     active.value = target.slug;
     document.getElementById(target.slug)?.scrollIntoView({ block: "start" });
-  }, [anchor]);
+  }, [anchor, book.id]);
 
   // the outline highlights where the reader actually is
   useEffect(() => {
@@ -128,10 +145,10 @@ export function Rulebook({ route }: { route: Route }) {
   }, []);
 
   const activeChapter = useComputed(() => {
-    for (const c of outline.chapters)
+    for (const c of book.outline.chapters)
       if (c.slug === active.value || c.sections.some((s) => s.slug === active.value))
         return c.slug;
-    return outline.chapters[0]?.slug ?? "";
+    return book.outline.chapters[0]?.slug ?? "";
   });
 
   const outlineList = (
@@ -149,7 +166,7 @@ export function Rulebook({ route }: { route: Route }) {
             {hits.value.length === 0 && <li class="muted">{STRINGS.rbNoHits}</li>}
             {hits.value.map((h) => (
               <li key={h.slug}>
-                <a href={rulesHash(h.slug)} onClick={() => (query.value = "")}>
+                <a href={rulesHash(h.slug, book.id)} onClick={() => (query.value = "")}>
                   {h.where} <small>({h.count})</small>
                 </a>
               </li>
@@ -158,10 +175,10 @@ export function Rulebook({ route }: { route: Route }) {
         )}
       </div>
       <ul>
-        {outline.chapters.map((c) => (
+        {book.outline.chapters.map((c) => (
           <li key={c.slug}>
             <a
-              href={rulesHash(c.slug)}
+              href={rulesHash(c.slug, book.id)}
               class={active.value === c.slug ? "active" : ""}
               aria-current={active.value === c.slug ? "location" : undefined}
             >
@@ -172,7 +189,7 @@ export function Rulebook({ route }: { route: Route }) {
                 {c.sections.map((s) => (
                   <li key={s.slug}>
                     <a
-                      href={rulesHash(s.slug)}
+                      href={rulesHash(s.slug, book.id)}
                       class={active.value === s.slug ? "active" : ""}
                       aria-current={active.value === s.slug ? "location" : undefined}
                     >
@@ -227,7 +244,22 @@ export function Rulebook({ route }: { route: Route }) {
         </div>
       )}
       <div class="book-head">
-        <h2 data-testid="book-title">{outline.title}</h2>
+        <h2 data-testid="book-title">{book.outline.title}</h2>
+        <select
+          class="book-select"
+          data-testid="book-select"
+          aria-label={STRINGS.rbBookSelect}
+          value={book.id}
+          onChange={(e) =>
+            go(rulesHash(undefined, (e.target as HTMLSelectElement).value))
+          }
+        >
+          {BOOKS.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.outline.title}
+            </option>
+          ))}
+        </select>
         {engineLineage.value && (
           <span class="chip lineage-chip" data-testid="book-lineage">
             {STRINGS.lineageLabel} {engineLineage.value}
