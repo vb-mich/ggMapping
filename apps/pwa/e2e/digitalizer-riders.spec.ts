@@ -198,6 +198,13 @@ test("auto-fix gives the scanner look and the toggle undoes it", async ({ page }
   const before = await paper();
   await page.getByTestId("btn-auto-fix").click();
   await expect(page.getByTestId("btn-auto-fix")).toHaveClass(/active/, { timeout: 20_000 });
+  // the canvas repaints asynchronously after the toggle: poll for the look
+  await expect
+    .poll(async () => {
+      const p = await paper();
+      return Math.min(...p.a, ...p.b);
+    }, { timeout: 15_000 })
+    .toBeGreaterThan(210);
   const after = await paper();
   // bright, neutral, and uniform — in both corners of the sheet
   for (const p of [after.a, after.b]) {
@@ -207,11 +214,12 @@ test("auto-fix gives the scanner look and the toggle undoes it", async ({ page }
   // and it genuinely changed something the warm original could not show
   expect(Math.max(...before.a) - Math.min(...before.a)).toBeGreaterThan(14);
 
-  // off again: the original returns
+  // off again: the original returns — polled, same reason
   await page.getByTestId("btn-auto-fix").click();
   await expect(page.getByTestId("btn-auto-fix")).not.toHaveClass(/active/);
-  const undone = await paper();
-  expect(Math.round(undone.a[0])).toBe(Math.round(before.a[0]));
+  await expect
+    .poll(async () => Math.round((await paper()).a[0]), { timeout: 15_000 })
+    .toBe(Math.round(before.a[0]));
 
   // save WITH the fix: the stored scan carries the scanner look
   await page.getByTestId("btn-auto-fix").click();
