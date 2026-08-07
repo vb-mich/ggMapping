@@ -11,18 +11,29 @@ ggMapping is a pre-set system to jerrymapping for those who want to start right 
 
 ---
 
-# 1. The spirit
+# 1. Introduction
 
 This book keeps the rules light on purpose. If you're curious about how this manual came to be, or if you have any doubt about a specific rule, you can always refer to the full Master Manual.
 What you need from this system is small: one law that keeps the geography honest, a deck that paces the work, and a little randomness in the right places so the map stays wilder than your habits.
 
 What you need:
-
 * Paper panels and something to paint with.
 * The deck of 22 cards (chapter 6).
 * A d6 and a d4, or any randomizer you like: a coin, a phone, honest eyes.
 
-You are in control. Every rule can be bent, and the map is yours.
+## The panels
+The standard panel size in this manual is small, a pocket size, something you can bring with you in a coffee shop to work and assemble in a kitchen table. But the system work well with any panel size with just a few intuitive adjustment
+
+**Pocket size** (standard)
+- Grid units: 5x6 units
+- Unit Size: 1.5cm square (5/8″)
+- Panel Size: 7,5 x 9cm (3 1/8″ x 3 3/4″)
+**Full size** (Jerry's size)
+- Grid units: 8x10 units
+- Unit Size: 2.5cm square (1″)
+- Panel Size: 20 x 25cm (8″x10″)
+
+![[panel-img.png|262]]
 
 *The exact rules: Master Manual, chapters 1 to 3.*
 
@@ -91,6 +102,8 @@ Hold to it and geography draws itself: shores grow shallow rims, seas darken ste
 * The law works across panel borders.
 * Anomaly units (chapter 6) are the one exception: they restrict nothing.
 
+![[step-rule-example.png]]
+
 *The exact rules: Master Manual, chapter 4.*
 
 # 4. Filling rules
@@ -99,11 +112,17 @@ First of all, there are no standard colors the various elevations and features, 
 
 Here are few simple filling rules:
 1. **Fill the pockets first.** Paint the empty unit touching the most painted units, across borders too. Ties: you choose, pick the pocket that pulls the map toward something you love.
+   ![[fill-pockets-example.png]]
+
 2. **Copy the dominant elevation.** Take the most common elevation among painted side neighbors (up-down-left-right). Anomaly units never count here: they have no elevation voice.
+   ![[dominant-example.png]]
+
 3. **Apply the card's mood:** 
 	- **Settle** keeps the same elevation. 
 	- **Level** moves one step toward plain. 
 	- **Rise** moves one step away; Rise on plain is your choice of coastal or hills.
+	![[moods-example.png]]
+
 4. **First paint on empty ground?** (a new map, a fresh panel): roll a d6.
 
 | d6 | First elevation |
@@ -133,6 +152,8 @@ The stroke is the shared mechanic behind Basin, Ridge, Great Ridge, Free Stroke 
 7. **Everything else ends it**: a foreign feature ahead, the Step Rule, or the length running out. Features are allowed to end.
 8. **But the walk goes on.** A stroke always walks its whole length. When it ends early, keep walking the steps but instead of filling, you do decorations/reworks on filled units along the way. A stroke's energy is never lost: what it cannot carve, it decorates.
 
+![[stroke-example 1.png]]
+
 *The exact rules: Master Manual, chapter 8.*
 
 # 6. The cards
@@ -152,17 +173,21 @@ The deck, 22 cards:
 | 2      | *Add Panel  | 3, 5         | Settle |
 \*The two Add Panel cards sleep out of the deck for the first era and join at the back when era two begins.
 
+![[card-example.png|289]]
+An example of Free Stroke card
 ## Cards instructions
 
 ### Calm
 No instruction, just do the filling work.
 ### Extend
 (Stroke paint) Look at the bordering panels and walk along the shared border unit by unit. Where a run of water or heights on the other side touches your border, that run can be continued. Take the longest run, counting it only up to four units so the biggest sea does not win every time, and continue it into your panel as a stroke, carrying its elevation. Nothing to extend: rework instead (chapter 7).
+![[extend-example 1.png]]
 ### Basin
 (Stroke paint) If water already touches the panel or its borders, grow that water as a stroke: start from it and dig one step deeper as you go. Otherwise seed a new lake anywhere sensible, starting shallow, digging as it wanders. A deep heart in a small lake is fine: the law rings it with graded shores.
-
+![[basin-example.png]]
 ### Ridge and Great Ridge 
 (Stroke paint) Choose any empty unit where hills are legal and start a climbing stroke: first unit hills, then one step higher as you go, so mountains from the second unit on. Ridge runs 2 to 5 units, Great Ridge 5 to 10, both your choice, no dice. Mountain chains are the most stunning feature of your map.
+![[ridge-example.png]]
 ### Free Stroke
 (Stroke paint) Everything is your choice: start, heading, elevations, turns, length up to 5 units. Make your map coherent and beautiful.
 ### Settlement
@@ -174,14 +199,16 @@ No one? Then roll a d6:
 | 1-3 | A farmstead: 1 rural home and 1 farmland                                             |
 | 4-5 | A village: 2 rural homes and 1 farmland                                              |
 | 6   | A small town: a low urban core with homes on every side (ring first), and 1 farmland |
+![[Settlement-founding-example.png]]
 
 Someone already there? Then grow. The tallest settlement takes two growth steps. Each step, roll a d6:
 
 | d6  | Growth step                                                                                               |
 | --- | --------------------------------------------------------------------------------------------------------- |
-| 1-2 | A field. Deepen a low intensity farmland to high intensity first; only then clear new ground              |
+| 1-2 | A field. Deepen a low intensity farmland to high intensity first; otherwise plant a new farmland          |
 | 3-4 | A rural home beside the busiest part of town                                                              |
 | 5-6 | A rise in density: rural to urban low, low to medium, medium to high. If nothing can rise, a home instead |
+Note: If growth cannot happen (e.g. no legal space for farmland), then do a rework instead.
 
 Urban density ladder
 
@@ -192,6 +219,8 @@ Urban density ladder
 | Urban Low    |
 | Rural        |
 Farmland can be **Low intensity** or **High intensity**
+
+![[settlement-growth-example.png]]
 
 People rules, in brief:
 

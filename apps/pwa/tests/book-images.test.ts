@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { resolveWikiEmbeds, WIKI_EMBED } from "../src/rulebook/book";
+import { BOOKS, resolveWikiEmbeds, WIKI_EMBED } from "../src/rulebook/book";
 
 const DOCS = join(__dirname, "..", "..", "..", "docs", "books");
 const URLS = { "map-dial.png": "/a/map-dial.hash.png",
@@ -46,11 +46,26 @@ describe("the Obsidian embed transform (pure)", () => {
 });
 
 describe("the figure integrity test (permanent)", () => {
-  const book = readFileSync(join(DOCS, "0-Jerrymapping-the-game.md"), "utf8")
+  // EVERY book of the library, not just the Master Manual: a figure that the
+  // Player's Handbook alone references must be bundled too, and a file only
+  // it uses is not "unreferenced". Derived from BOOKS so a new book is
+  // covered the moment it joins the shelf.
+  const BOOK_FILES: Record<string, string> = {
+    handbook: "0-ggMapping-Players-Handbook.md",
+    master: "0-Jerrymapping-the-game.md",
+  };
+  const missingFile = BOOKS.map((b) => b.id).filter((id) => !BOOK_FILES[id]);
+  const book = BOOKS.map((b) => readFileSync(join(DOCS, BOOK_FILES[b.id]), "utf8"))
+    .join("\n")
     .replace(/\r\n/g, "\n");
   const bundled = readdirSync(join(DOCS, "img"));
 
-  it("every figure the book references is a bundled file", () => {
+  it("checks every book on the shelf", () => {
+    expect(missingFile, "book(s) with no file mapping here").toEqual([]);
+    expect(BOOKS.length).toBeGreaterThan(1);
+  });
+
+  it("every figure any book references is a bundled file", () => {
     // both syntaxes, with the line number for the report when one is missing
     const missing: string[] = [];
     const referenced = new Set<string>();
