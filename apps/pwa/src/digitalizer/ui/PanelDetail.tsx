@@ -128,17 +128,26 @@ function MovePanel({ tx, ty, count }: { tx: number; ty: number; count: number })
     setTarget({ tx, ty });
   };
 
+  // Moving onto an empty coordinate is the plain move. Moving onto an
+  // OCCUPIED one only ever raises the question — the deed needs its own
+  // button, which never occupies the slot the question was asked from.
   const onMove = async () => {
     if (target.tx === tx && target.ty === ty) {
       close();
       return;
     }
-    const occupied = versionsOf(target.tx, target.ty).length;
-    if (occupied > 0 && !askMerge) {
-      setAskMerge(true); // the question, not the deed
+    if (versionsOf(target.tx, target.ty).length > 0) {
+      setAskMerge(true);
       return;
     }
-    if (await movePanel({ tx, ty }, target, occupied > 0)) {
+    if (await movePanel({ tx, ty }, target, false)) {
+      go(panelHash(target.tx, target.ty));
+      close();
+    }
+  };
+
+  const onMerge = async () => {
+    if (await movePanel({ tx, ty }, target, true)) {
       go(panelHash(target.tx, target.ty));
       close();
     }
@@ -162,26 +171,47 @@ function MovePanel({ tx, ty, count }: { tx: number; ty: number; count: number })
           setAskMerge(false);
         }}
       />
-      {askMerge && (
-        <p class="note" data-testid="merge-note" role="status">
-          {STRINGS.mmMergeWarn
-            .replace("{name}", panelName(target.tx, target.ty))
-            .replace("{n}", String(occupied))}
-        </p>
+      {askMerge ? (
+        <>
+          <p class="note merge-note" data-testid="merge-note" role="status">
+            {STRINGS.mmMergeConfirm
+              .replace("{from}", panelName(tx, ty))
+              .replace("{fromN}", String(count))
+              .replace("{to}", panelName(target.tx, target.ty))
+              .replace("{toN}", String(occupied))}{" "}
+            {STRINGS.mmMergeUndoable}
+          </p>
+          <div class="flow-buttons">
+            {/* the deed is deliberate and marked; the safe answer keeps the
+                primary slot, so a second tap where the question was asked
+                cannot merge anything */}
+            <button class="danger" data-testid="btn-merge-confirm" onClick={onMerge}>
+              {STRINGS.mmMergeGo}
+            </button>
+            <button
+              class="primary"
+              data-testid="btn-merge-decline"
+              onClick={() => setAskMerge(false)}
+            >
+              {STRINGS.mmKeepApart}
+            </button>
+          </div>
+        </>
+      ) : (
+        <div class="flow-buttons">
+          <button class="ghost" data-testid="btn-move-cancel" onClick={close}>
+            {STRINGS.cancel}
+          </button>
+          <button
+            class="primary"
+            data-testid="btn-move-go"
+            disabled={target.tx === tx && target.ty === ty}
+            onClick={onMove}
+          >
+            {STRINGS.mmMoveGo}
+          </button>
+        </div>
       )}
-      <div class="flow-buttons">
-        <button class="ghost" data-testid="btn-move-cancel" onClick={close}>
-          {STRINGS.cancel}
-        </button>
-        <button
-          class="primary"
-          data-testid="btn-move-go"
-          disabled={target.tx === tx && target.ty === ty}
-          onClick={onMove}
-        >
-          {askMerge ? STRINGS.mmMergeGo : STRINGS.mmMoveGo}
-        </button>
-      </div>
     </div>
   );
 }

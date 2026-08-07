@@ -401,6 +401,9 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
   border: 1px dashed var(--card-edge);
   color: var(--muted);
 }
+/* a ring position with no panel beside it: it holds the grid's shape and
+   invites nothing */
+.atlas-blank { width: var(--atlas-cell); aspect-ratio: 5 / 6; }
 
 /* the scan flow */
 .scan-flow .flow-buttons { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
@@ -526,6 +529,18 @@ details summary { cursor: pointer; color: var(--muted); margin: 0.4rem 0; }
   padding: 0.5rem 0.6rem; margin: 0.4rem 0;
 }
 .move-panel .flow-buttons { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
+.move-panel .merge-note { color: var(--ink); background: var(--warn-bg);
+  border: 1px solid var(--warn-edge); border-radius: 6px; padding: 0.4rem 0.5rem; }
+
+/* My map's destructive buttons are FILLED — merge, delete forever, delete a
+   map. A later top-level `button.danger` (the Helper's outline flavour)
+   recolours the text and would leave dark red on red fill; scoping by the
+   screen wins on specificity and leaves the Helper's own look alone. */
+.mymap button.danger {
+  background: var(--error);
+  border-color: var(--error);
+  color: #fff;
+}
 .move-panel .flow-buttons .primary { margin-left: auto; }
 
 /* the panel detail */

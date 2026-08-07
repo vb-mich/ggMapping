@@ -260,9 +260,13 @@ export const STRINGS = {
   mmMovePanel: "Move to another coordinate",
   mmMoveHint: "All {n} scan(s) of this panel move together; the atlas follows.",
   mmMoveGo: "Move",
-  mmMergeWarn:
-    "{name} already holds {n} scan(s). Moving here makes the two histories one, ordered by time.",
+  mmMergeConfirm:
+    "{to} already holds {toN} scan(s). Merging brings the {fromN} scan(s) of {from} into it, and the two histories become one, ordered by time — they cannot be told apart afterwards.",
+  mmMergeUndoable: "You can undo this while this session lasts.",
   mmMergeGo: "Merge histories",
+  mmKeepApart: "Choose another coordinate",
+  mmMergeDone: "{from} was merged into {to}: {n} scan(s) moved.",
+  mmUndoMerge: "Undo the merge",
   mmNoScansHere: "Nothing is filed at this coordinate yet.",
   mmDelete: "Delete",
   mmDeleteWarn: "This removes the scan from this device, forever. There is no copy anywhere else.",

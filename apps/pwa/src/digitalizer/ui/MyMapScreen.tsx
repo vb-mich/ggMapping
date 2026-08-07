@@ -5,16 +5,20 @@ import { useEffect, useState } from "preact/hooks";
 
 import { STRINGS } from "../../strings";
 import { go, type Route } from "../../router";
+import { panelName } from "../../contracts/geometry";
 import {
   activeMap,
   facts,
   fmtBytes,
+  forgetMerge,
   maps,
   newMap,
   notice,
+  pendingUndo,
   refresh,
   storeDead,
   switchMap,
+  undoMerge,
 } from "../store";
 import { Atlas } from "./Atlas";
 import { MapFiles } from "./MapFiles";
@@ -33,6 +37,25 @@ export function MyMapScreen({ route }: { route: Route }) {
         <div class="card notice" data-testid="mm-notice" role="status">
           <span>{notice.value}</span>
           <button class="ghost" data-testid="btn-mm-dismiss" onClick={() => (notice.value = null)}>
+            {STRINGS.dismiss}
+          </button>
+        </div>
+      )}
+
+      {/* a merge stays undoable for the rest of the session: the offer
+          follows the player across the screen, and only they retire it */}
+      {pendingUndo.value && (
+        <div class="card notice" data-testid="merge-undo" role="status">
+          <span>
+            {STRINGS.mmMergeDone
+              .replace("{from}", panelName(pendingUndo.value.from.tx, pendingUndo.value.from.ty))
+              .replace("{to}", panelName(pendingUndo.value.to.tx, pendingUndo.value.to.ty))
+              .replace("{n}", String(pendingUndo.value.ids.length))}
+          </span>
+          <button data-testid="btn-undo-merge" onClick={undoMerge}>
+            {STRINGS.mmUndoMerge}
+          </button>
+          <button class="ghost" data-testid="btn-keep-merge" onClick={forgetMerge}>
             {STRINGS.dismiss}
           </button>
         </div>

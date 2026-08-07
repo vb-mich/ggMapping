@@ -102,14 +102,27 @@ export function buildLut(a: Adjust): Uint8ClampedArray {
   const lut = new Uint8ClampedArray(256);
   const span = Math.max(1, a.hi - a.lo);
   const cf = 1 + a.contrast / 100; // 0..2
+  // EXPOSURE AS A CURVE, not a shift. A linear offset (x += e) drives every
+  // highlight to the same 255, so pushing exposure to find brushstrokes
+  // bleaches the paper texture away. A gamma curve holds both ends fixed
+  // and COMPRESSES what is between them: 0 stays 0, 1 stays 1, nothing
+  // clips, and near zero it matches the old offset almost exactly — the
+  // difference only appears at the extremes, which is where it was wrong.
+  const gamma = Math.pow(2, -a.exposure / 50);
   for (let v = 0; v < 256; v++) {
     let x = (v - a.lo) / span; // levels
-    x += a.exposure / 200; // exposure: ±0.5 across the slider
+    x = clampi(x, 0, 1); // the curve needs a base in [0,1]
+    x = Math.pow(x, gamma); // exposure
     x = (x - 0.5) * cf + 0.5; // contrast
     lut[v] = Math.round(clampi(x, 0, 1) * 255);
   }
   return lut;
 }
+
+// The identity levels: the straighten path's default, so that straightening
+// changes GEOMETRY ONLY (the field ruling). Automatic levels remain what
+// the Auto-fix button applies, deliberately.
+export const NEUTRAL_LEVELS = { lo: 0, hi: 255 } as const;
 
 // Per-channel LUTs: the shared curve above, plus WHITE BALANCE — a plain
 // opposed shift of red and blue (no auto magic, per the field ruling).

@@ -373,7 +373,7 @@ export function retagPanel(
   from: { tx: number; ty: number },
   to: { tx: number; ty: number },
   allowMerge: boolean,
-): Promise<{ moved: number; merged: boolean }> {
+): Promise<{ moved: number; merged: boolean; ids: string[] }> {
   const bad = (v: number) => !Number.isInteger(v) || v === 0;
   if (bad(to.tx) || bad(to.ty)) {
     return Promise.reject(new StoreError("failure", "no zero row or column"));
@@ -399,7 +399,36 @@ export function retagPanel(
       s.ty = to.ty;
       store.put(s);
     }
-    return { moved: source.length, merged: occupied > 0 };
+    // the ids travel back with the caller: a merge is undoable only if we
+    // know exactly WHICH scans moved, never "the panel" (the resident scans
+    // must stay where they were)
+    return { moved: source.length, merged: occupied > 0, ids: source.map((s) => s.id) };
+  });
+}
+
+// Put named scans at a coordinate: the merge undo. Forgiving by design — a
+// scan deleted since the merge is skipped, and the rest still go home.
+export function moveScansById(
+  mapId: string,
+  ids: string[],
+  to: { tx: number; ty: number },
+): Promise<number> {
+  const bad = (v: number) => !Number.isInteger(v) || v === 0;
+  if (bad(to.tx) || bad(to.ty)) {
+    return Promise.reject(new StoreError("failure", "no zero row or column"));
+  }
+  return tx("scans", "readwrite", async (t) => {
+    const store = t.objectStore("scans");
+    let moved = 0;
+    for (const id of ids) {
+      const rec = (await reqAsPromise(store.get(id))) as ScanRecord | undefined;
+      if (!rec || rec.mapId !== mapId) continue;
+      rec.tx = to.tx;
+      rec.ty = to.ty;
+      store.put(rec);
+      moved++;
+    }
+    return moved;
   });
 }
 

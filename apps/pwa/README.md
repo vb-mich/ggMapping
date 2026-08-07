@@ -188,6 +188,48 @@ panel's whole history moves to another coordinate from its detail view, all
 versions together in one transaction; an occupied target asks whether the
 two histories should become one, ordered by time.
 
+**Click-to-add** offers every open position that shares a side with a
+panel — the atlas draws the bounding box plus one ring, so a map grows
+outward along its edges, not only into its own notches ([grid.ts](src/digitalizer/grid.ts),
+pure and unit-tested, and it steps over the coordinate grid's missing zero
+column: the position west of N1/E1 is N1/W1). Positions that were offered
+before stay offered; diagonal-only neighbours are not, and hold the grid's
+shape in silence.
+
+**Merging is never the default action.** Moving a panel onto an occupied
+coordinate only ever raises the question: the button that asked it is
+replaced, the safe answer ("Choose another coordinate") takes the primary
+slot where the finger already is, and the merge sits apart, marked. The
+confirmation names both coordinates and how many versions each holds. Every
+merge then stays **undoable for the rest of the session** — the storage
+layer reports exactly which scans moved, so the undo puts back those and
+never the resident ones (in memory, newest first; it does not outlive the
+tab).
+
+### What the straighten path used to do to the light (act 1.7)
+
+A tester found that a digitally-made panel came out darker through
+crop-and-straighten while "import as is" was faithful. It was true, and the
+cause was one line: the rectified image's **automatic levels became the
+default**, sliders at zero. Measured on a synthetic digital panel, the
+default curve was a 2%/98% percentile stretch (lo=40, hi=241) that moved
+every value — −40 at its worst — darkening mid-tones (90 → 63, 130 → 114,
+150 → 140) while clipping paper to white (242 → 255). End to end, the
+tester's mid-tone field lost up to 37 levels per channel and the paper
+clipped: **(242,239,230) → (255,255,243)** and **(150,165,130) →
+(123,146,93)**. Now the straighten path's default is exactly identity, so
+straightening changes geometry only, and the same panel comes back
+**(242,239,230)** and **(150,165,130)** — value for value. Automatic levels
+did not disappear; they are what the Auto-fix button applies, deliberately.
+
+The same investigation covered the exposure slider, which bleached paper
+texture: it was a linear offset (`x += e`), so every highlight landed on the
+same 255 — seven distinct texture levels collapsed to **one**. Exposure is
+now a gamma curve, which holds both ends fixed and compresses what is
+between them: at +60 the same seven levels stay **seven**, nothing clips,
+and for gentle moves the curve matches the old offset within a level or two
+— it only ever differed at the extremes, which is where it was wrong.
+
 The Light stage also carries **Auto-fix** — the scanner look, one button,
 never automatic without it. It estimates the slowly-varying illumination per
 channel (shrink → blur → grow: the paper, the light, the cast) and divides

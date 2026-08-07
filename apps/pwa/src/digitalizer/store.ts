@@ -189,13 +189,65 @@ export async function movePanel(
   const m = activeMap.value;
   if (!m) return false;
   try {
-    await db.retagPanel(m.id, from, to, allowMerge);
+    const r = await db.retagPanel(m.id, from, to, allowMerge);
+    // a merge mixed two histories: remember exactly what moved, so the rest
+    // of the session can take it back
+    if (r.merged) {
+      undoableMerges.value = [
+        ...undoableMerges.value,
+        { mapId: m.id, ids: r.ids, from, to },
+      ];
+    }
   } catch (e) {
     fail(e);
     return false;
   }
   await refresh();
   return true;
+}
+
+// --- the merge undo ----------------------------------------------------------
+// A merge is the one move that cannot be read back out of the result: two
+// histories under one coordinate look like one history. So it stays undoable
+// for the rest of the session — in memory, newest first, never a promise
+// that outlives the tab.
+
+export interface UndoableMerge {
+  mapId: string;
+  ids: string[];
+  from: { tx: number; ty: number };
+  to: { tx: number; ty: number };
+}
+
+export const undoableMerges = signal<UndoableMerge[]>([]);
+
+// The merge the current map can still take back, if any.
+export const pendingUndo = computed<UndoableMerge | null>(() => {
+  const m = activeMap.value;
+  if (!m) return null;
+  const mine = undoableMerges.value.filter((u) => u.mapId === m.id);
+  return mine.length ? mine[mine.length - 1] : null;
+});
+
+export async function undoMerge(): Promise<boolean> {
+  const u = pendingUndo.value;
+  if (!u) return false;
+  try {
+    await db.moveScansById(u.mapId, u.ids, u.from);
+  } catch (e) {
+    fail(e);
+    return false;
+  }
+  forgetMerge();
+  await refresh();
+  return true;
+}
+
+// The player has read the notice and is content: stop offering the undo.
+export function forgetMerge(): void {
+  const u = pendingUndo.value;
+  if (!u) return;
+  undoableMerges.value = undoableMerges.value.filter((x) => x !== u);
 }
 
 // The one after-save edit a scan allows: its note.

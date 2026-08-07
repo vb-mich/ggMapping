@@ -314,12 +314,15 @@ test("a panel's history moves to another coordinate; an occupied target asks to 
   const note = page.getByTestId("merge-note");
   await expect(note).toBeVisible();
   await expect(note).toContainText("N1/E2");
-  await expect(note).toContainText("histories one");
-  await expect(page.getByTestId("btn-move-go")).toHaveText(STRINGS.mmMergeGo);
+  await expect(note).toContainText("the two histories become one");
+  // round two made the merge its own deliberate button, away from the slot
+  // that asked the question
+  await expect(page.getByTestId("btn-move-go")).toHaveCount(0);
+  await expect(page.getByTestId("btn-merge-confirm")).toHaveText(STRINGS.mmMergeGo);
   if (test.info().project.name === "mobile") {
     await page.screenshot({ path: "e2e-artifacts/rider-move-merge.png" });
   }
-  await page.getByTestId("btn-move-go").click();
+  await page.getByTestId("btn-merge-confirm").click();
   await expect(page).toHaveURL(/#\/map\/panel\/2\/1$/);
   await expect(page.getByTestId("version-list").locator("li")).toHaveCount(3);
   // newest first across the merged histories

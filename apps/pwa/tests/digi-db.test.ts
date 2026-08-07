@@ -314,7 +314,8 @@ describe("re-tag: a panel's history moves to another coordinate", () => {
     await db.addScan(newScan(map.id, 2, 1, "neighbor"));
 
     const r = await db.retagPanel(map.id, { tx: 1, ty: 1 }, { tx: 3, ty: -2 }, false);
-    expect(r).toEqual({ moved: 2, merged: false });
+    expect(r).toMatchObject({ moved: 2, merged: false });
+    expect(r.ids).toHaveLength(2);
     expect(await db.listVersions(map.id, 1, 1)).toHaveLength(0);
     const moved = await db.listVersions(map.id, 3, -2);
     expect(moved.map((v) => v.id)).toEqual([b.id, a.id]); // newest first, intact
@@ -334,10 +335,47 @@ describe("re-tag: a panel's history moves to another coordinate", () => {
     expect(await db.listVersions(map.id, 2, 1)).toHaveLength(1);
 
     const r = await db.retagPanel(map.id, { tx: 1, ty: 1 }, { tx: 2, ty: 1 }, true);
-    expect(r).toEqual({ moved: 1, merged: true });
+    expect(r).toMatchObject({ moved: 1, merged: true });
     const merged = await db.listVersions(map.id, 2, 1);
     expect(merged).toHaveLength(2); // one history now, ordered by time
     expect(merged[0].created).toBeGreaterThan(merged[1].created);
+  });
+
+  it("names the scans it moved, so a merge can be taken back exactly", async () => {
+    const map = await db.currentMap("m");
+    const a = await db.addScan(newScan(map.id, 1, 1, "mover one"));
+    const b = await db.addScan(newScan(map.id, 1, 1, "mover two"));
+    const resident = await db.addScan(newScan(map.id, 2, 1, "resident"));
+
+    const r = await db.retagPanel(map.id, { tx: 1, ty: 1 }, { tx: 2, ty: 1 }, true);
+    expect(r.merged).toBe(true);
+    expect([...r.ids].sort()).toEqual([a.id, b.id].sort());
+    expect(r.ids).not.toContain(resident.id); // the resident never moved
+    expect(await db.listVersions(map.id, 2, 1)).toHaveLength(3);
+
+    // the undo: exactly those scans go home, the resident stays put
+    const moved = await db.moveScansById(map.id, r.ids, { tx: 1, ty: 1 });
+    expect(moved).toBe(2);
+    const back = await db.listVersions(map.id, 1, 1);
+    expect(back.map((v) => v.note).sort()).toEqual(["mover one", "mover two"]);
+    const stayed = await db.listVersions(map.id, 2, 1);
+    expect(stayed.map((v) => v.note)).toEqual(["resident"]);
+  });
+
+  it("the undo is forgiving: a scan deleted since is skipped, the rest go home", async () => {
+    const map = await db.currentMap("m");
+    const a = await db.addScan(newScan(map.id, 1, 1, "kept"));
+    const b = await db.addScan(newScan(map.id, 1, 1, "deleted later"));
+    await db.addScan(newScan(map.id, 2, 1, "resident"));
+    const r = await db.retagPanel(map.id, { tx: 1, ty: 1 }, { tx: 2, ty: 1 }, true);
+    await db.deleteScan(b.id);
+
+    const moved = await db.moveScansById(map.id, r.ids, { tx: 1, ty: 1 });
+    expect(moved).toBe(1);
+    expect((await db.listVersions(map.id, 1, 1)).map((v) => v.id)).toEqual([a.id]);
+    await expect(
+      db.moveScansById(map.id, r.ids, { tx: 0, ty: 1 }),
+    ).rejects.toBeInstanceOf(db.StoreError); // and it still guards the grid
   });
 
   it("rejects the zero row, the zero column, and moving in place", async () => {
@@ -359,7 +397,7 @@ describe("the storage interface act two is reviewed against", () => {
     const seam = [
       "currentMap", "listMaps", "createMap", "renameMap", "deleteMap", "setCurrentMap",
       "addScan", "listScans", "listVersions", "latestPerPanel", "getScan", "deleteScan",
-      "updateScanNote", "retagPanel", "mapAt", "timelineStops", "stopIndexAt",
+      "updateScanNote", "retagPanel", "moveScansById", "mapAt", "timelineStops", "stopIndexAt",
       "listBookmarks", "addBookmark", "deleteBookmark",
       "exportArchive", "restoreArchive", "storageFacts", "requestPersistence",
       "defaultCoord", "stepCoord", "scanCounts", "getSetting", "putSetting",

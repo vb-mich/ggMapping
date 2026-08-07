@@ -12,6 +12,7 @@ import {
   autoLevels,
   applyLuts,
   buildLuts,
+  NEUTRAL_LEVELS,
   resize,
   rotate90,
   type Raster,
@@ -55,7 +56,7 @@ export function ScanFlow() {
   const rect = useRef<Rectified | null>(null);
   // the import-as-is path encodes at pick time and skips every stage between
   const asIsEncoded = useRef<(Encoded & { verbatim: boolean }) | null>(null);
-  const levels = useRef({ lo: 0, hi: 255 });
+  const levels = useRef({ ...NEUTRAL_LEVELS });
   const preview = useRef<Raster | null>(null);
   // the auto-fixed variants, computed once per toggle
   const fixedFull = useRef<Raster | null>(null);
@@ -110,7 +111,9 @@ export function ScanFlow() {
     await breathe();
     try {
       rect.current = rectify(src.current, orderQuad(quad));
-      levels.current = autoLevels(rect.current.raster);
+      // straightening changes geometry ONLY: the light stays as photographed
+      // until the player asks otherwise (Auto-fix, or the sliders)
+      levels.current = { ...NEUTRAL_LEVELS };
       const r = rect.current.raster;
       const scale = Math.min(1, 480 / Math.max(r.width, r.height));
       preview.current =

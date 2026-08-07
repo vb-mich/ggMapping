@@ -6,7 +6,7 @@ import { panelName } from "../../contracts/geometry";
 import { STRINGS } from "../../strings";
 import { go, panelHash } from "../../router";
 import type { ScanMeta } from "../db";
-import { coordAxis } from "../stitch";
+import { atlasGrid, coordKey } from "../grid";
 import { activeMap, atlas, presetCoord } from "../store";
 
 export function Atlas() {
@@ -30,8 +30,9 @@ export function Atlas() {
   }
 
   const coords = [...a.keys()].map((k) => k.split(",").map(Number) as [number, number]);
-  const cols = coordAxis(coords.map(([tx]) => tx));
-  const rows = coordAxis(coords.map(([, ty]) => ty)).reverse(); // north on top
+  // the bounding box plus one ring: the map grows outward, so the positions
+  // along its edges are offered, not only the notches inside it
+  const { cols, rows, addable } = atlasGrid(coords);
 
   return (
     <div class="card atlas-card">
@@ -43,12 +44,16 @@ export function Atlas() {
         >
           {rows.map((ty) =>
             cols.map((tx) => {
-              const meta = a.get(`${tx},${ty}`);
-              return meta ? (
-                <AtlasCell key={`${tx},${ty}`} tx={tx} ty={ty} meta={meta} />
-              ) : (
+              const meta = a.get(coordKey(tx, ty));
+              if (meta) return <AtlasCell key={coordKey(tx, ty)} tx={tx} ty={ty} meta={meta} />;
+              // a position with no panel beside it holds the grid's shape
+              // without inviting anything
+              if (!addable.has(coordKey(tx, ty))) {
+                return <div key={coordKey(tx, ty)} class="atlas-blank" />;
+              }
+              return (
                 <button
-                  key={`${tx},${ty}`}
+                  key={coordKey(tx, ty)}
                   class="atlas-gap"
                   data-testid={`atlas-gap-${tx},${ty}`}
                   onClick={() => {

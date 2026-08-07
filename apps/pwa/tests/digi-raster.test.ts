@@ -12,6 +12,7 @@ import {
   buildLut,
   buildLuts,
   makeRaster,
+  NEUTRAL_LEVELS,
   resize,
   warpPerspective,
   type Raster,
@@ -139,6 +140,62 @@ describe("the adjustment pair", () => {
     const flat = buildLut({ ...neutral, contrast: -100 });
     for (const v of [0, 255]) expect(flat[v]).toBe(128);
   });
+  it("the straighten path's default is EXACTLY identity", () => {
+    // the field finding: automatic levels were the default, and they moved
+    // every value (−40 at its worst). Straightening changes geometry only,
+    // so the neutral curve must return each value untouched.
+    const lut = buildLut({ ...NEUTRAL_LEVELS, exposure: 0, contrast: 0 });
+    for (let v = 0; v < 256; v++) expect(lut[v]).toBe(v);
+    const luts = buildLuts({ ...NEUTRAL_LEVELS, exposure: 0, contrast: 0, temperature: 0 });
+    for (let v = 0; v < 256; v++) {
+      expect(luts.r[v]).toBe(v);
+      expect(luts.g[v]).toBe(v);
+      expect(luts.b[v]).toBe(v);
+    }
+  });
+
+  it("exposure compresses the highlights instead of clipping them", () => {
+    // The paper texture the tester watched bleach away: the retired offset
+    // drove all seven levels to 255 — one flat white. The curve keeps them
+    // apart. At the slider's very end two neighbours can still land on the
+    // same byte (8-bit quantisation under heavy compression), which is a
+    // squeeze, not a clip: nothing collapses to white.
+    const texture = [228, 234, 240, 246, 250, 252, 255];
+    for (const [e, atLeast] of [[30, 7], [60, 7], [100, 6]] as [number, number][]) {
+      const lut = buildLut({ ...NEUTRAL_LEVELS, exposure: e, contrast: 0 });
+      const seen = texture.map((v) => lut[v]);
+      expect(new Set(seen).size).toBeGreaterThanOrEqual(atLeast);
+      expect(lut[255]).toBe(255); // white stays white, never beyond
+      expect(seen.filter((v) => v === 255)).toHaveLength(1); // only white is white
+      for (let i = 1; i < seen.length; i++) {
+        expect(seen[i]).toBeGreaterThanOrEqual(seen[i - 1]);
+      }
+    }
+    // and the retired behaviour would have failed this outright
+    const offsetWay = texture.map((v) =>
+      Math.round(Math.min(1, v / 255 + 60 / 200) * 255),
+    );
+    expect(new Set(offsetWay).size).toBe(1);
+  });
+
+  it("stays monotonic across the whole slider, both ways", () => {
+    for (const e of [-100, -40, 0, 40, 100]) {
+      const lut = buildLut({ ...NEUTRAL_LEVELS, exposure: e, contrast: 0 });
+      expect(lut[0]).toBe(0); // black holds
+      expect(lut[255]).toBe(255); // white holds
+      for (let v = 1; v < 256; v++) expect(lut[v]).toBeGreaterThanOrEqual(lut[v - 1]);
+    }
+  });
+
+  it("matches the old offset where the old offset was right: gentle moves", () => {
+    // the curve only departs from the retired behaviour at the extremes
+    for (const e of [-10, 10]) {
+      const lut = buildLut({ ...NEUTRAL_LEVELS, exposure: e, contrast: 0 });
+      const oldWay = Math.round(Math.max(0, Math.min(1, 0.5 + e / 200)) * 255);
+      expect(Math.abs(lut[128] - oldWay)).toBeLessThanOrEqual(3);
+    }
+  });
+
   it("temperature at zero leaves all three channels on the shared curve", () => {
     const luts = buildLuts({ ...neutral, temperature: 0 });
     const base = buildLut(neutral);
