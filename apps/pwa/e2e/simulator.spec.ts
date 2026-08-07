@@ -186,7 +186,7 @@ test("time travel to an Add Panel age shows the new panel's fills", async ({
   // Find the first Add Panel age from the committed golden, so the target is
   // the lineage's own truth rather than something the test invents.
   const golden = readFileSync(
-    join(HERE, "..", "..", "..", "reference", "sample_log_seed42_v09.txt"),
+    join(HERE, "..", "..", "..", "reference", "sample_log_seed42_v10.txt"),
     "utf8",
   ).split("\n");
   let era = 0,

@@ -53,7 +53,7 @@ describe("web-flavored engine smoke", () => {
     m._jm_run(h);
     const produced = m.UTF8ToString(m._jm_log(h)) + m.UTF8ToString(m._jm_report(h)) + "\n";
     const golden = readFileSync(
-      join(ROOT, "reference", "sample_log_seed42_v09.txt"),
+      join(ROOT, "reference", "sample_log_seed42_v10.txt"),
       "latin1",
     );
     expect(produced.length).toBe(golden.length);
@@ -135,7 +135,7 @@ describe("web-flavored engine smoke", () => {
 
     const canon = run("{}", 42n);
     const golden = readFileSync(
-      join(ROOT, "reference", "sample_log_seed42_v09.txt"),
+      join(ROOT, "reference", "sample_log_seed42_v10.txt"),
       "latin1",
     );
     expect(canon.log).toBe(golden.slice(0, canon.log.length));

@@ -14,7 +14,7 @@ Checks read the rendered log and the engine's structured event stream; they
 assert properties of the game, never byte equality (that is the gate's job).
 
 Usage:
-  python scripts/run_conformance.py --native build/jerrymap.exe [--twin reference/sim_v09.py]
+  python scripts/run_conformance.py --native build/jerrymap.exe [--twin reference/sim_v10.py]
 """
 import argparse
 import os
@@ -24,7 +24,7 @@ import sys
 import tempfile
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_TWIN = os.path.join(REPO, "reference", "sim_v09.py")
+DEFAULT_TWIN = os.path.join(REPO, "reference", "sim_v10.py")
 
 checks = []
 
@@ -413,6 +413,62 @@ def conform(lines, label):
     check("ch.9", f"{label}: fields are worked in both intensities and deepen",
           len(deepenings) > 0 and clearings > 0,
           f"{len(deepenings)} deepening(s), {clearings} clearing(s)")
+
+    # ---- chapter 9: the Ridge and Great Ridge length ranges ---------------
+    # "Choose the length: 2 to 5 units for Ridge, 5 to 10 for Great Ridge."
+    # Both are the player's CHOICE, so the log prints the size of the choice:
+    # four options for a Ridge, six for a Great Ridge since v0.10 raised the
+    # floor from 4 (a Great Ridge could come out shorter than a lucky Ridge).
+    WANT_LENGTH_CHOICES = {"RIDGE": 4, "GREATRIDGE": 6}
+    len_seen, len_bad = {"RIDGE": 0, "GREATRIDGE": 0}, []
+    for a in A:
+        if a["card"] not in WANT_LENGTH_CHOICES:
+            continue
+        for l in a["body"]:
+            m = re.match(r"^    choice among (\d+) \(length \(choice\)\)$", l)
+            if not m:
+                continue
+            len_seen[a["card"]] += 1
+            if int(m.group(1)) != WANT_LENGTH_CHOICES[a["card"]]:
+                len_bad.append((a["era"], a["age"], a["card"], int(m.group(1))))
+    check("ch.9", f"{label}: Ridge chooses among 4 lengths, Great Ridge among 6",
+          not len_bad and all(n > 0 for n in len_seen.values()),
+          f"seen {len_seen}, offenders {len_bad[:3]}")
+
+    # ---- chapter 8: the ghost stroke --------------------------------------
+    # "A stroke always walks its whole length. Ending is not stopping. When a
+    #  stroke ends early ... keep walking the steps it has left along the path
+    #  it would have taken ... Units it cannot [paint], it reworks if they are
+    #  already painted, and skips if they are blank. The walk stops for good
+    #  only at the edge of the map."
+    STROKES = ("ridge", "basin seed", "basin grow", "extend", "free stroke")
+    # two shapes carry an ending: "<stroke>: <reason>, ends" and
+    # "<stroke>: ends at map edge, heading X" — match the whole tail
+    END_RE = re.compile(r"^    (" + "|".join(STROKES) + r"): (.*ends.*)$")
+    STEP_RE = re.compile(r"^    \d+\. (?:paint|rework) .*\((" + "|".join(STROKES) + r")\)$")
+    ghost_walks, edge_stops, walked_past_edge = 0, 0, []
+    for a in A:
+        ended = {}  # label -> reason, the first ending of each stroke label
+        for l in a["body"]:
+            e = END_RE.match(l)
+            if e and e.group(1) not in ended:
+                ended[e.group(1)] = e.group(2)
+                continue
+            s = STEP_RE.match(l)
+            if s and s.group(1) in ended:
+                if "map edge" in ended[s.group(1)]:
+                    walked_past_edge.append((a["era"], a["age"], l.strip()))
+                elif l.lstrip().split(". ", 1)[1].startswith("rework"):
+                    ghost_walks += 1
+        edge_stops += sum(1 for r in ended.values() if "map edge" in r)
+
+    check("ch.8", f"{label}: a stroke that ends early keeps walking, reworking as it goes",
+          ghost_walks > 0,
+          "no rework followed an early ending in this run")
+    check("ch.8", f"{label}: the walk stops for good only at the edge of the map",
+          not walked_past_edge and edge_stops > 0,
+          f"{len(walked_past_edge)} step(s) after an edge stop, e.g. "
+          f"{walked_past_edge[0] if walked_past_edge else ''}; {edge_stops} edge stop(s)")
 
     # ---- the v0.9 rider: the water target is gone -------------------------
     # FORK_NOTES §v0.9: the parent-calibrated "(target 30-40)" described a

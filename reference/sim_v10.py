@@ -524,7 +524,7 @@ class Sim:
             L = (self.die(self.cfg["greatridge_die"], "length")
                  + self.cfg["greatridge_add"])
         else:
-            L = self.pick(list(range(4, 11)) if great else list(range(2, 6)),
+            L = self.pick(list(range(5, 11)) if great else list(range(2, 6)),
                           "length (choice)")
         self._stroke_choice = True
         self.stroke(g, HI, h, L, HEIGHTS, "climb", "ridge")

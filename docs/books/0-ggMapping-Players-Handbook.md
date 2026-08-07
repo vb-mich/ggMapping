@@ -19,7 +19,7 @@ What you need from this system is small: one law that keeps the geography honest
 What you need:
 
 * Paper panels and something to paint with.
-* The deck of 22 cards (chapter 4).
+* The deck of 22 cards (chapter 6).
 * A d6 and a d4, or any randomizer you like: a coin, a phone, honest eyes.
 
 You are in control. Every rule can be bent, and the map is yours.
@@ -40,7 +40,30 @@ You are in control. Every rule can be bent, and the map is yours.
 | Work number             | How many units a card fills                              |
 | Rework or Embellishment | Decorating filled units without changing their elevation |
 | Age, Era                | One card is one age; 25 ages are one era                 |
-# 2. One law: The Step Rule
+# 2. The turn
+
+Your map is a growing grid of paper panels, each a small matrix of units. Mark each panel's coordinates on the back, bottom right relative to north. Unworked order lives in a stack of panels.
+
+Each turn:
+
+1. **Draw a card** from the deck.
+2. **Take the front panel** of the Stack and lay its map neighbors around it, up to four: the Spread. If the card is Add Panel, skip this step: the new panel you place is your working panel.
+3. **Do the card's instruction**, if it has one (chapter 6).
+4. **Fill units** up to the card's work number (chapter 4). If the panel was already full before your visit, skip the fill: its tallest settlement takes one growth step instead, whatever the card. (A panel is full when every unit is painted: marks and people do not matter.)
+5. **Put everything back.** The played card to the front of the deck, the Spread to its places, the panel to the back of the Stack. A full panel may retire to an archive instead; bring it back whenever you miss it.
+6. **Advance the calendar** one age. Every 25 ages, a new era starts. Mark age and real date on the worked panel's back.
+
+Shuffle the deck once at the start and mark the bottom card. Each time the marked card comes round, shuffle again and mark anew.
+
+Have a look at this time dial that you can print and assemble by yourself.
+Decorated version -> https://drive.google.com/file/d/1n1EbJtwI5MI_7IphLmpX9bVZUhJIzxFq
+Plain version for you to decorate -> https://drive.google.com/file/d/14Y3d_Emow5Kj42nTOfvZ2p4-UC-NnY6y/
+
+![[map-dial.png]]
+
+*The exact rules: Master Manual, chapters 2, 5 and 6.*
+
+# 3. One law: The Step Rule
 
 **A unit and its side neighbor may differ by at most one elevation step.**
 
@@ -55,40 +78,17 @@ Hold to it and geography draws itself: shores grow shallow rims, seas darken ste
 | Hills     | land  | 3    |
 | Plain     | land  | 2    |
 | Coastal   | land  | 1    |
-| Shallow   | water | -1   |
-| Medium    | water | -2   |
-| Deep      | water | -3   |
-| Very deep | water | -4   |
+| Shallow   | water | 0    |
+| Medium    | water | -1   |
+| Deep      | water | -2   |
+| Very deep | water | -3   |
 
-* Coastal is the only door between land and water: coastal 1 touches shallow -1.
+* Coastal is the only door between land and water: coastal 1 touches shallow 0.
 * Side neighbors share a full side. **<u>Diagonals never count</u>**, here or anywhere.
 * The law works across panel borders.
-* Anomaly units (chapter 4) are the one exception: they restrict nothing.
+* Anomaly units (chapter 6) are the one exception: they restrict nothing.
 
 *The exact rules: Master Manual, chapter 4.*
-
-# 3. The turn
-
-Your map is a growing grid of paper panels, each a small matrix of units. Mark each panel's coordinates on the back, bottom right relative to north. Unworked order lives in a stack of panels.
-
-Each turn:
-
-1. **Draw a card** from the deck.
-2. **Take the front panel** of the Stack and lay its map neighbors around it, up to four: the Spread. If the card is Add Panel, skip this step: the new panel you place is your working panel.
-3. **Do the card's instruction**, if it has one (chapter 4).
-4. **Fill units** up to the card's work number (chapter 5). If the panel was already full before your visit, skip the fill: its tallest settlement takes one growth step instead, whatever the card. (A panel is full when every unit is painted: marks and people do not matter.)
-5. **Put everything back.** The played card to the front of the deck, the Spread to its places, the panel to the back of the Stack. A full panel may retire to an archive instead; bring it back whenever you miss it.
-6. **Advance the calendar** one age. Every 25 ages, a new era starts. Mark age and real date on the worked panel's back.
-
-Shuffle the deck once at the start and mark the bottom card. Each time the marked card comes round, shuffle again and mark anew.
-
-Have a look at this time dial that you can print and assemble by yourself.
-Decorated version -> https://drive.google.com/file/d/1n1EbJtwI5MI_7IphLmpX9bVZUhJIzxFq
-Plain version for you to decorate -> https://drive.google.com/file/d/14Y3d_Emow5Kj42nTOfvZ2p4-UC-NnY6y/
-
-![[map-dial.png]]
-
-*The exact rules: Master Manual, chapters 2, 5 and 6.*
 
 # 4. Filling rules
 
@@ -117,7 +117,22 @@ Here are few simple filling rules:
 <u>If all the units in a panel are already painted, the rest of the work becomes rework (chapter 7).</u>
 
 *The exact rules: Master Manual, chapter 7.*
-# 5. The cards
+# 5. A stroke, step by step
+
+The stroke is the shared mechanic behind Basin, Ridge, Great Ridge, Free Stroke and Extend instructions.
+
+1. **Pick a start unit and a direction.** Diagonals are allowed.
+2. **Pick a length**: 2 to 5 units (roll 1d4+1, or choose). Great Ridge: 5 to 10 units.
+3. **Lay units one at a time** along the direction.
+4. **Wobble.** Before each unit after the first, turn 45 degrees about one time in three, evenly left or right (d6: 1-4 keep the heading, 5 turn left, 6 turn right).
+5. **Move the elevation by 1 after each step** as the card commands: basins dig one step deeper, ridges climb one step higher, but Extend carries the same elevation.
+6. **Merging is good news.** A stroke that meets its own kind joins it: two seas become one sea, two ridges one range, and the stroke ends there.
+7. **Everything else ends it**: a foreign feature ahead, the Step Rule, or the length running out. Features are allowed to end.
+8. **But the walk goes on.** A stroke always walks its whole length. When it ends early, keep walking the steps it has left along the path it would have taken, wobbling as usual: units it can paint, it paints; units it cannot, it reworks if they are already painted, and skips if they are blank. It stops for good only at the edge of the map. A stroke's energy is never lost: what it cannot carve, it decorates.
+
+*The exact rules: Master Manual, chapter 8.*
+
+# 6. The cards
 
 The deck, 22 cards:
 
@@ -139,12 +154,12 @@ The deck, 22 cards:
 ### Calm
 No instruction, just do the filling work.
 ### Extend
-(Stroke paint) Look at the bordering panels, look at the elevations that touch the borders. Continue the longest one as a stroke, carrying its elevation. Count long features only up to four units, so the biggest sea does not win every time. Nothing to extend: rework instead (chapter 7).
+(Stroke paint) Look at the bordering panels and walk along the shared border unit by unit. Where a run of water or heights on the other side touches your border, that run can be continued. Take the longest run, counting it only up to four units so the biggest sea does not win every time, and continue it into your panel as a stroke, carrying its elevation. Nothing to extend: rework instead (chapter 7).
 ### Basin
 (Stroke paint) If water already touches the panel or its borders, grow that water as a stroke: start from it and dig one step deeper as you go. Otherwise seed a new lake anywhere sensible, starting shallow, digging as it wanders. A deep heart in a small lake is fine: the law rings it with graded shores.
 
 ### Ridge and Great Ridge 
-(Stroke paint) If mountains or hills already touches the panel or its borders, grow that chain as a stroke: start from it and raise one step higher as you go. Mountain chains are the most stunning feature of your map.
+(Stroke paint) Choose any empty unit where hills are legal and start a climbing stroke: first unit hills, then one step higher as you go, so mountains from the second unit on. Ridge runs 2 to 5 units, Great Ridge 5 to 10, both your choice, no dice. Mountain chains are the most stunning feature of your map.
 ### Free Stroke
 (Stroke paint) Everything is your choice: start, heading, elevations, turns, length up to 5 units. Make your map coherent and beautiful.
 ### Settlement
@@ -177,7 +192,7 @@ Farmland can be **Low intensity** or **High intensity**
 
 People rules, in brief:
 
-* Settlements stand only on plain or coastal. Farmland stand only on plain: flip a coin for light or rich when planting a new farmland.
+* Settlements stand only on plain or coastal. Farmland stand only on plain: roll 1d4 for the intensity of a new farmland, 1-2 low, 3-4 high.
 * <u>People keep their own step rule</u>: among plain and coastal neighbors, density differs by one step at most. Cities grow out before up!
 * Company: urban medium wants 2 touching people units, urban high wants 3.
 * **Farmlands are not cities.** They never block a step, never count as company, are never blocked. No home on a field, no field on a home. Fields feed the town, they do not crowd it.
@@ -185,6 +200,7 @@ People rules, in brief:
 
 ### Anomaly
 Want your "new dimensions" feature? This is the card made for it! The one license to break the rules, once, at placement. It may repaint anything and ignore the law as it lands. Afterward it restricts nothing, and nothing ever paints over it. Make your own anomaly table; the Master Manual carries a good one to start from. 
+One warning if you plan to keep your map at a fixed size, for a frame or a wall: a map that has stopped growing still draws the same cards, so anomalies that are rare landmarks on a wide map slowly take a small one over. Design this card gently for a bounded map, with fewer copies or kinder outcomes.
 ### Add Panel
 Put the new panel at the open position closest to the middle of the map; ties prefer a loose end, where water or heights meet the void. It is your working panel this turn, and its first units grow inward from the border it shares with the map. No panel is born blank.
 Tip: Use the online map digitalizer to easily spot the best place for a new panel.
@@ -192,20 +208,6 @@ Tip: Use the online map digitalizer to easily spot the best place for a new pane
 <u>If an instruction cannot result in paint, then it becomes rework (chapter 7).</u>
 
 *The exact rules: Master Manual, chapter 9.*
-
-# 6. A stroke, step by step
-
-The stroke is the shared mechanic behind Basin, Ridge, Great Ridge, Free Stroke and Extend instructions.
-
-1. **Pick a start unit and a direction.** Diagonals are allowed.
-2. **Pick a length**: 2 to 5 units (roll 1d4+1, or choose). Great Ridge: 4 to 10 units.
-3. **Lay units one at a time** along the direction.
-4. **Wobble.** Before each unit after the first, turn 45 degrees about one time in three, evenly left or right (d6: 1-4 keep the heading, 5 turn left, 6 turn right).
-5. **Move the elevation by 1 after each step** as the card commands: basins dig one step deeper, ridges climb one step higher, but Extend carries the same elevation.
-6. **Merging is good news.** A stroke that meets its own kind joins it: two seas become one sea, two ridges one range, and the stroke ends there.
-7. **Everything else ends it**: a foreign feature ahead, the Step Rule, or the length running out. Features are allowed to end.
-
-*The exact rules: Master Manual, chapter 8.*
 
 # 7. When something cannot happen
 
@@ -229,6 +231,8 @@ Here below some suggestions:
 - Use the same **mood** for all the instructions as the initial deck (e.g. Great Ridge is always Rise). Or keep the mood mix near the starting deck's: about 12x Settle, 7x Level, 3x Rise in the 22 cards.
 - If you implement a "Remove Card" instruction, make it a one-shot instruction that applies only when the deck size reaches a threshold. A "Remove card" instruction tends to destroy your deck over time.
 
+**If you decide to keep your map at a fixed size.** Some players choose a final size in advance, for a frame or a wall. A map that has stopped growing still draws the same cards, so anything that scars the land keeps arriving at the same rate on a world that can no longer spread it out. The Anomaly is the one to watch: design it gently for a bounded map, with fewer copies or kinder outcomes.
+
 # 9. On randomness
 
 Here is the honest truth this book is built on: people are poor randomizers. We streak, we favor, we repeat. Left to instinct alone, every ridge bends the way your wrist bends, every sea grows toward the same corner, and the map fills with your habits instead of a generated world. As Jerry once said "I try to think as little as possible".
@@ -239,10 +243,10 @@ So the rules ask for randomness in a few small places, and only there:
 | --------------------------- | --------------------------------- | ------------------------------------------- |
 | Stroke length               | 2 to 5, evenly                    | 1d4+1                                       |
 | Stroke wobble               | turn 1 in 3, evenly left or right | d6: 1-4 straight, 5 left, 6 right           |
-| First paint on empty ground | see the table in chapter 5        | d6                                          |
+| First paint on empty ground | see the table in chapter 4        | d6                                          |
 | Founding a settlement       | half, a third, a sixth            | d6: 1-3, 4-5, 6                             |
 | A growth step               | equal thirds                      | d6: 1-2, 3-4, 5-6                           |
-| A field's richness          | a coin                            | odd light, even rich                        |
+| A farmland's intensity      | half and half                     | 1d4: 1-2 low, 3-4 high                      |
 
 How you randomize is your taste, and all ways are equal: dice, percentages on a phone, a coin, a spun pencil. And the deck itself is your biggest randomizer: it decides what kind of day the map is having, seven quiet days in twenty-two, four of people, three of water. Trust the deck. It is the calibration, tuned by many hands before yours.
 

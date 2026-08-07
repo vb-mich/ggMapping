@@ -389,6 +389,8 @@ A stroke does not pick one elevation step and repeat it, it moves on the ladder 
 
 >The Step Rule has ALWAYS the final word: if the wanted level is not valid on that unit, paint the **nearest valid level of the stroke's class** instead. If no level of the class is valid there, the stroke ends.
 
+**A stroke always walks its whole length.** Ending is not stopping. When a stroke ends early, because it merged, because something blocked it, or because the Step Rule allowed nothing, keep walking the steps it has left along the path it would have taken, wobbling as usual. Units it can paint, it paints. Units it cannot, it **reworks** if they are already painted, and skips if they are blank. The walk stops for good only at the edge of the map. A stroke's energy is never lost: what it cannot carve, it decorates.
+
 This is how geography draws itself. A basin heading out from a shore digs shallow, medium, deep, very deep: the sea floor falls away from the coast one elevation level per step following the Step Rule.
 
 ## Painting the stroke
@@ -428,7 +430,7 @@ No dice. The heights are yours to place.
 
 1. Choose any empty unit on the current panel where hills are legal (the Step Rule decides; beside deep water they are not). None: do Reworks.
 2. Choose a heading, any of the eight directions.
-3. Draw a climbing stroke of the heights: first unit **hills**, then one elevation step higher with each unit, so mountains from the second unit on. Choose the length: **2 to 5** units for Ridge, **4 to 10** for Great Ridge. Wobble as you wish at each step, straight, left, or right, following the stroke rules of chapter 8.
+3. Draw a climbing stroke of the heights: first unit **hills**, then one elevation step higher with each unit, so mountains from the second unit on. Choose the length: **2 to 5** units for Ridge, **5 to 10** for Great Ridge. Wobble as you wish at each step, straight, left, or right, following the stroke rules of chapter 8.
 
 Do not worry that raw heights look lonely at first. The Settle days will wrap them in foothills and the foothills in plains, one visit at a time. Near settled lowlands the Step Rule bends the stroke down into hills instead of stopping it. The Great Ridge is the deck's one giant: it will often cross into neighbor panels and become the spine of a whole region.
 
@@ -530,4 +532,6 @@ Here below some suggestions:
 - Keep the average work number of your cards close to the starting deck's, about 6.5
 - Keep the number of **instructions** balanced as the initial deck (e.g. 1 every 20 is an Anomaly)
 - Use the same **mood** for all the instructions as the initial deck (e.g. Great Ridge is always Rise). Or keep the mood mix near the starting deck's: about 12x Settle, 7x Level, 3x Rise in the 22 cards.
+
+**If you decide to keep your map at a fixed size.** Some players choose a final size in advance, for a frame or a wall. A map that has stopped growing still draws the same cards, so anything that scars the land keeps arriving at the same rate on a world that can no longer spread it out. The Anomaly is the one to watch: on a wide map its volcanoes and marshes are rare landmarks, on a bounded one they slowly take the map over. If your map has a size limit, design your Anomaly card for it: fewer copies, gentler outcomes, or a table that repeats itself less.
 - If you implement a "Remove Card" instruction, make it a one-shot instruction that applies only when the deck size reaches a threshold. A "Remove card" instruction tends to destroy your deck over time.

@@ -150,7 +150,7 @@ std::uint64_t parse_state(const char* s) {
 
 extern "C" {
 
-const char* jm_version() { return "jerrymap-engine 5.3.0"; }
+const char* jm_version() { return "jerrymap-engine 6.0.0"; }
 
 // The rules lineage this engine speaks (CONTRACTS §9). Seeds do not survive a
 // lineage break, so anything that shares or compares maps must report it — and

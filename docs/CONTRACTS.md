@@ -1,6 +1,6 @@
 # CONTRACTS.md — the shared law of jerrymapping-app
 
-Contract version: **5.3.0** · State schema: **1** · Event schema: **3** · World lineage: **v0.9**
+Contract version: **6.0.0** · State schema: **1** · Event schema: **3** · World lineage: **v0.10**
 
 This document binds every conversation and every component of this mono-repo: the C++
 engine, the WASM build, the PWA, the dice roller, the helper tool, and the digitalizer.
@@ -12,7 +12,7 @@ the v0.5 depth erratum, the v0.7 amendments, the v0.8 fields promotion and the
 v0.9 community deck) defines the game;
 `docs/FORK_NOTES.md` defines this lineage's deltas and dials; the **C++ engine is the
 reference of record** (succession, §8.4), and
-`reference/sim_v09.py` is the **living twin** whose byte-identity the gate proves —
+`reference/sim_v10.py` is the **living twin** whose byte-identity the gate proves —
 every rules increment lands in both, and the matrix must be green three ways before
 the increment is law. `reference/sim.py` is the frozen v0.4 founding document,
 history. Where prose and implementations disagree, the twin-proven engine wins until
@@ -612,8 +612,8 @@ event-rendered lines, then the final report — **LF line endings always**; stdo
 ## 8. The gate
 
 ### 8.1 Oracle matrix
-Byte-identity of `seed{N}_log.txt`, the Python twin (`reference/sim_v09.py`) vs
-native C++ vs WASM, on the v0.9 lineage:
+Byte-identity of `seed{N}_log.txt`, the Python twin (`reference/sim_v10.py`) vs
+native C++ vs WASM, on the v0.10 lineage:
 
 | cell | seed | eras | dials |
 |---|---|---|---|
@@ -712,13 +712,28 @@ the twin — but anything readable from the log runs against both.
   break byte-identity with the oracle and require a lineage bump).
 * **State schema version**: integer; loaders reject unknown versions.
 * **Event schema version**: integer; additive payload fields are minor.
-* **World lineage**: `v0.9` — the PCG32 dialect with the depth erratum, the Add
+* **World lineage**: `v0.10` — the PCG32 dialect with the depth erratum, the Add
   Panel working-panel rule, the fields as canon, and the community's deck. A lineage
   bump means old seeds speak a different world; it never changes saved-state
   replayability within its lineage (loaders reject foreign lineages, §6.3).
 
 ### 9.1 Changelog
 
+* **6.0.0** — a rules increment, lineage `v0.9 → v0.10` (major: renderer text
+  and rules changed). **The Great Ridge floor**: its length range becomes
+  **5 to 10**, up from 4 to 10; Ridge is unchanged at 2 to 5. Both stay the
+  player's CHOICE, as canon has always had them — only the range moved, so a
+  Great Ridge can no longer come out shorter than a lucky Ridge (handbook
+  ch. 9). Note for dialers: `--greatridge-die 6 --greatridge-add 4` now
+  reproduces the canon range exactly as a roll, and the matrix's own
+  `dial-greatridge` cell (die 6, add 2) is untouched by the change because it
+  never takes the choice path. Riding the same package, docs only: chapter 8
+  finally writes the **ghost stroke** (a stroke always walks its whole length;
+  ending is not stopping) and chapter 10 warns that a map held at a fixed size
+  keeps drawing Anomalies at the same rate. Fixtures regenerate; v0.9 fixtures
+  retire to `reference/history-v0.9/`; the twin becomes `reference/sim_v10.py`.
+  Conformance gains the ch. 9 length-range check (it fails against the v0.9
+  golden) and two ch. 8 ghost-stroke checks (§8.5).
 * **5.3.0** — additive, log bytes untouched (gate green, matrix identical):
   the Helper's seam. The definitive decision taxonomy is law (§4.1), the
   candidate witness joins the Decider (§4.2 — default-noop, exercised by no

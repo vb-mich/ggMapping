@@ -710,7 +710,9 @@ void Sim::card_ridge(Panel t, bool great) {
         L = roll_die(cfg.greatridge_die, "length") + cfg.greatridge_add;
     } else {
         std::vector<int> lens;
-        if (great) for (int v = 4; v <= 10; ++v) lens.push_back(v);
+        // v0.10: the Great Ridge floor rose to 5 — it could previously be
+        // shorter than a lucky Ridge (book ch. 9)
+        if (great) for (int v = 5; v <= 10; ++v) lens.push_back(v);
         else for (int v = 2; v <= 5; ++v) lens.push_back(v);
         L = pick(lens, "length (choice)");
     }
