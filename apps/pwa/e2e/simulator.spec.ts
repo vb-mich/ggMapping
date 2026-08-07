@@ -353,6 +353,43 @@ test("a capped run holds its cap and says so", async ({ page }) => {
   await page.getByTestId("btn-canon").click();
 });
 
+test("the map cap holds a floor of twelve, and 0 stays unbounded", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const cap = page.getByTestId("input-max-panels");
+  const note = page.getByTestId("map-cap-note");
+  // unbounded by default: no cap, so no anomaly guidance
+  await expect(cap).toHaveValue("0");
+  await expect(note).toHaveCount(0);
+
+  // a cap under the twelve seeding panels can never bind (a tester set 9 and
+  // got 12): the field clamps up to the floor and explains the consequence
+  await cap.fill("9");
+  await cap.blur();
+  await expect(cap).toHaveValue("12");
+  await expect(note).toBeVisible();
+  await expect(note).toContainText("Anomaly");
+  await expect(page.getByText("the twelve starting panels are the floor")).toBeVisible();
+  await page
+    .getByTestId("input-max-panels")
+    .locator("xpath=ancestor::section[1]")
+    .screenshot({ path: "e2e-artifacts/map-cap-floor.png" });
+
+  // stepping down off the floor means "no cap" — 0 still reaches unbounded
+  await page.getByTestId("input-max-panels").press("ArrowDown"); // no-op guard
+  await cap.fill("0");
+  await cap.blur();
+  await expect(cap).toHaveValue("0");
+  await expect(note).toHaveCount(0);
+
+  // and a legal cap passes through untouched
+  await cap.fill("40");
+  await cap.blur();
+  await expect(cap).toHaveValue("40");
+  await page.getByTestId("btn-canon").click();
+});
+
 test("custom geometry: the tester's poker-card case runs 3x4", async ({ page }) => {
   await page.goto("/");
   await setRun(page, 42, 3);

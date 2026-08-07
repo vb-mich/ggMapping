@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   BOOKS,
+  buildOutline,
   BOOK_SOURCE,
   bookById,
   chapterByNumber,
@@ -105,6 +106,34 @@ describe("the rulebook's single source", () => {
     const ten = chapterByNumber(10);
     expect(ten?.text).toMatch(/^10\./);
     expect(findHeading(ten!.slug)).toBe(ten);
+  });
+
+  it("sends outbound links away and keeps in-app anchors in place", () => {
+    // A reader following the printable dial or an external page must not lose
+    // their place in the book; a chapter deep link must navigate in place.
+    // (Neither book carries a link today, so the transform is exercised on
+    // constructed markdown — the rule ships ahead of the first link.)
+    const md = [
+      "[out](https://example.org/dial.pdf)",
+      "[file](files/dial.pdf)",
+      "[chapter](#/rules/book/master/ch/9)",
+      "[anchor](#your-first-deck)",
+    ].join("\n\n");
+    const html = renderBook({ id: "t", source: md, outline: buildOutline(md) });
+
+    const link = (href: string) => {
+      const at = html.indexOf(`<a href="${href}"`);
+      expect(at, `link missing: ${href}`).toBeGreaterThan(-1);
+      return html.slice(at, html.indexOf(">", at) + 1);
+    };
+    for (const href of ["https://example.org/dial.pdf", "files/dial.pdf"]) {
+      expect(link(href), href).toContain('target="_blank"');
+      expect(link(href), href).toContain('rel="noopener noreferrer"');
+    }
+    for (const href of ["#/rules/book/master/ch/9", "#your-first-deck"]) {
+      expect(link(href), href).not.toContain("target=");
+      expect(link(href), href).not.toContain("rel=");
+    }
   });
 
   it("resolves every Obsidian embed to a real image, none missing", () => {

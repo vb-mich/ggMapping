@@ -20,6 +20,11 @@ import {
 } from "../state";
 import { Spinner } from "./Spinner";
 
+// The map cap's floor: genesis seeds twelve panels, so no smaller cap can
+// ever bind. Kept here beside the field it governs — the engine needs no
+// such rule, since a cap under its genesis is simply never reached.
+export const MIN_MAP_CAP = 12;
+
 function SpinField(props: {
   label: string;
   value: number;
@@ -105,10 +110,28 @@ export function ConfigPanel() {
           onChange={(v) => (extendCap.value = v)} hint={STRINGS.extendCapHint}
           offCanon={extendCap.value !== 4} tip={STRINGS.tipExtendCap} />
         <SpinField label={STRINGS.mapCap} value={maxPanels.value} min={0} max={1000}
-          onChange={(v) => (maxPanels.value = v)} hint={STRINGS.mapCapHint}
+          onChange={(v) => {
+            // Genesis seeds twelve panels, so a cap under twelve can never
+            // bind: the engine would hold twelve anyway (a tester set 9 and
+            // got 12). Below the floor there is nothing but "no cap", so
+            // stepping down off the floor means unbounded and every other
+            // under-floor value clamps up to it.
+            const cur = maxPanels.value;
+            if (v <= 0) maxPanels.value = 0;
+            else if (v < MIN_MAP_CAP)
+              maxPanels.value =
+                cur === MIN_MAP_CAP && v === MIN_MAP_CAP - 1 ? 0 : MIN_MAP_CAP;
+            else maxPanels.value = v;
+          }}
+          hint={STRINGS.mapCapHint}
           offCanon={maxPanels.value !== 0} tip={STRINGS.tipMapCap}
           testid="input-max-panels" />
       </div>
+      {maxPanels.value > 0 && (
+        <p class="note" data-testid="map-cap-note">
+          {STRINGS.mapCapAnomalyNote}
+        </p>
+      )}
       <div class="field-row">
         <SpinField label={STRINGS.strokeDie} value={strokeDie.value} min={2} max={20}
           onChange={(v) => (strokeDie.value = v)} offCanon={strokeDie.value !== 4}

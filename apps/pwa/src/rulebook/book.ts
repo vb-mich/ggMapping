@@ -202,6 +202,15 @@ export function renderBook(book: Book = bookById("master")!): string {
   };
   // standard markdown images keep working: an img/ path resolves to the
   // same bundled files the wiki embeds use
+  // A link that leaves the app opens away from it: a reader following the
+  // printable dial or an external page keeps their place in the book. In-app
+  // anchors — chapter deep links and every #/rules route — navigate in place.
+  renderer.link = ({ href, title, tokens }: Tokens.Link): string => {
+    const inner = marked.Parser.parseInline(tokens);
+    const t = title ? ` title="${title}"` : "";
+    if (href.startsWith("#")) return `<a href="${href}"${t}>${inner}</a>`;
+    return `<a href="${href}"${t} target="_blank" rel="noopener noreferrer">${inner}</a>`;
+  };
   renderer.image = ({ href, text }: Tokens.Image): string => {
     const name = decodeURIComponent(href.split("/").pop() ?? "");
     const url = BOOK_IMAGES[name] ?? href;

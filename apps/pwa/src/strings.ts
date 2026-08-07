@@ -21,7 +21,9 @@ export const STRINGS = {
   customW: "Width",
   customH: "Height",
   mapCap: "Map cap",
-  mapCapHint: "0 = unbounded",
+  mapCapHint: "0 = unbounded; the twelve starting panels are the floor",
+  mapCapAnomalyNote:
+    "A bounded map keeps drawing Anomaly cards at the same rate while it can no longer grow, so anomalies concentrate over time. Consider fewer Anomaly copies in the deck.",
   statsAtCap: "at the cap",
   legendAnomalies: "Anomalies",
   legendSunken: "sunken",
