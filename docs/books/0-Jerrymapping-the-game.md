@@ -78,7 +78,7 @@ This is the standard that we will refer to in this manual.
 Measurements:
 - Grid units: 5x6 units
 - Unit Size: 1.5cm square (5/8″)
-- Panel Size: 7,5 x 9cm (3 1/8″ x 3 3/4″)
+- Panel Size: 7,5 x 9cm (3 1/8″ x 3 3/4″)
 ### Full-map
 
 This is the original Jerry's map size. For those who want to reserve a bigger space to this experience.
@@ -532,6 +532,6 @@ Here below some suggestions:
 - Keep the average work number of your cards close to the starting deck's, about 6.5
 - Keep the number of **instructions** balanced as the initial deck (e.g. 1 every 20 is an Anomaly)
 - Use the same **mood** for all the instructions as the initial deck (e.g. Great Ridge is always Rise). Or keep the mood mix near the starting deck's: about 12x Settle, 7x Level, 3x Rise in the 22 cards.
+- If you implement a "Remove Card" instruction, make it a one-shot instruction that applies only when the deck size reaches a threshold. A "Remove card" instruction tends to destroy your deck over time.
 
 **If you decide to keep your map at a fixed size.** Some players choose a final size in advance, for a frame or a wall. A map that has stopped growing still draws the same cards, so anything that scars the land keeps arriving at the same rate on a world that can no longer spread it out. The Anomaly is the one to watch: on a wide map its volcanoes and marshes are rare landmarks, on a bounded one they slowly take the map over. If your map has a size limit, design your Anomaly card for it: fewer copies, gentler outcomes, or a table that repeats itself less.
-- If you implement a "Remove Card" instruction, make it a one-shot instruction that applies only when the deck size reaches a threshold. A "Remove card" instruction tends to destroy your deck over time.

@@ -49,9 +49,12 @@ Each turn:
 1. **Draw a card** from the deck.
 2. **Take the front panel** of the Stack and lay its map neighbors around it, up to four: the Spread. If the card is Add Panel, skip this step: the new panel you place is your working panel.
 3. **Do the card's instruction**, if it has one (chapter 6).
-4. **Fill units** up to the card's work number (chapter 4). If the panel was already full before your visit, skip the fill: its tallest settlement takes one growth step instead, whatever the card. (A panel is full when every unit is painted: marks and people do not matter.)
-5. **Put everything back.** The played card to the front of the deck, the Spread to its places, the panel to the back of the Stack. A full panel may retire to an archive instead; bring it back whenever you miss it.
-6. **Advance the calendar** one age. Every 25 ages, a new era starts. Mark age and real date on the worked panel's back.
+4. **Fill units** up to the card's work number (chapter 4). 
+   Is the panel already completely filled? Then:
+   - Do reworks up to the card's work number. (chapter 7)
+   - The panel's tallest settlement gets one growth step. (see Settlement card)
+1. **Put everything back.** The played card to the front of the deck, the Spread to its places, the panel to the back of the Stack. A full panel may retire to an archive instead; bring it back whenever you miss it.
+2. **Advance the calendar** one age. Every 25 ages, a new era starts. Mark age and real date on the worked panel's back.
 
 Shuffle the deck once at the start and mark the bottom card. Each time the marked card comes round, shuffle again and mark anew.
 
@@ -128,7 +131,7 @@ The stroke is the shared mechanic behind Basin, Ridge, Great Ridge, Free Stroke 
 5. **Move the elevation by 1 after each step** as the card commands: basins dig one step deeper, ridges climb one step higher, but Extend carries the same elevation.
 6. **Merging is good news.** A stroke that meets its own kind joins it: two seas become one sea, two ridges one range, and the stroke ends there.
 7. **Everything else ends it**: a foreign feature ahead, the Step Rule, or the length running out. Features are allowed to end.
-8. **But the walk goes on.** A stroke always walks its whole length. When it ends early, keep walking the steps it has left along the path it would have taken, wobbling as usual: units it can paint, it paints; units it cannot, it reworks if they are already painted, and skips if they are blank. It stops for good only at the edge of the map. A stroke's energy is never lost: what it cannot carve, it decorates.
+8. **But the walk goes on.** A stroke always walks its whole length. When it ends early, keep walking the steps but instead of filling, you do decorations/reworks on filled units along the way. A stroke's energy is never lost: what it cannot carve, it decorates.
 
 *The exact rules: Master Manual, chapter 8.*
 
@@ -166,11 +169,11 @@ No instruction, just do the filling work.
 Does anyone live on this panel or its Spread?
 No one? Then roll a d6:
 
-| d6  | Founding                                                                          |
-| --- | --------------------------------------------------------------------------------- |
-| 1-3 | A farmstead: 1 rural home and 1 field                                             |
-| 4-5 | A village: 2 rural homes and 1 field                                              |
-| 6   | A small town: a low urban core with homes on every side (ring first), and 1 field |
+| d6  | Founding                                                                             |
+| --- | ------------------------------------------------------------------------------------ |
+| 1-3 | A farmstead: 1 rural home and 1 farmland                                             |
+| 4-5 | A village: 2 rural homes and 1 farmland                                              |
+| 6   | A small town: a low urban core with homes on every side (ring first), and 1 farmland |
 
 Someone already there? Then grow. The tallest settlement takes two growth steps. Each step, roll a d6:
 
@@ -199,8 +202,8 @@ People rules, in brief:
 * Ties for tallest: grow the larger; still tied, the one with the better story.
 
 ### Anomaly
-Want your "new dimensions" feature? This is the card made for it! The one license to break the rules, once, at placement. It may repaint anything and ignore the law as it lands. Afterward it restricts nothing, and nothing ever paints over it. Make your own anomaly table; the Master Manual carries a good one to start from. 
-One warning if you plan to keep your map at a fixed size, for a frame or a wall: a map that has stopped growing still draws the same cards, so anomalies that are rare landmarks on a wide map slowly take a small one over. Design this card gently for a bounded map, with fewer copies or kinder outcomes.
+Want your "other dimensions" feature? This is the card made for it! The one license to break the rules, once, at placement. It may repaint anything and ignore the law as it lands. Afterward it restricts nothing, and your anomalies follow nothing but your rules. Make your own anomaly table; the Master Manual carries a good one to start from. 
+
 ### Add Panel
 Put the new panel at the open position closest to the middle of the map; ties prefer a loose end, where water or heights meet the void. It is your working panel this turn, and its first units grow inward from the border it shares with the map. No panel is born blank.
 Tip: Use the online map digitalizer to easily spot the best place for a new panel.
@@ -230,8 +233,9 @@ Here below some suggestions:
 - Keep the number of **instructions** balanced as the initial deck (e.g. 1 every 20 is an Anomaly)
 - Use the same **mood** for all the instructions as the initial deck (e.g. Great Ridge is always Rise). Or keep the mood mix near the starting deck's: about 12x Settle, 7x Level, 3x Rise in the 22 cards.
 - If you implement a "Remove Card" instruction, make it a one-shot instruction that applies only when the deck size reaches a threshold. A "Remove card" instruction tends to destroy your deck over time.
+- Add a "Shuffle Deck" instruction only when the deck size is considerable. Frequent re-shuffling can negatively affect cards exit balance, thus the map balance. Shuffling when all cards have been drawn ensure that all cards are executed at least once.
 
-**If you decide to keep your map at a fixed size.** Some players choose a final size in advance, for a frame or a wall. A map that has stopped growing still draws the same cards, so anything that scars the land keeps arriving at the same rate on a world that can no longer spread it out. The Anomaly is the one to watch: design it gently for a bounded map, with fewer copies or kinder outcomes.
+NOTE: **If you decide to keep your map at a fixed size.** Some players choose a final size in advance, for a frame or a wall. A map that has stopped growing still draws the same cards, so anything that scars the land (like the Void on Jerry's map) keeps arriving at the same rate on a world that can no longer spread it out. The Anomaly is the one to watch: design it gently for a bounded map, with fewer copies or kinder outcomes.
 
 # 9. On randomness
 
