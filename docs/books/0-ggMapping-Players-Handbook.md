@@ -16,6 +16,8 @@ ggMapping is a pre-set system to jerrymapping for those who want to start right 
 This book keeps the rules light on purpose. If you're curious about how this manual came to be, or if you have any doubt about a specific rule, you can always refer to the full Master Manual.
 What you need from this system is small: one law that keeps the geography honest, a deck that paces the work, and a little randomness in the right places so the map stays wilder than your habits.
 
+One more thing for your first afternoons: early maps look like loose blocks and the cards instructions are less effective. Be patient. The chain of filling knits them into a flowing landscape, one visit at a time. Trust in the cards and your map will turn into something amazing.
+
 What you need:
 * Paper panels and something to paint with.
 * The deck of 22 cards (chapter 6).
@@ -64,10 +66,12 @@ Each turn:
    Is the panel already completely filled? Then:
    - Do reworks up to the card's work number. (chapter 7)
    - The panel's tallest settlement gets one growth step. (see Settlement card)
-1. **Put everything back.** The played card to the front of the deck, the Spread to its places, the panel to the back of the Stack. A full panel may retire to an archive instead; bring it back whenever you miss it.
-2. **Advance the calendar** one age. Every 25 ages, a new era starts. Mark age and real date on the worked panel's back.
+5. **Put everything back.** The played card to the front of the deck, the Spread to its places, the panel to the back of the Stack. A full panel may retire to an archive instead (see notes).
+6. **Advance the calendar** one age. Every 25 ages, a new era starts. Mark age and real date on the worked panel's back.
 
-Shuffle the deck once at the start and mark the bottom card. Each time the marked card comes round, shuffle again and mark anew.
+NOTES:
+- Shuffle the deck once at the start and mark the bottom card. Each time the marked card comes round, shuffle again and mark anew.
+- When a panel is full (completely painted), you can decide to put it in an "archive" instead of the working stack. Panels archiving helps to paint new maps faster and it keeps bigger maps manageable.
 
 Have a look at this time dial that you can print and assemble by yourself.
 Decorated version -> https://drive.google.com/file/d/1n1EbJtwI5MI_7IphLmpX9bVZUhJIzxFq
@@ -121,6 +125,8 @@ Here are few simple filling rules:
 	- **Settle** keeps the same elevation. 
 	- **Level** moves one step toward plain. 
 	- **Rise** moves one step away; Rise on plain is your choice of coastal or hills.
+	  
+	NOTE: **Level** keep Plains unchanged and **Rise** doesn't change mountains nor deep water. Carry on the same elevation when it cannot change.
 	![[moods-example.png]]
 
 4. **First paint on empty ground?** (a new map, a fresh panel): roll a d6.
@@ -143,9 +149,9 @@ Here are few simple filling rules:
 
 The stroke is the shared mechanic behind Basin, Ridge, Great Ridge, Free Stroke and Extend instructions.
 
-1. **Pick a start unit and a direction.** Diagonals are allowed.
+1. **Pick a start unit and a direction.** Diagonals are allowed. Each card's entry says where its stroke may start. Where it says you choose, choose freely, randomly, or roll dice for a starting unit.
 2. **Pick a length**: 2 to 5 units (roll 1d4+1, or choose). Great Ridge: 5 to 10 units.
-3. **Lay units one at a time** along the direction.
+3. **Lay units one at a time** along the direction. Borders do not stop a stroke: it walks across panels. The map's edge ends the walk for good, and no stroke ever creates a new panel.
 4. **Wobble.** Before each unit after the first, turn 45 degrees about one time in three, evenly left or right (d6: 1-4 keep the heading, 5 turn left, 6 turn right).
 5. **Move the elevation by 1 after each step** as the card commands: basins dig one step deeper, ridges climb one step higher, but Extend carries the same elevation.
 6. **Merging is good news.** A stroke that meets its own kind joins it: two seas become one sea, two ridges one range, and the stroke ends there.
@@ -175,6 +181,9 @@ The deck, 22 cards:
 
 ![[card-example.png|289]]
 An example of Free Stroke card
+
+HERE is a link of a printable document with all the cards:
+https://drive.google.com/file/d/1CVBCDG6nfsf6vPZVkXyCsEq-WNDPUqYm/view?usp=sharing
 ## Cards instructions
 
 ### Calm
@@ -192,7 +201,8 @@ No instruction, just do the filling work.
 (Stroke paint) Everything is your choice: start, heading, elevations, turns, length up to 5 units. Make your map coherent and beautiful.
 ### Settlement
 Does anyone live on this panel or its Spread?
-No one? Then roll a d6:
+
+**No one?** Then roll a d6:
 
 | d6  | Founding                                                                             |
 | --- | ------------------------------------------------------------------------------------ |
@@ -201,11 +211,15 @@ No one? Then roll a d6:
 | 6   | A small town: a low urban core with homes on every side (ring first), and 1 farmland |
 ![[Settlement-founding-example.png]]
 
-Someone already there? Then grow. The tallest settlement takes two growth steps. Each step, roll a d6:
+**NOTE:** Founding needs painted ground: homes stand on plain or coastal units already on the map, and the word "empty" in the people rules means no people on it, not unpainted. On a mostly blank panel there may be no legal home.
+
+**Someone already there?** Then grow. 
+The tallest settlement takes two growth steps. 
+Each step, roll a d6:
 
 | d6  | Growth step                                                                                               |
 | --- | --------------------------------------------------------------------------------------------------------- |
-| 1-2 | A field. Deepen a low intensity farmland to high intensity first; otherwise plant a new farmland          |
+| 1-2 | A field. Deepen a low intensity farmland to high intensity first; otherwise plant a new farmland, always low intensity |
 | 3-4 | A rural home beside the busiest part of town                                                              |
 | 5-6 | A rise in density: rural to urban low, low to medium, medium to high. If nothing can rise, a home instead |
 Note: If growth cannot happen (e.g. no legal space for farmland), then do a rework instead.
@@ -246,8 +260,9 @@ Tip: Use the online map digitalizer to easily spot the best place for a new pane
 Cards are ALWAYS effective, but sometimes the instruction cannot be executed, either because of rules restriction or because the panel is already completely painted. 
 In that case apply the nudge or the instruction become a rework task.
 
-* **The Nudge.** If a unit cannot take what you must place, slide to the nearest unit that can. Ties: your choice.
+* **The Nudge.** If a unit cannot take what you must place, slide to the nearest unit on the working panel that can. The Nudge never leaves the working panel. Ties: your choice.
 * **The Rework.** If the instruction cannot happen at all, or the panel is full, decorate instead: work the same units the instruction would have touched, without changing elevation. Waves on the deep sea, roads, collages, a festival in the city, etc... Reworks are what makes an old panel look loved! Blank units are never reworked. (The simulator's records say embellish for a rework, and waymark for a settlement that found no home: a small sign of the visit, placed where you like.)
+* **The pass.** Blank units are never reworked, so on a panel with no painted units at all, a failed instruction simply passes: note it and paint on, the card's fill still happens. On a young map instructions fail often for the first few ages. That is normal, and every card is still a full card of painting.
 * **The healing.** While reworking, a coastal unit with no water on any side may become plain: the shore forgets its sea. Beyond that, artistic freedom over reworked ground. Use it like salt.
 
 *The exact rules: Master Manual, chapter 4.*
