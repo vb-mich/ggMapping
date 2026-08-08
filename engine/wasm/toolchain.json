@@ -1,0 +1,20 @@
+{
+  "_why": [
+    "A byte-identity project must not build on a moving toolchain. CI's emsdk",
+    "was unpinned and moved mid-deploy once already: emcc stopped linking",
+    "libc++ and the wasm link broke (FORK_NOTES v0.9.1, the toolchain pin",
+    "flag). This file is the single place that says which Emscripten builds",
+    "the engine, so a fresh clone and CI agree and the nine-cell gate keeps",
+    "meaning the same thing on every machine.",
+    "To move it: bump deliberately, rebuild both flavors, run the gate, and",
+    "record the new version here in the same commit."
+  ],
+  "emscripten": "6.0.5",
+  "emsdkRelease": "releases-dbd755b5da399329c2576f6e3dfa7f419f5d8409-64bit",
+  "pinnedOn": "2026-08-08",
+  "usedBy": [
+    "engine/wasm/build.sh checks em++ --version against emscripten",
+    ".github/workflows/identity.yml passes it to setup-emsdk"
+  ],
+  "override": "set JM_ALLOW_TOOLCHAIN_DRIFT=1 to build anyway, knowing the bytes may move"
+}

@@ -188,6 +188,15 @@ panel's whole history moves to another coordinate from its detail view, all
 versions together in one transaction; an occupied target asks whether the
 two histories should become one, ordered by time.
 
+**The atlas draws thumbnails at rest and stored scans once zoomed.** A 256 px
+thumbnail covers a 96 px cell perfectly until the map is magnified, and past
+1.5x zoom a visible cell asks for its full stored scan instead
+([fullScans.ts](src/digitalizer/fullScans.ts)). The scans live in a bounded
+pool: at most 12 resident, least recently wanted evicted, its object URL
+revoked at that moment, and the cell told so it can fall back to its
+thumbnail rather than point at a dead URL. The ceiling does not grow with the
+map, so a 280 panel world still holds twelve. Storage on disk is unchanged.
+
 **Click-to-add** offers every open position that shares a side with a
 panel — the atlas draws the bounding box plus one ring, so a map grows
 outward along its edges, not only into its own notches ([grid.ts](src/digitalizer/grid.ts),

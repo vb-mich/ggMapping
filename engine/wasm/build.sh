@@ -13,6 +13,22 @@ set -euo pipefail
 cd "$(dirname "$0")"
 what="${1:-all}"
 
+# The toolchain pin. toolchain.json names the exact Emscripten this engine is
+# built with; a different one may emit different bytes, and the nine-cell gate
+# would then be comparing two toolchains rather than two implementations.
+# Set JM_ALLOW_TOOLCHAIN_DRIFT=1 to build anyway.
+want=$(sed -n 's/.*"emscripten"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' toolchain.json)
+have=$(em++ --version 2>/dev/null | sed -n '1s/.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+if [[ -n "$want" && "$have" != "$want" ]]; then
+  if [[ "${JM_ALLOW_TOOLCHAIN_DRIFT:-0}" == "1" ]]; then
+    echo "toolchain drift allowed: want Emscripten $want, have ${have:-unknown}" >&2
+  else
+    echo "toolchain mismatch: engine/wasm/toolchain.json pins Emscripten $want, this shell has ${have:-none}." >&2
+    echo "Install the pinned version, or set JM_ALLOW_TOOLCHAIN_DRIFT=1 to build anyway." >&2
+    exit 1
+  fi
+fi
+
 # Every engine source except the CLI, which only the node flavor links. Globbed
 # on purpose: the native build uses src/*.cpp, and a hand-kept list here drifts
 # from it silently (a new file simply fails to link, or worse, links in one

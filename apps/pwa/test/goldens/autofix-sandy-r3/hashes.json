@@ -1,0 +1,282 @@
+{
+ "6ecd64a0-79d5-4aed-97bc-a3979a50398a.jpg": {
+  "map": "My first map",
+  "panel": "1,2",
+  "w": 884,
+  "h": 1065,
+  "sha256": "9515c59360cda9583ba5a2700b629dcf339ee3763229e612e31c02fc9799ecb1"
+ },
+ "ca0dc2dd-bffb-49c2-b74b-bfd8f97409c7.jpg": {
+  "map": "My first map",
+  "panel": "1,2",
+  "w": 892,
+  "h": 1072,
+  "sha256": "eda32a06790112f9bcb6c259a0d7ba9ca1285d845d132b8cc98027bc5707c004"
+ },
+ "849b50ea-ff27-4bd0-bfd0-0ae87c87f324.jpg": {
+  "map": "My first map",
+  "panel": "-2,1",
+  "w": 894,
+  "h": 1072,
+  "sha256": "6853dd4f72ab94606e2aba68e4bc5644b60c1e75459c687d8ee21f2c0d44a470"
+ },
+ "fa92aac0-d50b-4818-9594-8c98529f73fa.jpg": {
+  "map": "My first map",
+  "panel": "-1,1",
+  "w": 889,
+  "h": 1073,
+  "sha256": "8bba7f3186c6a3a31527989b6889ee8c5cb5b5f5a2447e9126a1d322cec74d17"
+ },
+ "0032eff7-4d00-4660-a173-e4ba442a3a95.jpg": {
+  "map": "My first map",
+  "panel": "1,1",
+  "w": 884,
+  "h": 1062,
+  "sha256": "3af98ba1dc0bbae93987d2d263a1866ac8aed569dc46217acaf128e02568a5d1"
+ },
+ "e6e7ed36-e62e-4924-a347-50cd8bbd8dac.jpg": {
+  "map": "My first map",
+  "panel": "2,1",
+  "w": 887,
+  "h": 1062,
+  "sha256": "1a5e1b4369b50c98a3daf29d6fa8671ca6ffdfe016540d8ce67fdf8926f25878"
+ },
+ "dc440873-2e81-4d75-a31a-a12e84e31b13.jpg": {
+  "map": "My first map",
+  "panel": "-2,-1",
+  "w": 889,
+  "h": 1060,
+  "sha256": "fdbbe3365d524bc55848c6094bea1aeb60695032a38ac1fad88054e8df67eebb"
+ },
+ "38405243-0664-4447-9fa2-351349637f5e.jpg": {
+  "map": "My first map",
+  "panel": "-1,-1",
+  "w": 893,
+  "h": 1045,
+  "sha256": "e9c4e37eb35b67cca3472d35be69c6eea9adef9728736982bf123b72760b0a69"
+ },
+ "fe9b243a-e8df-4e7e-8fa2-7bf87b50d506.jpg": {
+  "map": "My first map",
+  "panel": "1,-1",
+  "w": 894,
+  "h": 1060,
+  "sha256": "829dc7dc32e09c01f393f6485aacee965a3568a0e27a4db05f2a976e70f11b21"
+ },
+ "6d336f5e-e5bd-401f-a275-0ba9a3b64f29.jpg": {
+  "map": "My first map",
+  "panel": "2,-1",
+  "w": 893,
+  "h": 1066,
+  "sha256": "31234ad55c9dbdcb62cdabe0642b90628cdf2c447fc2a6a2dde4dfda7b12cd9d"
+ },
+ "2205bf1b-1e63-450f-8c13-1b57a068a310.jpg": {
+  "map": "My first map",
+  "panel": "-1,-2",
+  "w": 887,
+  "h": 1076,
+  "sha256": "d8513b44658ba3aa4be97f1236b5c924e038c2ec92fc34f9ecf0001928517d63"
+ },
+ "39d1b43c-fb2f-4566-97ec-b45d62353d05.jpg": {
+  "map": "My first map",
+  "panel": "1,-2",
+  "w": 909,
+  "h": 1074,
+  "sha256": "94ff070345509416b7620dc3d79ab61bd83c20822b9b773285e51c9376063b9c"
+ },
+ "67e56458-c24f-4f27-888d-267336eabfb0.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "1,1",
+  "w": 502,
+  "h": 684,
+  "sha256": "e879ef2f7fca0a15b72c07b95fbf442ceb83ca6667302bb9de495f3353d2e43a"
+ },
+ "24a4843b-d345-4174-9db8-86497473db4f.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "-1,1",
+  "w": 481,
+  "h": 672,
+  "sha256": "bb539bb0f6933bec8b5a81c5bed907a57c3990f4bc53ed9a7768880e6e3798ae"
+ },
+ "b81a914f-9769-49d8-9ca2-c59bf1d4fefd.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "-1,-1",
+  "w": 439,
+  "h": 744,
+  "sha256": "5f42cf0067f8af3e7307b35d451f0b9f747b311864615d75ff16dc323d2fc01d"
+ },
+ "e2fc10e9-2dca-4636-b8d7-16762ab4e692.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "1,-1",
+  "w": 531,
+  "h": 746,
+  "sha256": "ce7b38b4af4f3f1d824905c446c204659886aa7b2bdf78de3d1546e7e95fbb92"
+ },
+ "e6099ffd-eba8-4e79-972e-17401fca6843.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "-1,-1",
+  "w": 1130,
+  "h": 1600,
+  "sha256": "f09e8a82e939ed05d68e6403db8ba21c06a47c3f2c3b2f48ff195beec53027b0"
+ },
+ "daaf3324-4377-4876-99f2-78a3b328d5cf.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "1,1",
+  "w": 1133,
+  "h": 1569,
+  "sha256": "04413ec19de4e73695739428cdba73bc1eabadc7d618608a55e1ce0a42ddb532"
+ },
+ "2f33175e-f229-4b95-bf68-3bf87fe77537.jpg": {
+  "map": "My first map",
+  "panel": "1,2",
+  "w": 533,
+  "h": 640,
+  "sha256": "a5f6c63d902c53a587f64dc3a6e5465adc58af232f171b58d5ddd49980a878e8"
+ },
+ "0b6d39ad-f19d-403f-9ba5-577f4941a819.jpg": {
+  "map": "My first map",
+  "panel": "1,2",
+  "w": 521,
+  "h": 640,
+  "sha256": "916ef19249893606d71106128e67c4c6d87a8159fc44a728a64b43e8d300f47d"
+ },
+ "eff60fa5-4af7-40cc-a6d2-785c44fedc67.jpg": {
+  "map": "My first map",
+  "panel": "1,2",
+  "w": 888,
+  "h": 1062,
+  "sha256": "2eda475ad61a849ac0d15921a3f802c9e0364d8d52dcb78c40b06c60389f0ecf"
+ },
+ "cbb5149f-827c-478c-8d98-36f83b609877.jpg": {
+  "map": "My first map",
+  "panel": "-1,2",
+  "w": 885,
+  "h": 1058,
+  "sha256": "a67cea26bf2e3e389e2bf29ea165c18f07275d73e382aa7ec86dd79eca8f7b0a"
+ },
+ "5aff8705-df2c-45ab-98a1-24b6df9756f3.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "-1,1",
+  "w": 595,
+  "h": 841,
+  "sha256": "fb8c543b4c390382349801b91e5696e9795d9d61aa3ab3716578c98d2161e6a3"
+ },
+ "f2e9cd4f-07ba-423c-b113-b5ed45237031.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "1,1",
+  "w": 572,
+  "h": 803,
+  "sha256": "7c1a9c17b99c06496f75c18d734ca8e6325c2da1289dcceebdadd62395350a7a"
+ },
+ "f12dad82-302a-458f-9dbc-099dc5e97f1d.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "-1,-1",
+  "w": 660,
+  "h": 920,
+  "sha256": "546a921bdca6a3c0fa807835af6951f351de452a4466ae94f165ee00f0f18798"
+ },
+ "4e81cc91-0be5-4304-93a0-cdbb5ace0738.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "1,-1",
+  "w": 620,
+  "h": 898,
+  "sha256": "332a51acf783fab49413fb77275e171ce6f66cd74314b99c4c986338648a62de"
+ },
+ "ecb4aa26-4c16-4e4c-a8c8-e649362b7b8d.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "1,1",
+  "w": 1074,
+  "h": 1506,
+  "sha256": "cce68e13c31dc542ec80c476865c3da05a18dea4d17ff836246faf126272c75d"
+ },
+ "f085d7dc-3fe0-4728-826a-8c6865d7381e.jpg": {
+  "map": "Player handbook map",
+  "panel": "-1,1",
+  "w": 887,
+  "h": 1068,
+  "sha256": "1ff06a56f6f5ccf0c6992c12c99375ee37e0d3db57183c3a12a899dd973a1cb8"
+ },
+ "36bad3fc-8083-44c3-aedd-ccfa36d92b8a.jpg": {
+  "map": "Player handbook map",
+  "panel": "1,1",
+  "w": 888,
+  "h": 1064,
+  "sha256": "e465137af681e4d2890cd9e55de979f7642d75e634aba4efc9cfef04ce3c8929"
+ },
+ "9a34e617-d45e-4cc4-b9fc-d9a2a0d5ff4b.jpg": {
+  "map": "Player handbook map",
+  "panel": "2,1",
+  "w": 888,
+  "h": 1063,
+  "sha256": "ad43d108cd18bdb5de7ebc0fe97200b9be0dd1e5011b7f0621d3052810973533"
+ },
+ "99406182-affa-4fa0-bba5-df284725f365.jpg": {
+  "map": "Player handbook map",
+  "panel": "-2,-1",
+  "w": 887,
+  "h": 1061,
+  "sha256": "b74e1f63045b87bca3bb3c11bae02b17ed3ada6a0652fe947205902164fc54a7"
+ },
+ "d56b1962-9810-4ad3-a28e-43bf65fdce9f.jpg": {
+  "map": "Player handbook map",
+  "panel": "-1,-1",
+  "w": 891,
+  "h": 1053,
+  "sha256": "8214550bf05f1dbb0bc9d68999712c5bae39b2ba6f325d69b6c8ea86a9a01941"
+ },
+ "d5531312-f71d-4b06-a9c1-671dc6618ac0.jpg": {
+  "map": "Player handbook map",
+  "panel": "1,-1",
+  "w": 896,
+  "h": 1055,
+  "sha256": "5c70481bcef02b90722ea2c4440efd49d319db182d42532cc3942a2b31d17171"
+ },
+ "ed3b0e98-1ce3-45ba-a38d-17f94b463e54.jpg": {
+  "map": "Player handbook map",
+  "panel": "2,-1",
+  "w": 896,
+  "h": 1066,
+  "sha256": "6ac7d59cdde410844eafaa505aefbf925de6f36958386119a27c4bc8fae5f1d6"
+ },
+ "89c5f1e9-0887-4e9a-a40e-62e3d2addf4c.jpg": {
+  "map": "Player handbook map",
+  "panel": "-1,-2",
+  "w": 885,
+  "h": 1081,
+  "sha256": "367f5bac847574d078a552aad3d98e6ce1ab1cd4f6da7b04b4c57f882de4f4cc"
+ },
+ "a16b0d71-f200-42f6-ae3f-68c38d6b46d5.jpg": {
+  "map": "Player handbook map",
+  "panel": "1,-2",
+  "w": 891,
+  "h": 1071,
+  "sha256": "069d8ab1f6e71227ddb77a37a7b468ba15d1114e4d0d7cf2d397a38b1460be58"
+ },
+ "dd8164d3-5317-4b8b-bac5-55fed9ab8981.jpg": {
+  "map": "Player handbook map",
+  "panel": "-1,2",
+  "w": 888,
+  "h": 1062,
+  "sha256": "ac1320bf3161f2ed00a8f9bda39015176263265abfe5e33c877d3a5e8a730735"
+ },
+ "a79c351f-55ad-4a70-a34c-5a3a4ca06bd7.jpg": {
+  "map": "Player handbook map",
+  "panel": "1,2",
+  "w": 888,
+  "h": 1063,
+  "sha256": "e0227c2ddf9d01b4fb1b95201d57ec0f94c3ed27459f01a38fc24e2db0aa9170"
+ },
+ "9edf826f-903b-4381-a392-85dc392c42a5.jpg": {
+  "map": "Player handbook map",
+  "panel": "-2,1",
+  "w": 889,
+  "h": 1069,
+  "sha256": "c85fb7ea273fc50461722d5865dd0592d628008a6c6e1bd050714bfaa99e5fee"
+ },
+ "c6ce09a2-52f0-4cb6-9900-b701c402c51c.jpg": {
+  "map": "Second map - whiteboard",
+  "panel": "1,1",
+  "w": 1077,
+  "h": 1510,
+  "sha256": "cf84baed90082c7c1f31ccd4f57987dcbccc4ec457de6c553f557a92da8f4f0f"
+ }
+}

@@ -5,19 +5,34 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { panelName } from "../../contracts/geometry";
 import { STRINGS } from "../../strings";
 import { go, panelHash } from "../../router";
-import type { ScanMeta } from "../db";
+import { getScan, type ScanMeta } from "../db";
+import { FULL_SCAN_ZOOM, FullScanPool } from "../fullScans";
 import { atlasGrid, coordKey } from "../grid";
 import { activeMap, atlas, presetCoord } from "../store";
+
+// One pool for the screen. It holds the stored scans the atlas is currently
+// showing at zoom, and nothing else.
+const pool = new FullScanPool({
+  load: async (id) => (await getScan(id))?.image,
+  createUrl: (blob) => URL.createObjectURL(blob),
+  revokeUrl: (url) => URL.revokeObjectURL(url),
+});
 
 export function Atlas() {
   const a = atlas.value;
   const viewport = useRef<HTMLDivElement>(null);
   const plane = useRef<HTMLDivElement>(null);
+  // the zoom the cells watch: past FULL_SCAN_ZOOM they fetch their stored
+  // scan, because a thumbnail stretched past its own size is the blur
+  const [zoom, setZoom] = useState(1);
   // keyed on content, not on the refs: the first render is the empty state
   // (scans still loading), and refs are only set after commit — an effect
   // depending on ref.current would never re-fire when the grid appears.
   // The map key recenters the view when another map takes the stage.
-  usePinchPan(viewport, plane, a.size > 0, activeMap.value?.id ?? "");
+  usePinchPan(viewport, plane, a.size > 0, activeMap.value?.id ?? "", setZoom);
+
+  // another map means another set of scans: let the old ones go
+  useEffect(() => () => pool.clear(), [activeMap.value?.id]);
 
   if (!a.size) {
     return (
@@ -45,7 +60,17 @@ export function Atlas() {
           {rows.map((ty) =>
             cols.map((tx) => {
               const meta = a.get(coordKey(tx, ty));
-              if (meta) return <AtlasCell key={coordKey(tx, ty)} tx={tx} ty={ty} meta={meta} />;
+              if (meta)
+                return (
+                  <AtlasCell
+                    key={coordKey(tx, ty)}
+                    tx={tx}
+                    ty={ty}
+                    meta={meta}
+                    zoom={zoom}
+                    viewport={viewport}
+                  />
+                );
               // a position with no panel beside it holds the grid's shape
               // without inviting anything
               if (!addable.has(coordKey(tx, ty))) {
@@ -73,21 +98,77 @@ export function Atlas() {
   );
 }
 
-function AtlasCell({ tx, ty, meta }: { tx: number; ty: number; meta: ScanMeta }) {
-  const [url, setUrl] = useState("");
+function AtlasCell({
+  tx,
+  ty,
+  meta,
+  zoom,
+  viewport,
+}: {
+  tx: number;
+  ty: number;
+  meta: ScanMeta;
+  zoom: number;
+  viewport: { current: HTMLDivElement | null };
+}) {
+  const [thumbUrl, setThumbUrl] = useState("");
+  const [fullUrl, setFullUrl] = useState("");
+  const [onScreen, setOnScreen] = useState(false);
+  const cell = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     const u = URL.createObjectURL(meta.thumb);
-    setUrl(u);
+    setThumbUrl(u);
     return () => URL.revokeObjectURL(u);
   }, [meta.id]);
+
+  // only cells the player can actually see are worth a full scan
+  useEffect(() => {
+    const el = cell.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setOnScreen(true); // no observer: treat every cell as visible
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => setOnScreen(entries[entries.length - 1].isIntersecting),
+      { root: viewport.current ?? null, rootMargin: "25%" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [meta.id, viewport.current]);
+
+  const wantFull = zoom >= FULL_SCAN_ZOOM && onScreen;
+
+  useEffect(() => {
+    let dead = false;
+    if (!wantFull) {
+      setFullUrl("");
+      return;
+    }
+    pool.request(meta.id).then((u) => {
+      if (!dead && u) setFullUrl(u);
+    });
+    // if the pool drops this scan, fall back before the URL is revoked
+    const off = pool.onEvicted((id) => {
+      if (id === meta.id && !dead) setFullUrl("");
+    });
+    return () => {
+      dead = true;
+      off();
+    };
+  }, [meta.id, wantFull]);
+
+  const shown = fullUrl || thumbUrl;
   return (
     <button
+      ref={cell}
       class="atlas-cell"
       data-testid={`atlas-cell-${tx},${ty}`}
       data-scan={meta.id}
+      data-full={fullUrl ? "yes" : "no"}
       onClick={() => go(panelHash(tx, ty))}
     >
-      {url && <img src={url} alt={panelName(tx, ty)} draggable={false} />}
+      {shown && <img src={shown} alt={panelName(tx, ty)} draggable={false} />}
       <span>{panelName(tx, ty)}</span>
     </button>
   );
@@ -101,6 +182,7 @@ function usePinchPan(
   plane: { current: HTMLDivElement | null },
   enabled: boolean,
   contentKey: string,
+  onScale: (scale: number) => void,
 ) {
   const state = useRef({
     x: 0,
@@ -120,9 +202,18 @@ function usePinchPan(
     if (!enabled || !vp || !pl) return;
     const s = state.current;
 
+    // the transform is applied on every move; the zoom is only REPORTED
+    // when it changes enough to matter, so the cells do not re-render on
+    // every pixel of a drag
+    let reported = -1;
     const apply = () => {
       s.scale = Math.max(0.4, Math.min(4, s.scale));
       pl.style.transform = `translate(${s.x}px, ${s.y}px) scale(${s.scale})`;
+      const step = Math.round(s.scale * 20) / 20;
+      if (step !== reported) {
+        reported = step;
+        onScale(s.scale);
+      }
     };
 
     // the default view holds the map in the middle of the viewport — a map
