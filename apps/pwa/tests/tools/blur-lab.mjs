@@ -2,11 +2,11 @@
 // writes numbers and goldens to disk, so a fresh clone can reproduce both.
 //
 // Run the dev server first (npm run dev), then from apps/pwa:
-//   node test/tools/blur-lab.mjs goldens     write auto-fix goldens and hashes
-//   node test/tools/blur-lab.mjs measure     write the round-trip table
-//   node test/tools/blur-lab.mjs determinism auto-fix twice, compare
+//   node tests/tools/blur-lab.mjs goldens     write auto-fix goldens and hashes
+//   node tests/tools/blur-lab.mjs measure     write the round-trip table
+//   node tests/tools/blur-lab.mjs determinism auto-fix twice, compare
 //
-// Output lands in test/goldens/autofix-sandy-r3/ and test/reports/.
+// Output lands in tests/goldens/autofix-sandy-r3/ and tests/reports/.
 import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -17,8 +17,8 @@ const { chromium } = require("@playwright/test");
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PWA = join(HERE, "..", "..");
-const GOLDENS = join(PWA, "test", "goldens", "autofix-sandy-r3");
-const REPORTS = join(PWA, "test", "reports");
+const GOLDENS = join(PWA, "tests", "goldens", "autofix-sandy-r3");
+const REPORTS = join(PWA, "tests", "reports");
 const BASE = process.env.JM_DEV || "http://localhost:5173";
 
 // one representative panel per map keeps the goldens small; every scan still
@@ -59,7 +59,7 @@ async function withPage(fn) {
 // installed into the page: decoding, metrics, and the auto-fix run
 const HELPERS = `
 window.__fetchFile = async (name) => {
-  const b = await (await fetch("/test/fixtures/sandy-r3/scans/" + name)).blob();
+  const b = await (await fetch("/tests/fixtures/sandy-r3/scans/" + name)).blob();
   return new File([b], name, { type: "image/jpeg" });
 };
 window.__toRaster = async (blob, maxEdge) => {
@@ -153,7 +153,7 @@ window.__autofixPng = async (name) => {
            chunks: null, dataUrl: cv.toDataURL("image/png") };
 };
 window.__manifest = async () =>
-  await (await fetch("/test/fixtures/sandy-r3/manifest.json")).json();
+  await (await fetch("/tests/fixtures/sandy-r3/manifest.json")).json();
 `;
 
 const scansOf = (man) =>
@@ -299,13 +299,13 @@ async function shots(label) {
   // a fresh map holding one of the tester's panels
   await page.evaluate(async () => {
     const db = await import("/src/digitalizer/db.ts");
-    const man = await (await fetch("/test/fixtures/sandy-r3/manifest.json")).json();
+    const man = await (await fetch("/tests/fixtures/sandy-r3/manifest.json")).json();
     const rec = man.scans.find(
       (s) => s.imageEntry.includes("0032eff7"),
     );
     const map = await db.createMap("Blur shot " + Math.random().toString(36).slice(2, 7));
-    const image = await (await fetch("/" + "test/fixtures/sandy-r3/" + rec.imageEntry)).blob();
-    const thumb = await (await fetch("/" + "test/fixtures/sandy-r3/" + rec.thumbEntry)).blob();
+    const image = await (await fetch("/" + "tests/fixtures/sandy-r3/" + rec.imageEntry)).blob();
+    const thumb = await (await fetch("/" + "tests/fixtures/sandy-r3/" + rec.thumbEntry)).blob();
     await db.addScan({
       mapId: map.id, tx: rec.tx, ty: rec.ty, note: "", mime: "image/jpeg",
       width: rec.width, height: rec.height, image, thumb,
@@ -356,6 +356,6 @@ else if (cmd === "measure") await measure();
 else if (cmd === "determinism") await determinism();
 else if (cmd === "shots") await shots(process.argv[3] || "after");
 else {
-  console.log("usage: node test/tools/blur-lab.mjs goldens|measure|determinism|shots <label>");
+  console.log("usage: node tests/tools/blur-lab.mjs goldens|measure|determinism|shots <label>");
   process.exit(1);
 }
