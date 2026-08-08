@@ -126,7 +126,7 @@ Here are few simple filling rules:
 	- **Level** moves one step toward plain. 
 	- **Rise** moves one step away; Rise on plain is your choice of coastal or hills.
 	  
-	NOTE: **Level** keep Plains unchanged and **Rise** doesn't change mountains nor deep water. Carry on the same elevation when it cannot change.
+	NOTE: **Level** keep Plains unchanged and **Rise** doesn't change mountains. The elevation doesn't change.
 	![[moods-example.png]]
 
 4. **First paint on empty ground?** (a new map, a fresh panel): roll a d6.
@@ -181,9 +181,6 @@ The deck, 22 cards:
 
 ![[card-example.png|289]]
 An example of Free Stroke card
-
-HERE is a link of a printable document with all the cards:
-https://drive.google.com/file/d/1CVBCDG6nfsf6vPZVkXyCsEq-WNDPUqYm/view?usp=sharing
 ## Cards instructions
 
 ### Calm

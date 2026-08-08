@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 252 352" width="252" height="352"><rect width="252" height="352" fill="#F3EFE7"/><rect x="3" y="3" width="246" height="346" rx="13" fill="#F3EFE7" stroke="#2B2620" stroke-width="2.6"/>
+<rect x="11" y="11" width="230" height="330" rx="8" fill="none" stroke="#7A7168" stroke-width="0.8"/>
+<text x="126.0" y="36" font-family="Helvetica, Arial, sans-serif" font-size="20" fill="#2B2620" text-anchor="middle" font-weight="bold" font-style="normal">ROLL TABLES</text>
+<line x1="20" y1="48" x2="232" y2="48" stroke="#7A7168" stroke-width="0.8"/>
+<text x="24" y="68" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#2B2620" text-anchor="start" font-weight="bold" font-style="normal">SETTLEMENT</text>
+<line x1="24" y1="73" x2="120" y2="73" stroke="#D19A2E" stroke-width="1.8"/>
+<text x="24" y="88.5" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#2B2620" text-anchor="start" font-weight="bold" font-style="normal">Founding</text>
+<text x="120" y="88.5" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#7A7168" text-anchor="end" font-weight="normal" font-style="normal">d6</text>
+<line x1="24" y1="92.0" x2="120" y2="92.0" stroke="#7A7168" stroke-width="0.5"/>
+<text x="24" y="105.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">1-3</text>
+<text x="48" y="105.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Farmstead</text>
+<text x="24" y="121.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">4-5</text>
+<text x="48" y="121.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Village</text>
+<text x="24" y="138.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">6</text>
+<text x="48" y="138.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Small town</text>
+<text x="24" y="163.5" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#2B2620" text-anchor="start" font-weight="bold" font-style="normal">Growth</text>
+<text x="120" y="163.5" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#7A7168" text-anchor="end" font-weight="normal" font-style="normal">d6</text>
+<line x1="24" y1="167.0" x2="120" y2="167.0" stroke="#7A7168" stroke-width="0.5"/>
+<text x="24" y="180.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">1-2</text>
+<text x="48" y="180.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">A field</text>
+<text x="24" y="196.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">3-4</text>
+<text x="48" y="196.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">A home</text>
+<text x="24" y="213.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">5-6</text>
+<text x="48" y="213.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Rise a step</text>
+<text x="24" y="238.5" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#2B2620" text-anchor="start" font-weight="bold" font-style="normal">Farmland</text>
+<text x="120" y="238.5" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#7A7168" text-anchor="end" font-weight="normal" font-style="normal">1d4</text>
+<line x1="24" y1="242.0" x2="120" y2="242.0" stroke="#7A7168" stroke-width="0.5"/>
+<text x="24" y="255.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">1-2</text>
+<text x="48" y="255.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Low intensity</text>
+<text x="24" y="271.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">3-4</text>
+<text x="48" y="271.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">High intensity</text>
+<text x="132" y="68" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#2B2620" text-anchor="start" font-weight="bold" font-style="normal">BLANK PANEL</text>
+<line x1="132" y1="73" x2="228" y2="73" stroke="#D19A2E" stroke-width="1.8"/>
+<text x="132" y="88.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">1</text>
+<text x="156" y="88.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Shallow</text>
+<text x="132" y="105.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">2</text>
+<text x="156" y="105.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Coastal</text>
+<text x="132" y="121.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">3-4</text>
+<text x="156" y="121.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Plain</text>
+<text x="132" y="138.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">5</text>
+<text x="156" y="138.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Hills</text>
+<text x="132" y="154.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">6</text>
+<text x="156" y="154.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Mountains</text>
+<text x="132" y="187.5" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#2B2620" text-anchor="start" font-weight="bold" font-style="normal">STROKE</text>
+<line x1="132" y1="192.5" x2="228" y2="192.5" stroke="#D19A2E" stroke-width="1.8"/>
+<text x="132" y="208.0" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#2B2620" text-anchor="start" font-weight="bold" font-style="normal">Wobble</text>
+<text x="228" y="208.0" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#7A7168" text-anchor="end" font-weight="normal" font-style="normal">d6</text>
+<line x1="132" y1="211.5" x2="228" y2="211.5" stroke="#7A7168" stroke-width="0.5"/>
+<text x="132" y="224.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">1-4</text>
+<text x="156" y="224.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Straight</text>
+<text x="132" y="241.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">5</text>
+<text x="156" y="241.0" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Turn left</text>
+<text x="132" y="257.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">6</text>
+<text x="156" y="257.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">Turn right</text>
+<text x="132" y="283.0" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#2B2620" text-anchor="start" font-weight="bold" font-style="normal">Length</text>
+<text x="228" y="283.0" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#7A7168" text-anchor="end" font-weight="normal" font-style="normal">1d4+1</text>
+<line x1="132" y1="286.5" x2="228" y2="286.5" stroke="#7A7168" stroke-width="0.5"/>
+<text x="132" y="299.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#B87F1E" text-anchor="start" font-weight="bold" font-style="normal">2-5</text>
+<text x="156" y="299.5" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#2B2620" text-anchor="start" font-weight="normal" font-style="normal">units, or choose</text></svg>
